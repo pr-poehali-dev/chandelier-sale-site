@@ -1,53 +1,69 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  brand: string;
-  type: string;
-  image: string;
-  inStock: boolean;
-}
-
-const products: Product[] = [
-  { id: 1, name: 'Люстра Crystal Dream', price: 45900, brand: 'LuxCrystal', type: 'chandelier', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/ea3f6d76-2db5-45df-8995-27d163a48b43.jpg', inStock: true },
-  { id: 2, name: 'Люстра Modern Style', price: 32500, brand: 'ModernLight', type: 'chandelier', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/ea3f6d76-2db5-45df-8995-27d163a48b43.jpg', inStock: true },
-  { id: 3, name: 'Настольная лампа Desk Pro', price: 8900, brand: 'OfficeLight', type: 'lamp', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/08d2e311-543a-444f-bd95-27580dbf222a.jpg', inStock: true },
-  { id: 4, name: 'Настольная лампа Reading Plus', price: 12400, brand: 'ModernLight', type: 'lamp', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/08d2e311-543a-444f-bd95-27580dbf222a.jpg', inStock: false },
-  { id: 5, name: 'Бра Wave Light', price: 15600, brand: 'DesignLight', type: 'sconce', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/2544184f-df96-433d-8e76-14c189cae2d4.jpg', inStock: true },
-  { id: 6, name: 'Бра Art Deco', price: 19200, brand: 'LuxCrystal', type: 'sconce', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/2544184f-df96-433d-8e76-14c189cae2d4.jpg', inStock: true },
-  { id: 7, name: 'Спот Track Light', price: 6700, brand: 'OfficeLight', type: 'spotlight', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/08d2e311-543a-444f-bd95-27580dbf222a.jpg', inStock: true },
-  { id: 8, name: 'Люстра Elite Crystal', price: 67800, brand: 'LuxCrystal', type: 'chandelier', image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/ea3f6d76-2db5-45df-8995-27d163a48b43.jpg', inStock: true },
-];
+import { api, Product, User } from '@/lib/api';
 
 const Catalog = () => {
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<number[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<number[]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
   const [showCart, setShowCart] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
 
-  const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight'];
+  const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
     { value: 'chandelier', label: 'Люстры' },
     { value: 'lamp', label: 'Настольные лампы' },
     { value: 'sconce', label: 'Бра' },
     { value: 'spotlight', label: 'Споты' },
+    { value: 'floor_lamp', label: 'Торшеры' },
+    { value: 'pendant', label: 'Подвесные светильники' },
   ];
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getProducts({ limit: 200 });
+      if (data.products.length < 50) {
+        await api.seedProducts();
+        const refreshedData = await api.getProducts({ limit: 200 });
+        setProducts(refreshedData.products);
+      } else {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка загрузки',
+        description: 'Не удалось загрузить товары',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProducts = products.filter((product) => {
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
@@ -76,6 +92,14 @@ const Catalog = () => {
   const cartItems = cart.map(id => products.find(p => p.id === id)).filter(Boolean) as Product[];
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price, 0);
 
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    toast({
+      title: 'Выход выполнен',
+    });
+  };
+
   const FilterSidebar = () => (
     <div className="space-y-6">
       <div>
@@ -83,7 +107,7 @@ const Catalog = () => {
         <Slider
           value={priceRange}
           onValueChange={setPriceRange}
-          max={100000}
+          max={150000}
           step={1000}
           className="mb-2"
         />
@@ -147,7 +171,7 @@ const Catalog = () => {
         onClick={() => {
           setSelectedBrands([]);
           setSelectedTypes([]);
-          setPriceRange([0, 100000]);
+          setPriceRange([0, 150000]);
         }}
       >
         Сбросить фильтры
@@ -164,7 +188,17 @@ const Catalog = () => {
       />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Каталог освещения</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold">Каталог освещения</h1>
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm">Привет, {user.first_name}!</span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Выйти
+              </Button>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="hidden lg:block w-64 shrink-0">
@@ -172,66 +206,64 @@ const Catalog = () => {
           </aside>
 
           <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="lg:hidden mb-4 w-full">
-                <Icon name="SlidersHorizontal" className="mr-2 h-4 w-4" />
-                Фильтры
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <SheetHeader>
-                <SheetTitle>Фильтры</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
-                <FilterSidebar />
-              </div>
-            </SheetContent>
+            <Button variant="outline" className="lg:hidden mb-4 w-full">
+              <Icon name="SlidersHorizontal" className="mr-2 h-4 w-4" />
+              Фильтры
+            </Button>
           </Sheet>
 
           <div className="flex-1">
-            <div className="mb-4 text-sm text-muted-foreground">
-              Найдено товаров: {filteredProducts.length}
-            </div>
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Загрузка товаров...</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 text-sm text-muted-foreground">
+                  Найдено товаров: {filteredProducts.length}
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in">
-                  <CardHeader className="p-0">
-                    <div className="aspect-square overflow-hidden bg-muted">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <Badge variant="secondary" className="mb-2">
-                      {product.brand}
-                    </Badge>
-                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                    <p className="text-2xl font-bold text-primary">
-                      {product.price.toLocaleString()} ₽
-                    </p>
-                    {!product.inStock && (
-                      <Badge variant="destructive" className="mt-2">
-                        Нет в наличии
-                      </Badge>
-                    )}
-                  </CardContent>
-                  <CardFooter className="p-4 pt-0">
-                    <Button
-                      className="w-full"
-                      onClick={() => addToCart(product.id)}
-                      disabled={!product.inStock}
-                    >
-                      <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-                      В корзину
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredProducts.map((product) => (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in">
+                      <CardHeader className="p-0">
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <Badge variant="secondary" className="mb-2">
+                          {product.brand}
+                        </Badge>
+                        <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                        <p className="text-2xl font-bold text-primary">
+                          {product.price.toLocaleString()} ₽
+                        </p>
+                        {!product.inStock && (
+                          <Badge variant="destructive" className="mt-2">
+                            Нет в наличии
+                          </Badge>
+                        )}
+                      </CardContent>
+                      <CardFooter className="p-4 pt-0">
+                        <Button
+                          className="w-full"
+                          onClick={() => addToCart(product.id)}
+                          disabled={!product.inStock}
+                        >
+                          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+                          В корзину
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -281,28 +313,11 @@ const Catalog = () => {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={showAuth} onOpenChange={setShowAuth}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Вход / Регистрация</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <p className="text-sm text-muted-foreground mb-4">
-              Войдите в свой аккаунт или создайте новый
-            </p>
-            <div className="space-y-4">
-              <Button variant="outline" className="w-full">
-                <Icon name="Mail" className="mr-2 h-4 w-4" />
-                Войти через Email
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Icon name="Phone" className="mr-2 h-4 w-4" />
-                Войти через Телефон
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <AuthDialog
+        open={showAuth}
+        onOpenChange={setShowAuth}
+        onAuthSuccess={(user) => setUser(user)}
+      />
 
       <Footer />
     </div>
