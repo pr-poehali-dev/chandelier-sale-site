@@ -24,15 +24,14 @@ const Catalog = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [imageSearchLoading, setImageSearchLoading] = useState(false);
-  const [cart, setCart] = useState<number[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
-  const [showCart, setShowCart] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [cartCount, setCartCount] = useState(0);
 
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
@@ -65,8 +64,17 @@ const Catalog = () => {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
+    updateCartCount();
     loadProducts();
   }, []);
+
+  const updateCartCount = () => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      const cart = JSON.parse(savedCart);
+      setCartCount(cart.length);
+    }
+  };
 
   const loadProducts = async () => {
     setLoading(true);
@@ -160,39 +168,25 @@ const Catalog = () => {
     }
   };
 
-  const addToCart = (productId: number) => {
-    setCart([...cart, productId]);
+  const addToCart = (product: Product) => {
+    const savedCart = localStorage.getItem('cart');
+    const cart = savedCart ? JSON.parse(savedCart) : [];
+    
+    const existingItem = cart.find((item: any) => item.id === product.id);
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    setCartCount(cart.length);
+    
     toast({
       title: 'Товар добавлен в корзину',
       duration: 2000,
     });
   };
-
-  const removeFromCart = (productId: number) => {
-    const index = cart.indexOf(productId);
-    if (index > -1) {
-      const newCart = [...cart];
-      newCart.splice(index, 1);
-      setCart(newCart);
-    }
-  };
-
-  const removeAllOfProduct = (productId: number) => {
-    setCart(cart.filter(id => id !== productId));
-  };
-
-  const getCartItemQuantity = (productId: number) => {
-    return cart.filter(id => id === productId).length;
-  };
-
-  const uniqueCartItems = Array.from(new Set(cart))
-    .map(id => products.find(p => p.id === id))
-    .filter(Boolean) as Product[];
-  
-  const cartTotal = cart.reduce((sum, id) => {
-    const product = products.find(p => p.id === id);
-    return sum + (product?.price || 0);
-  }, 0);
 
   const toggleFavorite = (productId: number) => {
     const newFavorites = favorites.includes(productId)
@@ -299,8 +293,8 @@ const Catalog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
-        cartItemsCount={cart.length}
-        onCartClick={() => setShowCart(true)}
+        cartItemsCount={cartCount}
+        onCartClick={() => window.location.href = '/cart'}
         onAuthClick={() => setShowAuth(true)}
       />
 
@@ -496,7 +490,7 @@ const Catalog = () => {
                           className="flex-1"
                           onClick={(e) => {
                             e.stopPropagation();
-                            addToCart(product.id);
+                            addToCart(product);
                           }}
                           disabled={!product.inStock}
                         >
@@ -513,114 +507,7 @@ const Catalog = () => {
         </div>
       </main>
 
-      <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent className="w-full sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Корзина ({cart.length} товаров)</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-4 flex flex-col h-[calc(100vh-120px)]">
-            {uniqueCartItems.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <Icon name="ShoppingCart" className="h-20 w-20 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground text-center">Корзина пуста</p>
-                <Button className="mt-4" onClick={() => setShowCart(false)}>
-                  Перейти к покупкам
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 space-y-3 overflow-y-auto pr-2">
-                  {uniqueCartItems.map((item) => {
-                    const quantity = getCartItemQuantity(item.id);
-                    const itemTotal = item.price * quantity;
-                    
-                    return (
-                      <div key={item.id} className="flex gap-4 p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-20 h-20 object-cover rounded flex-shrink-0" 
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm mb-1 line-clamp-2">{item.name}</h4>
-                          <Badge variant="outline" className="text-xs mb-2">
-                            {item.brand}
-                          </Badge>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-2 border rounded-md">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => removeFromCart(item.id)}
-                              >
-                                <Icon name="Minus" className="h-3 w-3" />
-                              </Button>
-                              <span className="w-8 text-center text-sm font-medium">
-                                {quantity}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => addToCart(item.id)}
-                              >
-                                <Icon name="Plus" className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-primary">
-                                {itemTotal.toLocaleString()} ₽
-                              </p>
-                              {quantity > 1 && (
-                                <p className="text-xs text-muted-foreground">
-                                  {item.price.toLocaleString()} ₽ × {quantity}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                          onClick={() => removeAllOfProduct(item.id)}
-                        >
-                          <Icon name="Trash2" className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="border-t pt-4 space-y-4 bg-background">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Товаров:</span>
-                      <span>{cart.length} шт.</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Итого:</span>
-                      <span className="text-primary">{cartTotal.toLocaleString()} ₽</span>
-                    </div>
-                  </div>
-                  <Button className="w-full" size="lg">
-                    <Icon name="CreditCard" className="mr-2 h-5 w-5" />
-                    Оформить заказ
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={() => setShowCart(false)}
-                  >
-                    Продолжить покупки
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+
 
       <AuthDialog
         open={showAuth}
@@ -884,7 +771,7 @@ const Catalog = () => {
                       className="flex-1"
                       size="lg"
                       onClick={() => {
-                        addToCart(selectedProduct.id);
+                        addToCart(selectedProduct);
                         setSelectedProduct(null);
                       }}
                       disabled={!selectedProduct.inStock}
@@ -896,9 +783,9 @@ const Catalog = () => {
                       variant="outline"
                       size="lg"
                       onClick={() => {
-                        addToCart(selectedProduct.id);
+                        addToCart(selectedProduct);
                         setSelectedProduct(null);
-                        setShowCart(true);
+                        window.location.href = '/cart';
                       }}
                       disabled={!selectedProduct.inStock}
                     >
