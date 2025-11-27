@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthDialog from '@/components/AuthDialog';
@@ -9,15 +9,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { api, Product, User } from '@/lib/api';
 
 const Catalog = () => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [imageSearchLoading, setImageSearchLoading] = useState(false);
   const [cart, setCart] = useState<number[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -66,11 +70,72 @@ const Catalog = () => {
   };
 
   const filteredProducts = products.filter((product) => {
+    const searchMatch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    return brandMatch && typeMatch && priceMatch;
+    return searchMatch && brandMatch && typeMatch && priceMatch;
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Ошибка',
+        description: 'Пожалуйста, загрузите изображение',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setImageSearchLoading(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        const base64Data = base64.split(',')[1];
+
+        try {
+          const result = await api.searchByImage(base64Data);
+          setProducts(result.products);
+          setSearchQuery('');
+          setSelectedBrands([]);
+          setSelectedTypes([]);
+          
+          toast({
+            title: 'Поиск завершён',
+            description: result.description || `Найдено ${result.products.length} товаров`,
+          });
+        } catch (error) {
+          toast({
+            title: 'Ошибка поиска',
+            description: error instanceof Error ? error.message : 'Попробуйте другое фото',
+            variant: 'destructive',
+          });
+        } finally {
+          setImageSearchLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setImageSearchLoading(false);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить изображение',
+        variant: 'destructive',
+      });
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const addToCart = (productId: number) => {
     setCart([...cart, productId]);
@@ -214,6 +279,61 @@ const Catalog = () => {
           )}
         </div>
 
+        <div className="mb-6 space-y-4">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Поиск по названию, бренду..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={imageSearchLoading}
+              className="whitespace-nowrap"
+            >
+              {imageSearchLoading ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Поиск...
+                </>
+              ) : (
+                <>
+                  <Icon name="Image" className="mr-2 h-4 w-4" />
+                  Поиск по фото
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {searchQuery && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">
+                Поиск: {searchQuery}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+              >
+                <Icon name="X" className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="hidden lg:block w-64 shrink-0">
             <FilterSidebar />
@@ -233,8 +353,26 @@ const Catalog = () => {
               </div>
             ) : (
               <>
-                <div className="mb-4 text-sm text-muted-foreground">
-                  Найдено товаров: {filteredProducts.length}
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Найдено товаров: {filteredProducts.length}
+                  </span>
+                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || priceRange[0] > 0 || priceRange[1] < 150000) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedBrands([]);
+                        setSelectedTypes([]);
+                        setPriceRange([0, 150000]);
+                        loadProducts();
+                      }}
+                    >
+                      <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
+                      Сбросить всё
+                    </Button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

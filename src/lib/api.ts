@@ -2,6 +2,7 @@ const API_URLS = {
   products: 'https://functions.poehali.dev/c44b8670-1a85-41f5-9bd4-b828cbf10cca',
   auth: 'https://functions.poehali.dev/8ff2e88b-9f98-45e4-8e1a-0c1196c9196a',
   seedProducts: 'https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0',
+  searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
 };
 
 export interface Product {
@@ -87,6 +88,25 @@ export const api = {
     });
     
     if (!response.ok) throw new Error('Failed to seed products');
+    return response.json();
+  },
+
+  async searchByImage(imageBase64: string): Promise<{
+    products: Product[];
+    description: string;
+    detected_type: string | null;
+  }> {
+    const response = await fetch(API_URLS.searchImage, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageBase64 }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Image search failed');
+    }
+    
     return response.json();
   },
 };
