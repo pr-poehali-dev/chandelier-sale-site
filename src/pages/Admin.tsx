@@ -281,6 +281,42 @@ const Admin = () => {
     XLSX.writeFile(wb, 'template_products.xlsx');
   };
 
+  const exportProducts = () => {
+    if (products.length === 0) {
+      toast({
+        title: 'Нет данных',
+        description: 'Нет товаров для экспорта',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const exportData = products.map(product => ({
+      'ID': product.id,
+      'Название': product.name,
+      'Описание': product.description || '',
+      'Цена': product.price,
+      'Бренд': product.brand,
+      'Тип': product.type,
+      'Изображение': product.image,
+      'В наличии': product.inStock ? 'Да' : 'Нет',
+      'Рейтинг': product.rating,
+      'Отзывы': product.reviews
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Товары');
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `products_export_${date}.xlsx`);
+
+    toast({
+      title: 'Успешно',
+      description: `Экспортировано ${products.length} товаров`,
+    });
+  };
+
   const types = [
     { value: 'chandelier', label: 'Люстра' },
     { value: 'lamp', label: 'Настольная лампа' },
@@ -311,7 +347,11 @@ const Admin = () => {
           <div className="flex gap-2">
             <Button variant="outline" onClick={downloadTemplate}>
               <Icon name="Download" className="mr-2 h-4 w-4" />
-              Шаблон Excel
+              Шаблон
+            </Button>
+            <Button variant="outline" onClick={exportProducts}>
+              <Icon name="FileDown" className="mr-2 h-4 w-4" />
+              Экспорт
             </Button>
             <Button 
               variant="outline" 
@@ -323,7 +363,7 @@ const Admin = () => {
               ) : (
                 <Icon name="FileSpreadsheet" className="mr-2 h-4 w-4" />
               )}
-              Загрузить Excel/CSV
+              Импорт
             </Button>
             <input
               ref={fileInputRef}
@@ -334,7 +374,7 @@ const Admin = () => {
             />
             <Button onClick={handleCreate}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
-              Добавить товар
+              Добавить
             </Button>
           </div>
         </div>
