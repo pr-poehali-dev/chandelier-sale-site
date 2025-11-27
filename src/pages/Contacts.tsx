@@ -19,7 +19,7 @@ const Contacts = () => {
     {
       icon: 'MapPin',
       title: 'Адрес',
-      items: ['г. Москва, ул. Примерная, д. 1', 'Пн-Вс: 09:00 - 21:00'],
+      items: ['г. Уфа, ул. Менделеева, 137к4', 'Пн-Вс: 09:00 - 21:00'],
     },
     {
       icon: 'Clock',
@@ -161,7 +161,7 @@ const Contacts = () => {
                     <div className="text-center">
                       <Icon name="Map" className="h-16 w-16 text-primary mx-auto mb-4" />
                       <p className="text-lg font-semibold">Интерактивная карта</p>
-                      <p className="text-sm text-muted-foreground">г. Москва, ул. Примерная, д. 1</p>
+                      <p className="text-sm text-muted-foreground">г. Уфа, ул. Менделеева, 137к4</p>
                     </div>
                   </div>
                 </CardContent>
