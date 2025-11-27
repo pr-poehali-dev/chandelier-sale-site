@@ -25,6 +25,10 @@ const Admin = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingBulk, setUploadingBulk] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBrand, setFilterBrand] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStock, setFilterStock] = useState('all');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -326,6 +330,23 @@ const Admin = () => {
     { value: 'pendant', label: 'Подвесной светильник' },
   ];
 
+  const brands = Array.from(new Set(products.map(p => p.brand))).sort();
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesBrand = filterBrand === 'all' || product.brand === filterBrand;
+    const matchesType = filterType === 'all' || product.type === filterType;
+    const matchesStock = filterStock === 'all' || 
+      (filterStock === 'inStock' && product.inStock) ||
+      (filterStock === 'outOfStock' && !product.inStock);
+    
+    return matchesSearch && matchesBrand && matchesType && matchesStock;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -342,9 +363,10 @@ const Admin = () => {
       <Header />
       
       <div className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Управление товарами</h1>
-          <div className="flex gap-2">
+        <div className="space-y-6 mb-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Управление товарами</h1>
+            <div className="flex gap-2">
             <Button variant="outline" onClick={downloadTemplate}>
               <Icon name="Download" className="mr-2 h-4 w-4" />
               Шаблон
@@ -376,11 +398,87 @@ const Admin = () => {
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Добавить
             </Button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border p-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="search">Поиск</Label>
+                <Input
+                  id="search"
+                  placeholder="Название, бренд, описание..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="brand-filter">Бренд</Label>
+                <Select value={filterBrand} onValueChange={setFilterBrand}>
+                  <SelectTrigger id="brand-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все бренды</SelectItem>
+                    {brands.map(brand => (
+                      <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="type-filter">Тип товара</Label>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger id="type-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все типы</SelectItem>
+                    {types.map(type => (
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="stock-filter">Наличие</Label>
+                <Select value={filterStock} onValueChange={setFilterStock}>
+                  <SelectTrigger id="stock-filter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все товары</SelectItem>
+                    <SelectItem value="inStock">В наличии</SelectItem>
+                    <SelectItem value="outOfStock">Нет в наличии</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Показано: {filteredProducts.length} из {products.length} товаров
+              </p>
+              {(searchQuery || filterBrand !== 'all' || filterType !== 'all' || filterStock !== 'all') && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setFilterBrand('all');
+                    setFilterType('all');
+                    setFilterStock('all');
+                  }}
+                >
+                  <Icon name="X" className="mr-2 h-4 w-4" />
+                  Сбросить фильтры
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <Card key={product.id}>
               <CardHeader>
                 <img 
