@@ -28,6 +28,9 @@ const Catalog = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
+  const [hasRemote, setHasRemote] = useState(false);
+  const [isDimmable, setIsDimmable] = useState(false);
+  const [hasColorChange, setHasColorChange] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
@@ -106,7 +109,10 @@ const Catalog = () => {
     const categoryMatch = selectedCategory === '' || selectedCategory === 'sale' || product.type === selectedCategory || 
       (selectedCategory === 'sconce-wall' && product.type === 'sconce');
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch;
+    const remoteMatch = !hasRemote || product.hasRemote;
+    const dimmableMatch = !isDimmable || product.isDimmable;
+    const colorChangeMatch = !hasColorChange || product.hasColorChange;
+    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch && remoteMatch && dimmableMatch && colorChangeMatch;
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,6 +280,45 @@ const Catalog = () => {
         </div>
       </div>
 
+      <div>
+        <h3 className="font-semibold mb-4">Дополнительно</h3>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="has-remote"
+              checked={hasRemote}
+              onCheckedChange={(checked) => setHasRemote(!!checked)}
+            />
+            <Label htmlFor="has-remote" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Radio" className="h-4 w-4 text-primary" />
+              С пультом управления
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is-dimmable"
+              checked={isDimmable}
+              onCheckedChange={(checked) => setIsDimmable(!!checked)}
+            />
+            <Label htmlFor="is-dimmable" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Sun" className="h-4 w-4 text-orange-500" />
+              Регулировка яркости
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="has-color-change"
+              checked={hasColorChange}
+              onCheckedChange={(checked) => setHasColorChange(!!checked)}
+            />
+            <Label htmlFor="has-color-change" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Palette" className="h-4 w-4 text-purple-500" />
+              Смена цвета
+            </Label>
+          </div>
+        </div>
+      </div>
+
       <Button
         variant="outline"
         className="w-full"
@@ -281,6 +326,9 @@ const Catalog = () => {
           setSelectedBrands([]);
           setSelectedTypes([]);
           setPriceRange([0, 150000]);
+          setHasRemote(false);
+          setIsDimmable(false);
+          setHasColorChange(false);
         }}
       >
         Сбросить фильтры
@@ -410,7 +458,7 @@ const Catalog = () => {
                   <span className="text-sm text-muted-foreground">
                     Найдено товаров: {filteredProducts.length}
                   </span>
-                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000) && (
+                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -420,6 +468,9 @@ const Catalog = () => {
                         setSelectedTypes([]);
                         setSelectedCategory('');
                         setPriceRange([0, 150000]);
+                        setHasRemote(false);
+                        setIsDimmable(false);
+                        setHasColorChange(false);
                         loadProducts();
                       }}
                     >
@@ -504,6 +555,28 @@ const Catalog = () => {
                         <h3 className="font-semibold text-lg leading-tight min-h-[3.5rem]">{product.name}</h3>
                         {product.description && (
                           <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                        )}
+                        {(product.hasRemote || product.isDimmable || product.hasColorChange) && (
+                          <div className="flex flex-wrap gap-1">
+                            {product.hasRemote && (
+                              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                <Icon name="Radio" className="h-3 w-3" />
+                                Пульт
+                              </Badge>
+                            )}
+                            {product.isDimmable && (
+                              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                <Icon name="Sun" className="h-3 w-3" />
+                                Диммер
+                              </Badge>
+                            )}
+                            {product.hasColorChange && (
+                              <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                <Icon name="Palette" className="h-3 w-3" />
+                                RGB
+                              </Badge>
+                            )}
+                          </div>
                         )}
                         <div className="flex items-center justify-between pt-2">
                           <div>

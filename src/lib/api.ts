@@ -16,6 +16,9 @@ export interface Product {
   inStock: boolean;
   rating: number;
   reviews: number;
+  hasRemote?: boolean;
+  isDimmable?: boolean;
+  hasColorChange?: boolean;
 }
 
 export interface User {

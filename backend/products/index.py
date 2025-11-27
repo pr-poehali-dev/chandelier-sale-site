@@ -49,10 +49,11 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     product_type = params.get('type')
     min_price = params.get('min_price')
     max_price = params.get('max_price')
+    has_remote = params.get('has_remote')
     limit = int(params.get('limit', '50'))
     offset = int(params.get('offset', '0'))
     
-    query = "SELECT id, name, description, price, brand, type, image_url, in_stock, rating, reviews FROM products WHERE 1=1"
+    query = "SELECT id, name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change FROM products WHERE 1=1"
     query_params = []
     
     if brand:
@@ -70,6 +71,10 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     if max_price:
         query += " AND price <= %s"
         query_params.append(float(max_price))
+    
+    if has_remote:
+        query += " AND has_remote = %s"
+        query_params.append(has_remote.lower() == 'true')
     
     query += " ORDER BY id LIMIT %s OFFSET %s"
     query_params.extend([limit, offset])
@@ -89,7 +94,10 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'image': row[6],
             'inStock': row[7],
             'rating': float(row[8]) if row[8] else 5.0,
-            'reviews': int(row[9]) if row[9] else 0
+            'reviews': int(row[9]) if row[9] else 0,
+            'hasRemote': bool(row[10]) if row[10] is not None else False,
+            'isDimmable': bool(row[11]) if row[11] is not None else False,
+            'hasColorChange': bool(row[12]) if row[12] is not None else False
         })
     
     cur.close()
@@ -116,6 +124,9 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     in_stock = body.get('inStock', True)
     rating = body.get('rating', 5.0)
     reviews = body.get('reviews', 0)
+    has_remote = body.get('hasRemote', False)
+    is_dimmable = body.get('isDimmable', False)
+    has_color_change = body.get('hasColorChange', False)
     
     if not all([name, price, brand, product_type, image]):
         cur.close()
@@ -127,8 +138,8 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         }
     
     cur.execute(
-        "INSERT INTO products (name, description, price, brand, type, image_url, in_stock, rating, reviews) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-        (name, description, price, brand, product_type, image, in_stock, rating, reviews)
+        "INSERT INTO products (name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+        (name, description, price, brand, product_type, image, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change)
     )
     product_id = cur.fetchone()[0]
     conn.commit()
@@ -143,7 +154,10 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'image': image,
         'inStock': in_stock,
         'rating': rating,
-        'reviews': reviews
+        'reviews': reviews,
+        'hasRemote': has_remote,
+        'isDimmable': is_dimmable,
+        'hasColorChange': has_color_change
     }
     
     cur.close()
@@ -203,6 +217,15 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     if 'reviews' in body:
         updates.append("reviews = %s")
         params.append(body['reviews'])
+    if 'hasRemote' in body:
+        updates.append("has_remote = %s")
+        params.append(body['hasRemote'])
+    if 'isDimmable' in body:
+        updates.append("is_dimmable = %s")
+        params.append(body['isDimmable'])
+    if 'hasColorChange' in body:
+        updates.append("has_color_change = %s")
+        params.append(body['hasColorChange'])
     
     if not updates:
         cur.close()
@@ -214,7 +237,7 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         }
     
     params.append(int(product_id))
-    query = f"UPDATE products SET {', '.join(updates)} WHERE id = %s RETURNING id, name, description, price, brand, type, image_url, in_stock, rating, reviews"
+    query = f"UPDATE products SET {', '.join(updates)} WHERE id = %s RETURNING id, name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change"
     
     cur.execute(query, params)
     row = cur.fetchone()
@@ -239,7 +262,10 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'image': row[6],
         'inStock': row[7],
         'rating': float(row[8]),
-        'reviews': int(row[9])
+        'reviews': int(row[9]),
+        'hasRemote': bool(row[10]) if row[10] is not None else False,
+        'isDimmable': bool(row[11]) if row[11] is not None else False,
+        'hasColorChange': bool(row[12]) if row[12] is not None else False
     }
     
     cur.close()

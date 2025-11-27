@@ -40,6 +40,9 @@ const Admin = () => {
     inStock: true,
     type: 'chandelier' as 'chandelier' | 'lamp' | 'sconce' | 'spotlight' | 'floor_lamp' | 'pendant',
     description: '',
+    hasRemote: false,
+    isDimmable: false,
+    hasColorChange: false,
   });
 
   useEffect(() => {
@@ -86,6 +89,9 @@ const Admin = () => {
       inStock: product.inStock,
       type: product.type,
       description: product.description || '',
+      hasRemote: product.hasRemote || false,
+      isDimmable: product.isDimmable || false,
+      hasColorChange: product.hasColorChange || false,
     });
     setIsNewProduct(false);
     setIsDialogOpen(true);
@@ -103,6 +109,9 @@ const Admin = () => {
       inStock: true,
       type: 'chandelier',
       description: '',
+      hasRemote: false,
+      isDimmable: false,
+      hasColorChange: false,
     });
     setIsNewProduct(true);
     setIsDialogOpen(true);
@@ -888,6 +897,42 @@ const Admin = () => {
                 placeholder="Подробное описание товара"
                 rows={4}
               />
+            </div>
+
+            <div>
+              <Label className="mb-3 block">Дополнительные возможности</Label>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasRemote}
+                    onChange={(e) => setFormData({ ...formData, hasRemote: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Icon name="Radio" className="h-4 w-4 text-primary" />
+                  <span>Пульт управления</span>
+                </Label>
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isDimmable}
+                    onChange={(e) => setFormData({ ...formData, isDimmable: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Icon name="Sun" className="h-4 w-4 text-orange-500" />
+                  <span>Регулировка яркости (диммер)</span>
+                </Label>
+                <Label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasColorChange}
+                    onChange={(e) => setFormData({ ...formData, hasColorChange: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Icon name="Palette" className="h-4 w-4 text-purple-500" />
+                  <span>Смена цвета освещения</span>
+                </Label>
+              </div>
             </div>
           </div>
 
