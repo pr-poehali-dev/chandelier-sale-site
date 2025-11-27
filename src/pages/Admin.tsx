@@ -21,6 +21,7 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewProduct, setIsNewProduct] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -262,20 +263,87 @@ const Admin = () => {
             </div>
 
             <div>
-              <Label htmlFor="image">Ссылка на изображение</Label>
-              <Input
-                id="image"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://..."
-              />
-              {formData.image && (
-                <img 
-                  src={formData.image} 
-                  alt="Предпросмотр"
-                  className="w-32 h-32 object-cover rounded-lg mt-2"
-                />
-              )}
+              <Label htmlFor="image">Изображение товара</Label>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    id="image"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    placeholder="https://... или загрузите файл"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploadingImage}
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                  >
+                    {uploadingImage ? (
+                      <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icon name="Upload" className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      if (!file.type.startsWith('image/')) {
+                        toast({
+                          title: 'Ошибка',
+                          description: 'Выберите изображение',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      
+                      setUploadingImage(true);
+                      
+                      try {
+                        const formDataUpload = new FormData();
+                        formDataUpload.append('file', file);
+                        
+                        const response = await fetch('https://api.poehali.dev/upload', {
+                          method: 'POST',
+                          body: formDataUpload,
+                        });
+                        
+                        if (!response.ok) throw new Error('Upload failed');
+                        
+                        const data = await response.json();
+                        setFormData({ ...formData, image: data.url });
+                        
+                        toast({
+                          title: 'Успешно',
+                          description: 'Изображение загружено',
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Ошибка',
+                          description: 'Не удалось загрузить изображение',
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setUploadingImage(false);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                {formData.image && (
+                  <img 
+                    src={formData.image} 
+                    alt="Предпросмотр"
+                    className="w-full max-w-xs h-48 object-cover rounded-lg"
+                  />
+                )}
+              </div>
             </div>
 
             <div>
