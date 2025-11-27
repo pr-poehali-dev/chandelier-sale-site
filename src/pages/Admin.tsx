@@ -347,6 +347,31 @@ const Admin = () => {
     return matchesSearch && matchesBrand && matchesType && matchesStock;
   });
 
+  const stats = {
+    totalProducts: products.length,
+    inStock: products.filter(p => p.inStock).length,
+    outOfStock: products.filter(p => !p.inStock).length,
+    totalValue: products.reduce((sum, p) => sum + p.price, 0),
+    averagePrice: products.length > 0 ? products.reduce((sum, p) => sum + p.price, 0) / products.length : 0,
+    averageRating: products.length > 0 ? products.reduce((sum, p) => sum + p.rating, 0) / products.length : 0,
+    totalReviews: products.reduce((sum, p) => sum + p.reviews, 0),
+  };
+
+  const topProducts = [...products]
+    .sort((a, b) => b.rating * b.reviews - a.rating * a.reviews)
+    .slice(0, 5);
+
+  const brandStats = brands.map(brand => ({
+    brand,
+    count: products.filter(p => p.brand === brand).length,
+    totalValue: products.filter(p => p.brand === brand).reduce((sum, p) => sum + p.price, 0),
+  })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+  const typeStats = types.map(type => ({
+    type: type.label,
+    count: products.filter(p => p.type === type.value).length,
+  })).filter(t => t.count > 0).sort((a, b) => b.count - a.count);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -365,7 +390,7 @@ const Admin = () => {
       <div className="flex-1 container mx-auto px-4 py-8">
         <div className="space-y-6 mb-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Управление товарами</h1>
+            <h1 className="text-3xl font-bold">Панель управления</h1>
             <div className="flex gap-2">
             <Button variant="outline" onClick={downloadTemplate}>
               <Icon name="Download" className="mr-2 h-4 w-4" />
@@ -398,6 +423,162 @@ const Admin = () => {
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Добавить
             </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Всего товаров
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">{stats.totalProducts}</div>
+                  <Icon name="Package" className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  В наличии: {stats.inStock} | Нет: {stats.outOfStock}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Общая стоимость
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">
+                    {(stats.totalValue / 1000000).toFixed(1)}М
+                  </div>
+                  <Icon name="DollarSign" className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Средняя цена: {stats.averagePrice.toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ₽
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Средний рейтинг
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-3xl font-bold">{stats.averageRating.toFixed(1)}</div>
+                  <Icon name="Star" className="h-8 w-8 text-yellow-500" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Всего отзывов: {stats.totalReviews}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Топ бренд
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold">{brandStats[0]?.brand || '-'}</div>
+                  <Icon name="Award" className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {brandStats[0]?.count || 0} товаров
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Топ-5 товаров по рейтингу</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {topProducts.map((product, index) => (
+                    <div key={product.id} className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                        {index + 1}
+                      </div>
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{product.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Icon name="Star" className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            {product.rating}
+                          </span>
+                          <span>({product.reviews} отзывов)</span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold">
+                        {product.price.toLocaleString()} ₽
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Товары по типам</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {typeStats.map((stat) => (
+                      <div key={stat.type} className="flex items-center justify-between">
+                        <span className="text-sm">{stat.type}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary"
+                              style={{ width: `${(stat.count / stats.totalProducts) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-8 text-right">{stat.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Топ-5 брендов</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {brandStats.map((stat) => (
+                      <div key={stat.brand} className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{stat.brand}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {(stat.totalValue / 1000).toFixed(0)}K ₽
+                          </span>
+                          <span className="text-sm font-medium">{stat.count} шт</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
