@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ const Admin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingBulk, setUploadingBulk] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -146,6 +149,138 @@ const Admin = () => {
     }
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+      toast({
+        title: 'Ошибка',
+        description: 'Поддерживаются только Excel (.xlsx, .xls) и CSV файлы',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingBulk(true);
+
+    try {
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        try {
+          const data = event.target?.result;
+          let workbook: XLSX.WorkBook;
+          
+          if (fileExtension === '.csv') {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } else {
+            workbook = XLSX.read(data, { type: 'array' });
+          }
+          
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+          if (jsonData.length === 0) {
+            toast({
+              title: 'Ошибка',
+              description: 'Файл пуст',
+              variant: 'destructive',
+            });
+            setUploadingBulk(false);
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const row of jsonData) {
+            try {
+              const productData = {
+                name: row['Название'] || row['name'] || '',
+                description: row['Описание'] || row['description'] || '',
+                price: Number(row['Цена'] || row['price'] || 0),
+                brand: row['Бренд'] || row['brand'] || '',
+                type: (row['Тип'] || row['type'] || 'chandelier') as any,
+                image: row['Изображение'] || row['image'] || '',
+                inStock: row['В наличии'] !== undefined ? row['В наличии'] : (row['inStock'] !== undefined ? row['inStock'] : true),
+                rating: Number(row['Рейтинг'] || row['rating'] || 5),
+                reviews: Number(row['Отзывы'] || row['reviews'] || 0),
+              };
+
+              if (!productData.name || !productData.price || !productData.brand) {
+                errorCount++;
+                continue;
+              }
+
+              await api.createProduct(productData);
+              successCount++;
+            } catch (err) {
+              errorCount++;
+            }
+          }
+
+          toast({
+            title: 'Загрузка завершена',
+            description: `Успешно: ${successCount}, Ошибок: ${errorCount}`,
+          });
+
+          loadProducts();
+        } catch (error) {
+          toast({
+            title: 'Ошибка',
+            description: 'Не удалось обработать файл',
+            variant: 'destructive',
+          });
+        } finally {
+          setUploadingBulk(false);
+        }
+      };
+
+      if (fileExtension === '.csv') {
+        reader.readAsBinaryString(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось прочитать файл',
+        variant: 'destructive',
+      });
+      setUploadingBulk(false);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        'Название': 'Пример: Люстра Crystal',
+        'Описание': 'Роскошный светильник из хрусталя',
+        'Цена': 45000,
+        'Бренд': 'LuxCrystal',
+        'Тип': 'chandelier',
+        'Изображение': 'https://example.com/image.jpg',
+        'В наличии': true,
+        'Рейтинг': 5.0,
+        'Отзывы': 12
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Товары');
+    XLSX.writeFile(wb, 'template_products.xlsx');
+  };
+
   const types = [
     { value: 'chandelier', label: 'Люстра' },
     { value: 'lamp', label: 'Настольная лампа' },
@@ -173,10 +308,35 @@ const Admin = () => {
       <div className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Управление товарами</h1>
-          <Button onClick={handleCreate}>
-            <Icon name="Plus" className="mr-2 h-4 w-4" />
-            Добавить товар
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={downloadTemplate}>
+              <Icon name="Download" className="mr-2 h-4 w-4" />
+              Шаблон Excel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingBulk}
+            >
+              {uploadingBulk ? (
+                <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Icon name="FileSpreadsheet" className="mr-2 h-4 w-4" />
+              )}
+              Загрузить Excel/CSV
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={handleBulkUpload}
+            />
+            <Button onClick={handleCreate}>
+              <Icon name="Plus" className="mr-2 h-4 w-4" />
+              Добавить товар
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
