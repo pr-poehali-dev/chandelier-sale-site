@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import { User } from '@/lib/api';
 
 const Home = () => {
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const categories = [
     {
       name: 'Люстры',
@@ -49,7 +54,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header onAuthClick={() => setShowAuth(true)} />
 
       <section className="relative bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 py-20 md:py-32 animate-fade-in">
         <div className="container mx-auto px-4">
@@ -141,6 +146,12 @@ const Home = () => {
           </Button>
         </div>
       </section>
+
+      <AuthDialog
+        open={showAuth}
+        onOpenChange={setShowAuth}
+        onAuthSuccess={(user) => setUser(user)}
+      />
 
       <Footer />
     </div>
