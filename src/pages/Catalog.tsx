@@ -9,7 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { api, Product, User } from '@/lib/api';
@@ -29,6 +31,7 @@ const Catalog = () => {
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
   const [showCart, setShowCart] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
@@ -416,7 +419,7 @@ const Catalog = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in">
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in cursor-pointer" onClick={() => setSelectedProduct(product)}>
                       <CardHeader className="p-0">
                         <div className="aspect-square overflow-hidden bg-muted">
                           <img
@@ -431,6 +434,9 @@ const Catalog = () => {
                           {product.brand}
                         </Badge>
                         <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
+                        )}
                         <p className="text-2xl font-bold text-primary">
                           {product.price.toLocaleString()} ₽
                         </p>
@@ -440,10 +446,24 @@ const Catalog = () => {
                           </Badge>
                         )}
                       </CardContent>
-                      <CardFooter className="p-4 pt-0">
+                      <CardFooter className="p-4 pt-0 flex gap-2">
                         <Button
-                          className="w-full"
-                          onClick={() => addToCart(product.id)}
+                          variant="outline"
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProduct(product);
+                          }}
+                        >
+                          <Icon name="Eye" className="mr-2 h-4 w-4" />
+                          Подробнее
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product.id);
+                          }}
                           disabled={!product.inStock}
                         >
                           <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
@@ -573,6 +593,154 @@ const Catalog = () => {
         onOpenChange={setShowAuth}
         onAuthSuccess={(user) => setUser(user)}
       />
+
+      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedProduct && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl">{selectedProduct.name}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="grid md:grid-cols-2 gap-6 mt-4">
+                <div className="space-y-4">
+                  <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <Badge variant="secondary" className="mb-3">
+                      {selectedProduct.brand}
+                    </Badge>
+                    <p className="text-3xl font-bold text-primary mb-4">
+                      {selectedProduct.price.toLocaleString()} ₽
+                    </p>
+                    {selectedProduct.inStock ? (
+                      <Badge variant="default" className="bg-green-600">
+                        <Icon name="Check" className="mr-1 h-3 w-3" />
+                        В наличии
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">Нет в наличии</Badge>
+                    )}
+                  </div>
+
+                  <Tabs defaultValue="description" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="description">Описание</TabsTrigger>
+                      <TabsTrigger value="specs">Характеристики</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="description" className="space-y-4 mt-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">О товаре</h3>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {selectedProduct.description || 'Описание товара отсутствует'}
+                        </p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Преимущества</h3>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          <li className="flex items-start gap-2">
+                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span>Высокое качество материалов</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span>Энергоэффективность</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span>Гарантия 2 года</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span>Бесплатная доставка</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="specs" className="mt-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Бренд</span>
+                          <span className="font-medium">{selectedProduct.brand}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Тип</span>
+                          <span className="font-medium">
+                            {types.find(t => t.value === selectedProduct.type)?.label || selectedProduct.type}
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Мощность</span>
+                          <span className="font-medium">40-60 Вт</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Световой поток</span>
+                          <span className="font-medium">3000-4000 лм</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Цветовая температура</span>
+                          <span className="font-medium">2700-6500K</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Материал</span>
+                          <span className="font-medium">Металл, стекло</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Диммирование</span>
+                          <span className="font-medium">Да</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Степень защиты</span>
+                          <span className="font-medium">IP20</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Гарантия</span>
+                          <span className="font-medium">2 года</span>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      className="flex-1"
+                      size="lg"
+                      onClick={() => {
+                        addToCart(selectedProduct.id);
+                        setSelectedProduct(null);
+                      }}
+                      disabled={!selectedProduct.inStock}
+                    >
+                      <Icon name="ShoppingCart" className="mr-2 h-5 w-5" />
+                      В корзину
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        addToCart(selectedProduct.id);
+                        setSelectedProduct(null);
+                        setShowCart(true);
+                      }}
+                      disabled={!selectedProduct.inStock}
+                    >
+                      Купить сейчас
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
