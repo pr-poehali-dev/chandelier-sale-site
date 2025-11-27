@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthDialog from '@/components/AuthDialog';
@@ -9,8 +9,21 @@ import Icon from '@/components/ui/icon';
 import { User } from '@/lib/api';
 
 const Home = () => {
+  const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartCount(cart.length);
+    };
+
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    return () => window.removeEventListener('storage', updateCartCount);
+  }, []);
   const categories = [
     {
       name: 'Люстры',
@@ -54,7 +67,11 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header onAuthClick={() => setShowAuth(true)} />
+      <Header 
+        onAuthClick={() => setShowAuth(true)}
+        cartItemsCount={cartCount}
+        onCartClick={() => navigate('/cart')}
+      />
 
       <section className="relative bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 py-20 md:py-32 animate-fade-in">
         <div className="container mx-auto px-4">
