@@ -195,6 +195,7 @@ const Catalog = () => {
     toast({
       title: 'Выход выполнен',
     });
+    window.location.reload();
   };
 
   const FilterSidebar = () => (

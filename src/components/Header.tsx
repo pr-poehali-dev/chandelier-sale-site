@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -20,7 +20,14 @@ interface HeaderProps {
 }
 
 const Header = ({ cartItemsCount = 0, onCartClick, onAuthClick }: HeaderProps) => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    setIsLoggedIn(!!user);
+  }, []);
 
   const navLinks = [
     { to: '/', label: 'Главная' },
@@ -107,7 +114,17 @@ const Header = ({ cartItemsCount = 0, onCartClick, onAuthClick }: HeaderProps) =
               )}
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={onAuthClick}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => {
+                if (isLoggedIn) {
+                  navigate('/profile');
+                } else {
+                  onAuthClick?.();
+                }
+              }}
+            >
               <Icon name="User" className="h-5 w-5" />
             </Button>
 
