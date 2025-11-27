@@ -2,17 +2,22 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
-import { User } from '@/lib/api';
+import { User, Product, api } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -21,7 +26,45 @@ const Profile = () => {
       return;
     }
     setUser(JSON.parse(savedUser));
+    
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      const favIds = JSON.parse(savedFavorites);
+      setFavorites(favIds);
+      loadFavoriteProducts(favIds);
+    } else {
+      setLoadingFavorites(false);
+    }
   }, [navigate]);
+
+  const loadFavoriteProducts = async (favIds: number[]) => {
+    if (favIds.length === 0) {
+      setLoadingFavorites(false);
+      return;
+    }
+    
+    try {
+      const { products } = await api.getProducts({ limit: 200 });
+      const favProducts = products.filter(p => favIds.includes(p.id));
+      setFavoriteProducts(favProducts);
+    } catch (error) {
+      console.error('Failed to load favorites', error);
+    } finally {
+      setLoadingFavorites(false);
+    }
+  };
+
+  const removeFavorite = (productId: number) => {
+    const newFavorites = favorites.filter(id => id !== productId);
+    setFavorites(newFavorites);
+    setFavoriteProducts(favoriteProducts.filter(p => p.id !== productId));
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+    
+    toast({
+      title: 'Удалено из избранного',
+      duration: 2000,
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -173,9 +216,94 @@ const Profile = () => {
               <Tabs defaultValue="orders" className="w-full">
                 <TabsList className="mb-6">
                   <TabsTrigger value="orders">Мои заказы</TabsTrigger>
+                  <TabsTrigger value="favorites">
+                    Избранное
+                    {favorites.length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {favorites.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
                   <TabsTrigger value="info">Личные данные</TabsTrigger>
                   <TabsTrigger value="settings">Настройки</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="favorites">
+                  {loadingFavorites ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">Загрузка...</p>
+                    </div>
+                  ) : favoriteProducts.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-12 text-center">
+                        <Icon
+                          name="Heart"
+                          className="h-16 w-16 text-muted-foreground mx-auto mb-4"
+                        />
+                        <p className="text-muted-foreground mb-4">
+                          У вас пока нет избранных товаров
+                        </p>
+                        <Button onClick={() => navigate('/catalog')}>
+                          Перейти в каталог
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {favoriteProducts.map((product) => (
+                        <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                          <CardHeader className="p-0 relative">
+                            <div className="aspect-square overflow-hidden bg-muted cursor-pointer"
+                              onClick={() => navigate('/catalog')}>
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                              onClick={() => removeFavorite(product.id)}
+                            >
+                              <Icon 
+                                name="Heart" 
+                                className="h-5 w-5 fill-red-500 text-red-500"
+                              />
+                            </Button>
+                          </CardHeader>
+                          <CardContent className="p-4">
+                            <Badge variant="secondary" className="mb-2">
+                              {product.brand}
+                            </Badge>
+                            <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                              {product.name}
+                            </h3>
+                            <p className="text-2xl font-bold text-primary">
+                              {product.price.toLocaleString()} ₽
+                            </p>
+                            {!product.inStock && (
+                              <Badge variant="destructive" className="mt-2">
+                                Нет в наличии
+                              </Badge>
+                            )}
+                          </CardContent>
+                          <CardFooter className="p-4 pt-0">
+                            <Button
+                              className="w-full"
+                              onClick={() => navigate('/catalog')}
+                              disabled={!product.inStock}
+                            >
+                              <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+                              В корзину
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
                 <TabsContent value="orders" className="space-y-4">
                   {orders.map((order) => (

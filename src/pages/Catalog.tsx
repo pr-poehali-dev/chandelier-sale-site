@@ -32,6 +32,7 @@ const Catalog = () => {
   const [showCart, setShowCart] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
@@ -59,6 +60,10 @@ const Catalog = () => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
+    }
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites));
     }
     loadProducts();
   }, []);
@@ -188,6 +193,20 @@ const Catalog = () => {
     const product = products.find(p => p.id === id);
     return sum + (product?.price || 0);
   }, 0);
+
+  const toggleFavorite = (productId: number) => {
+    const newFavorites = favorites.includes(productId)
+      ? favorites.filter(id => id !== productId)
+      : [...favorites, productId];
+    
+    setFavorites(newFavorites);
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+    
+    toast({
+      title: favorites.includes(productId) ? 'Удалено из избранного' : 'Добавлено в избранное',
+      duration: 2000,
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -421,7 +440,7 @@ const Catalog = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
                     <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in cursor-pointer" onClick={() => setSelectedProduct(product)}>
-                      <CardHeader className="p-0">
+                      <CardHeader className="p-0 relative">
                         <div className="aspect-square overflow-hidden bg-muted">
                           <img
                             src={product.image}
@@ -429,6 +448,20 @@ const Catalog = () => {
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           />
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(product.id);
+                          }}
+                        >
+                          <Icon 
+                            name="Heart" 
+                            className={`h-5 w-5 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                          />
+                        </Button>
                       </CardHeader>
                       <CardContent className="p-4">
                         <Badge variant="secondary" className="mb-2">
