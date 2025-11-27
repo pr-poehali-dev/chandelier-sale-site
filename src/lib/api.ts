@@ -14,6 +14,8 @@ export interface Product {
   type: string;
   image: string;
   inStock: boolean;
+  rating: number;
+  reviews: number;
 }
 
 export interface User {
@@ -108,5 +110,35 @@ export const api = {
     }
     
     return response.json();
+  },
+
+  async createProduct(data: Omit<Product, 'id'>): Promise<Product> {
+    const response = await fetch(API_URLS.products, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) throw new Error('Failed to create product');
+    return response.json();
+  },
+
+  async updateProduct(id: number, data: Partial<Omit<Product, 'id'>>): Promise<Product> {
+    const response = await fetch(`${API_URLS.products}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) throw new Error('Failed to update product');
+    return response.json();
+  },
+
+  async deleteProduct(id: number): Promise<void> {
+    const response = await fetch(`${API_URLS.products}/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) throw new Error('Failed to delete product');
   },
 };
