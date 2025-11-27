@@ -25,6 +25,7 @@ const Catalog = () => {
   const [cart, setCart] = useState<number[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
   const [showCart, setShowCart] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -37,6 +38,18 @@ const Catalog = () => {
     { value: 'spotlight', label: 'Споты' },
     { value: 'floor_lamp', label: 'Торшеры' },
     { value: 'pendant', label: 'Подвесные светильники' },
+  ];
+  
+  const categories = [
+    { value: 'sale', label: 'Распродажа', highlight: true },
+    { value: 'chandelier', label: 'Люстры' },
+    { value: 'sconce', label: 'Светильники' },
+    { value: 'sconce-wall', label: 'Бра' },
+    { value: 'lamp', label: 'Настольные лампы' },
+    { value: 'spotlight', label: 'Споты' },
+    { value: 'street', label: 'Уличное освещение' },
+    { value: 'track', label: 'Трековые светильники' },
+    { value: 'appliances', label: 'Электротовары' },
   ];
 
   useEffect(() => {
@@ -76,8 +89,10 @@ const Catalog = () => {
       (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
+    const categoryMatch = selectedCategory === '' || selectedCategory === 'sale' || product.type === selectedCategory || 
+      (selectedCategory === 'sconce-wall' && product.type === 'sconce');
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    return searchMatch && brandMatch && typeMatch && priceMatch;
+    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch;
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,7 +282,7 @@ const Catalog = () => {
       />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold">Каталог освещения</h1>
           {user && (
             <div className="flex items-center gap-3">
@@ -277,6 +292,29 @@ const Catalog = () => {
               </Button>
             </div>
           )}
+        </div>
+
+        <div className="mb-8 border-b">
+          <div className="flex gap-1 overflow-x-auto pb-px scrollbar-hide">
+            {categories.map((category) => (
+              <button
+                key={category.value}
+                onClick={() => setSelectedCategory(selectedCategory === category.value ? '' : category.value)}
+                className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${
+                  selectedCategory === category.value
+                    ? 'text-foreground'
+                    : category.highlight
+                    ? 'text-secondary hover:text-secondary/80'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {category.label}
+                {selectedCategory === category.value && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mb-6 space-y-4">
@@ -357,7 +395,7 @@ const Catalog = () => {
                   <span className="text-sm text-muted-foreground">
                     Найдено товаров: {filteredProducts.length}
                   </span>
-                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || priceRange[0] > 0 || priceRange[1] < 150000) && (
+                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -365,6 +403,7 @@ const Catalog = () => {
                         setSearchQuery('');
                         setSelectedBrands([]);
                         setSelectedTypes([]);
+                        setSelectedCategory('');
                         setPriceRange([0, 150000]);
                         loadProducts();
                       }}
