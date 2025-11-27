@@ -632,9 +632,10 @@ const Catalog = () => {
                   </div>
 
                   <Tabs defaultValue="description" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="description">Описание</TabsTrigger>
                       <TabsTrigger value="specs">Характеристики</TabsTrigger>
+                      <TabsTrigger value="reviews">Отзывы</TabsTrigger>
                     </TabsList>
                     <TabsContent value="description" className="space-y-4 mt-4">
                       <div>
@@ -704,6 +705,141 @@ const Catalog = () => {
                         <div className="flex justify-between py-2 border-b">
                           <span className="text-muted-foreground">Гарантия</span>
                           <span className="font-medium">2 года</span>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="reviews" className="mt-4">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="Star"
+                                    className={`h-5 w-5 ${star <= 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="font-semibold text-lg">4.0</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">На основе 12 отзывов</p>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                            Оставить отзыв
+                          </Button>
+                        </div>
+
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                          <div className="border rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-primary">АМ</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Анна М.</p>
+                                  <p className="text-xs text-muted-foreground">15 ноября 2024</p>
+                                </div>
+                              </div>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="Star"
+                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              Отличный светильник! Качество сборки на высоте, свет мягкий и приятный. 
+                              Идеально вписался в интерьер гостиной. Рекомендую!
+                            </p>
+                          </div>
+
+                          <div className="border rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-primary">ДП</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Дмитрий П.</p>
+                                  <p className="text-xs text-muted-foreground">8 ноября 2024</p>
+                                </div>
+                              </div>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="Star"
+                                    className={`h-4 w-4 ${star <= 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              Хороший вариант за свои деньги. Единственный минус - немного долгая доставка, 
+                              но это не критично. Светит отлично, дизайн современный.
+                            </p>
+                          </div>
+
+                          <div className="border rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-primary">ЕС</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Елена С.</p>
+                                  <p className="text-xs text-muted-foreground">2 ноября 2024</p>
+                                </div>
+                              </div>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="Star"
+                                    className={`h-4 w-4 ${star <= 3 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              В целом неплохо, но ожидала большего по яркости. 
+                              Для небольшой комнаты подходит, но для просторного помещения может быть маловато.
+                            </p>
+                          </div>
+
+                          <div className="border rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-primary">ИВ</span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">Игорь В.</p>
+                                  <p className="text-xs text-muted-foreground">28 октября 2024</p>
+                                </div>
+                              </div>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="Star"
+                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              Превосходное качество! Установил в офисе - все довольны. 
+                              Энергопотребление низкое, свет равномерный. Цена полностью оправдана.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </TabsContent>
