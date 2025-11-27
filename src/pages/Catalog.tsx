@@ -35,24 +35,22 @@ const Catalog = () => {
 
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
+    { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
+    { value: 'lamp', label: 'Настольные лампы', icon: 'Lamp', color: 'text-blue-500' },
+    { value: 'sconce', label: 'Бра', icon: 'WallLamp', color: 'text-purple-500' },
+    { value: 'spotlight', label: 'Споты', icon: 'Flashlight', color: 'text-orange-500' },
+    { value: 'floor_lamp', label: 'Торшеры', icon: 'FlashlightOff', color: 'text-green-500' },
+    { value: 'pendant', label: 'Подвесные светильники', icon: 'Droplet', color: 'text-cyan-500' },
+  ];
+  
+  const categories = [
+    { value: '', label: 'Все товары' },
     { value: 'chandelier', label: 'Люстры' },
     { value: 'lamp', label: 'Настольные лампы' },
     { value: 'sconce', label: 'Бра' },
     { value: 'spotlight', label: 'Споты' },
     { value: 'floor_lamp', label: 'Торшеры' },
-    { value: 'pendant', label: 'Подвесные светильники' },
-  ];
-  
-  const categories = [
-    { value: 'sale', label: 'Распродажа', highlight: true },
-    { value: 'chandelier', label: 'Люстры' },
-    { value: 'sconce', label: 'Светильники' },
-    { value: 'sconce-wall', label: 'Бра' },
-    { value: 'lamp', label: 'Настольные лампы' },
-    { value: 'spotlight', label: 'Споты' },
-    { value: 'street', label: 'Уличное освещение' },
-    { value: 'track', label: 'Трековые светильники' },
-    { value: 'appliances', label: 'Электротовары' },
+    { value: 'pendant', label: 'Подвесные' },
   ];
 
   useEffect(() => {
@@ -432,15 +430,47 @@ const Catalog = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                  {filteredProducts.map((product) => {
+                    const productType = types.find(t => t.value === product.type);
+                    const isLuxury = product.price > 50000;
+                    const isBudget = product.price < 10000;
+                    
+                    return (
+                    <Card 
+                      key={product.id} 
+                      className={`overflow-hidden hover:shadow-lg transition-all animate-fade-in cursor-pointer group ${
+                        isLuxury ? 'border-2 border-yellow-500/20 hover:border-yellow-500/40' :
+                        isBudget ? 'border-green-500/20 hover:border-green-500/40' :
+                        'hover:border-primary/20'
+                      }`}
+                      onClick={() => setSelectedProduct(product)}
+                    >
                       <CardHeader className="p-0 relative">
-                        <div className="aspect-square overflow-hidden bg-muted">
+                        <div className="aspect-square overflow-hidden bg-muted relative">
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
+                          {isLuxury && (
+                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+                              <Icon name="Crown" className="h-3 w-3" />
+                              Premium
+                            </div>
+                          )}
+                          {isBudget && (
+                            <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+                              <Icon name="Tag" className="h-3 w-3" />
+                              Выгодно
+                            </div>
+                          )}
+                          {!product.inStock && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <Badge variant="destructive" className="text-lg px-4 py-2">
+                                Нет в наличии
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                         <Button
                           variant="ghost"
@@ -457,22 +487,42 @@ const Catalog = () => {
                           />
                         </Button>
                       </CardHeader>
-                      <CardContent className="p-4">
-                        <Badge variant="secondary" className="mb-2">
-                          {product.brand}
-                        </Badge>
-                        <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                        {product.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
-                        )}
-                        <p className="text-2xl font-bold text-primary">
-                          {product.price.toLocaleString()} ₽
-                        </p>
-                        {!product.inStock && (
-                          <Badge variant="destructive" className="mt-2">
-                            Нет в наличии
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            {productType && (
+                              <Icon name={productType.icon as any} className={`h-3 w-3 ${productType.color}`} />
+                            )}
+                            {product.brand}
                           </Badge>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{product.rating}</span>
+                            <span className="text-muted-foreground">({product.reviews})</span>
+                          </div>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight min-h-[3.5rem]">{product.name}</h3>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
                         )}
+                        <div className="flex items-center justify-between pt-2">
+                          <div>
+                            <p className="text-2xl font-bold text-primary">
+                              {product.price.toLocaleString()} ₽
+                            </p>
+                            {isLuxury && (
+                              <p className="text-xs text-muted-foreground">
+                                Рассрочка от {Math.round(product.price / 12).toLocaleString()} ₽/мес
+                              </p>
+                            )}
+                          </div>
+                          {productType && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Icon name={productType.icon as any} className={`h-3 w-3 ${productType.color}`} />
+                              {productType.label}
+                            </Badge>
+                          )}
+                        </div>
                       </CardContent>
                       <CardFooter className="p-4 pt-0 flex gap-2">
                         <Button
@@ -499,7 +549,7 @@ const Catalog = () => {
                         </Button>
                       </CardFooter>
                     </Card>
-                  ))}
+                  )})}
                 </div>
               </>
             )}
