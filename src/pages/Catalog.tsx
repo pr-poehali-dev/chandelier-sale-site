@@ -30,6 +30,19 @@ const Catalog = () => {
   const [isDimmable, setIsDimmable] = useState(false);
   const [hasColorChange, setHasColorChange] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [isSale, setIsSale] = useState(false);
+  const [isNew, setIsNew] = useState(false);
+  const [isPickup, setIsPickup] = useState(false);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [styleSearch, setStyleSearch] = useState('');
+  const [sizeRange, setSizeRange] = useState({
+    height: [0, 3000],
+    length: [0, 3000],
+    depth: [0, 3000],
+    width: [0, 3000],
+    diameter: [0, 3000],
+    chainLength: [0, 3000],
+  });
   const [favorites, setFavorites] = useState<number[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -110,6 +123,15 @@ const Catalog = () => {
     { value: 'electric_video_doorbell', label: 'Видеозвонки', icon: 'Video', color: 'text-blue-700' },
     
     { value: 'floor_lamp', label: 'Торшеры', icon: 'FlashlightOff', color: 'text-green-500' },
+  ];
+  
+  const styles = [
+    'Американский', 'Арт-деко', 'Винтажный', 'Восточный', 'Джапанди', 
+    'Дизайнерские', 'Замковые', 'Индустриальный', 'Кантри', 'Классика', 
+    'Кристалл', 'Лофт', 'Мегаполис', 'Минимализм', 'Модерн', 'Морской', 
+    'Неоклассика', 'Прованс', 'Ретро', 'Скандинавский', 'Современный', 
+    'Техно', 'Тиффани', 'Флора', 'Флористика', 'Хай-тек', 'Хрусталь', 
+    'ЭКО', 'Элеганс', 'Этнический', 'Японский'
   ];
   
   const categories = [
@@ -293,7 +315,12 @@ const Catalog = () => {
     window.location.reload();
   };
 
-  const FilterSidebar = () => (
+  const FilterSidebar = () => {
+    const filteredStyles = styles.filter(style => 
+      style.toLowerCase().includes(styleSearch.toLowerCase())
+    );
+
+    return (
     <div className="space-y-6">
       <div>
         <h3 className="font-semibold mb-4">Цена</h3>
@@ -311,65 +338,104 @@ const Catalog = () => {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-4">Бренд</h3>
-        <div className="space-y-2">
-          {brands.map((brand) => (
-            <div key={brand} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand}`}
-                checked={selectedBrands.includes(brand)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedBrands([...selectedBrands, brand]);
-                  } else {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
-                  }
-                }}
-              />
-              <Label htmlFor={`brand-${brand}`} className="cursor-pointer">
-                {brand}
+        <h3 className="font-semibold mb-4">Специальные предложения</h3>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is-sale"
+              checked={isSale}
+              onCheckedChange={(checked) => setIsSale(!!checked)}
+            />
+            <Label htmlFor="is-sale" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Percent" className="h-4 w-4 text-red-500" />
+              Распродажа
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is-new"
+              checked={isNew}
+              onCheckedChange={(checked) => setIsNew(!!checked)}
+            />
+            <Label htmlFor="is-new" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Sparkles" className="h-4 w-4 text-yellow-500" />
+              Новинка
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is-pickup"
+              checked={isPickup}
+              onCheckedChange={(checked) => setIsPickup(!!checked)}
+            />
+            <Label htmlFor="is-pickup" className="cursor-pointer flex items-center gap-2">
+              <Icon name="Store" className="h-4 w-4 text-blue-500" />
+              Забрать из магазина
+            </Label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-4">Размеры (мм)</h3>
+        <div className="space-y-3 text-sm">
+          {[
+            { key: 'height', label: 'Высота', icon: 'ArrowUp' },
+            { key: 'length', label: 'Длина', icon: 'ArrowRight' },
+            { key: 'width', label: 'Ширина', icon: 'ArrowLeftRight' },
+            { key: 'depth', label: 'Глубина', icon: 'BoxSelect' },
+            { key: 'diameter', label: 'Диаметр', icon: 'Circle' },
+            { key: 'chainLength', label: 'Длина цепи', icon: 'Link' },
+          ].map(({ key, label, icon }) => (
+            <div key={key}>
+              <Label className="text-xs flex items-center gap-1 mb-1">
+                <Icon name={icon as any} className="h-3 w-3" />
+                {label}
               </Label>
+              <Slider
+                value={sizeRange[key as keyof typeof sizeRange]}
+                onValueChange={(value) => setSizeRange({ ...sizeRange, [key]: value })}
+                max={3000}
+                step={50}
+                className="mb-1"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{sizeRange[key as keyof typeof sizeRange][0]}</span>
+                <span>{sizeRange[key as keyof typeof sizeRange][1]}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <h3 className="font-semibold mb-4">Дополнительно</h3>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="has-remote"
-              checked={hasRemote}
-              onCheckedChange={(checked) => setHasRemote(!!checked)}
-            />
-            <Label htmlFor="has-remote" className="cursor-pointer flex items-center gap-2">
-              <Icon name="Radio" className="h-4 w-4 text-primary" />
-              С пультом управления
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is-dimmable"
-              checked={isDimmable}
-              onCheckedChange={(checked) => setIsDimmable(!!checked)}
-            />
-            <Label htmlFor="is-dimmable" className="cursor-pointer flex items-center gap-2">
-              <Icon name="Sun" className="h-4 w-4 text-orange-500" />
-              Регулировка яркости
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="has-color-change"
-              checked={hasColorChange}
-              onCheckedChange={(checked) => setHasColorChange(!!checked)}
-            />
-            <Label htmlFor="has-color-change" className="cursor-pointer flex items-center gap-2">
-              <Icon name="Palette" className="h-4 w-4 text-purple-500" />
-              Смена цвета
-            </Label>
-          </div>
+        <h3 className="font-semibold mb-3">Стиль</h3>
+        <Input
+          type="text"
+          placeholder="Поиск стиля..."
+          value={styleSearch}
+          onChange={(e) => setStyleSearch(e.target.value)}
+          className="mb-3"
+        />
+        <div className="space-y-2 max-h-60 overflow-y-auto">
+          {filteredStyles.map((style) => (
+            <div key={style} className="flex items-center space-x-2">
+              <Checkbox
+                id={`style-${style}`}
+                checked={selectedStyles.includes(style)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedStyles([...selectedStyles, style]);
+                  } else {
+                    setSelectedStyles(selectedStyles.filter((s) => s !== style));
+                  }
+                }}
+              />
+              <Label htmlFor={`style-${style}`} className="cursor-pointer text-sm">
+                {style}
+              </Label>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -383,12 +449,25 @@ const Catalog = () => {
           setHasRemote(false);
           setIsDimmable(false);
           setHasColorChange(false);
+          setIsSale(false);
+          setIsNew(false);
+          setIsPickup(false);
+          setSelectedStyles([]);
+          setSizeRange({
+            height: [0, 3000],
+            length: [0, 3000],
+            depth: [0, 3000],
+            width: [0, 3000],
+            diameter: [0, 3000],
+            chainLength: [0, 3000],
+          });
         }}
       >
         Сбросить фильтры
       </Button>
     </div>
-  );
+  )};
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -411,11 +490,12 @@ const Catalog = () => {
           )}
         </div>
 
-        <div className="mb-8 border-b">
+        <div className="mb-8 border-b relative">
           <div className="flex gap-1 overflow-x-auto pb-px scrollbar-hide">
             {categories.map((category) => (
               <button
                 key={category.value}
+                onMouseEnter={() => category.value && setSelectedCategory(category.value)}
                 onClick={() => setSelectedCategory(selectedCategory === category.value ? '' : category.value)}
                 className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${
                   selectedCategory === category.value
@@ -435,22 +515,12 @@ const Catalog = () => {
         </div>
 
         {selectedCategory && selectedCategory !== '' && (
-          <>
             <div 
-              className="fixed inset-0 bg-black/20 z-30 animate-in fade-in"
-              onClick={() => setSelectedCategory('')}
-            />
-            <div className="fixed left-4 top-32 z-40 w-64 bg-background border rounded-lg shadow-xl p-4 animate-in slide-in-from-left-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Подразделы</h3>
-                <button
-                  onClick={() => setSelectedCategory('')}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Icon name="X" className="h-4 w-4" />
-                </button>
-              </div>
-            <div className="flex flex-col gap-1 max-h-[calc(100vh-200px)] overflow-y-auto">
+              className="fixed left-4 top-32 z-40 w-56 bg-background border rounded-lg shadow-xl p-3 animate-in slide-in-from-left-5"
+              onMouseLeave={() => setSelectedCategory('')}
+            >
+              <h3 className="font-semibold text-xs mb-2 text-muted-foreground uppercase">Подразделы</h3>
+            <div className="flex flex-col gap-0.5 max-h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin">
               {types
                 .filter((type) => {
                   if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
@@ -476,7 +546,7 @@ const Catalog = () => {
                           setSelectedTypes([...selectedTypes, type.value]);
                         }
                       }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs font-medium transition-all ${
                         isSelected
                           ? 'bg-primary text-primary-foreground'
                           : 'hover:bg-accent'
@@ -489,7 +559,6 @@ const Catalog = () => {
                 })}
             </div>
           </div>
-          </>
         )}
 
         <div className="mb-6 space-y-4">
@@ -582,7 +651,7 @@ const Catalog = () => {
                   <span className="text-sm text-muted-foreground">
                     Найдено товаров: {filteredProducts.length}
                   </span>
-                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange) && (
+                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange || isSale || isNew || isPickup || selectedStyles.length > 0) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -595,6 +664,18 @@ const Catalog = () => {
                         setHasRemote(false);
                         setIsDimmable(false);
                         setHasColorChange(false);
+                        setIsSale(false);
+                        setIsNew(false);
+                        setIsPickup(false);
+                        setSelectedStyles([]);
+                        setSizeRange({
+                          height: [0, 3000],
+                          length: [0, 3000],
+                          depth: [0, 3000],
+                          width: [0, 3000],
+                          diameter: [0, 3000],
+                          chainLength: [0, 3000],
+                        });
                         loadProducts();
                       }}
                     >
