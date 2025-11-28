@@ -19,6 +19,34 @@ export interface Product {
   hasRemote?: boolean;
   isDimmable?: boolean;
   hasColorChange?: boolean;
+  
+  // Основные характеристики
+  article?: string;
+  brandCountry?: string;
+  manufacturerCountry?: string;
+  collection?: string;
+  style?: string;
+  
+  // Лампы
+  lampType?: string;
+  socketType?: string;
+  bulbType?: string;
+  lampCount?: number;
+  lampPower?: number;
+  totalPower?: number;
+  lightingArea?: number;
+  voltage?: number;
+  
+  // Цвет и материал
+  color?: string;
+  
+  // Размеры
+  height?: number;
+  diameter?: number;
+  length?: number;
+  width?: number;
+  depth?: number;
+  chainLength?: number;
 }
 
 export interface User {

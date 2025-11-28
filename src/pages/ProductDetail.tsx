@@ -263,62 +263,192 @@ const ProductDetail = () => {
               </Button>
             </div>
 
-            <Tabs defaultValue="description" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="description" className="flex-1">
-                  Описание
+            <Tabs defaultValue="specs" className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="specs">
+                  Технические характеристики
                 </TabsTrigger>
-                <TabsTrigger value="specs" className="flex-1">
-                  Характеристики
+                <TabsTrigger value="payment">
+                  Оплата
                 </TabsTrigger>
-                <TabsTrigger value="delivery" className="flex-1">
+                <TabsTrigger value="delivery">
                   Доставка
+                </TabsTrigger>
+                <TabsTrigger value="return">
+                  Обмен и возврат
+                </TabsTrigger>
+                <TabsTrigger value="warranty">
+                  Гарантия
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="description" className="space-y-4 mt-4">
-                <p className="text-muted-foreground leading-relaxed">
-                  {product.description || 'Описание товара отсутствует.'}
-                </p>
+              <TabsContent value="specs" className="space-y-6 mt-4">
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">Основные</h3>
+                  <div className="grid gap-2">
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-muted-foreground">Артикул</span>
+                      <span className="font-medium">{product.article || `#${product.id}`}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-muted-foreground">Бренд</span>
+                      <span className="font-medium">{product.brand}</span>
+                    </div>
+                    {product.brandCountry && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Страна бренда</span>
+                        <span className="font-medium">{product.brandCountry}</span>
+                      </div>
+                    )}
+                    {product.manufacturerCountry && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Страна производства</span>
+                        <span className="font-medium">{product.manufacturerCountry}</span>
+                      </div>
+                    )}
+                    {product.collection && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Коллекция</span>
+                        <span className="font-medium">{product.collection}</span>
+                      </div>
+                    )}
+                    {product.style && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Стиль</span>
+                        <span className="font-medium">{product.style}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">Лампы</h3>
+                  <div className="grid gap-2">
+                    {product.socketType && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Тип цоколя</span>
+                        <span className="font-medium">{product.socketType}</span>
+                      </div>
+                    )}
+                    {product.bulbType && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Тип лампочки (основной)</span>
+                        <span className="font-medium">{product.bulbType}</span>
+                      </div>
+                    )}
+                    {product.lampCount && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Количество ламп</span>
+                        <span className="font-medium">{product.lampCount}</span>
+                      </div>
+                    )}
+                    {product.lampPower && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Мощность лампы, W</span>
+                        <span className="font-medium">{product.lampPower}</span>
+                      </div>
+                    )}
+                    {product.totalPower && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Общая мощность, W</span>
+                        <span className="font-medium">{product.totalPower}</span>
+                      </div>
+                    )}
+                    {product.lightingArea && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Площадь освещения, м²</span>
+                        <span className="font-medium">{product.lightingArea}</span>
+                      </div>
+                    )}
+                    {product.voltage && (
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Напряжение, V</span>
+                        <span className="font-medium">{product.voltage}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {product.color && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Цвет и материал</h3>
+                    <div className="grid gap-2">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="text-muted-foreground">Цвет</span>
+                        <span className="font-medium">{product.color}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(product.height || product.diameter || product.length || product.width) && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Размеры</h3>
+                    <div className="grid gap-2">
+                      {product.height && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Высота, мм</span>
+                          <span className="font-medium">{product.height}</span>
+                        </div>
+                      )}
+                      {product.diameter && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Диаметр, мм</span>
+                          <span className="font-medium">{product.diameter}</span>
+                        </div>
+                      )}
+                      {product.length && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Длина, мм</span>
+                          <span className="font-medium">{product.length}</span>
+                        </div>
+                      )}
+                      {product.width && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Ширина, мм</span>
+                          <span className="font-medium">{product.width}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="specs" className="space-y-3 mt-4">
-                <div className="grid gap-3">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Бренд</span>
-                    <span className="font-medium">{product.brand}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Тип</span>
-                    <span className="font-medium">{product.type}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Артикул</span>
-                    <span className="font-medium">#{product.id}</span>
-                  </div>
-                  {product.hasRemote && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Пульт управления</span>
-                      <Icon name="Check" className="h-5 w-5 text-green-500" />
+              <TabsContent value="payment" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="CreditCard" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Оплата картой</p>
+                      <p className="text-sm text-muted-foreground">Принимаем Visa, MasterCard, МИР</p>
                     </div>
-                  )}
-                  {product.isDimmable && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Диммирование</span>
-                      <Icon name="Check" className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="Wallet" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Наличными</p>
+                      <p className="text-sm text-muted-foreground">При получении товара курьеру или в магазине</p>
                     </div>
-                  )}
-                  {product.hasColorChange && (
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-muted-foreground">Смена цвета</span>
-                      <Icon name="Check" className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="Building" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Рассрочка 0%</p>
+                      <p className="text-sm text-muted-foreground">До 12 месяцев без переплат</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="FileText" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Безналичный расчет</p>
+                      <p className="text-sm text-muted-foreground">Для юридических лиц с НДС</p>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="delivery" className="space-y-4 mt-4">
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <Icon name="Truck" className="h-5 w-5 text-primary mt-0.5" />
                     <div>
@@ -338,6 +468,79 @@ const ProductDetail = () => {
                     <div>
                       <p className="font-medium">Доставка по России</p>
                       <p className="text-sm text-muted-foreground">3-7 рабочих дней, рассчитывается при оформлении</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="Home" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Подъем на этаж</p>
+                      <p className="text-sm text-muted-foreground">Рассчитывается индивидуально</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="return" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="RotateCcw" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Возврат товара</p>
+                      <p className="text-sm text-muted-foreground">В течение 14 дней с момента покупки при сохранении товарного вида</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="RefreshCw" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Обмен товара</p>
+                      <p className="text-sm text-muted-foreground">Обмен на аналогичный или другой товар в течение 14 дней</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Условия возврата</p>
+                      <p className="text-sm text-muted-foreground">Товар не был в использовании, сохранена упаковка и документы</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="DollarSign" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Возврат денег</p>
+                      <p className="text-sm text-muted-foreground">В течение 10 рабочих дней на карту или наличными</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="warranty" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="Shield" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Гарантия производителя</p>
+                      <p className="text-sm text-muted-foreground">2 года на электронные компоненты</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="Store" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Гарантия магазина</p>
+                      <p className="text-sm text-muted-foreground">12 месяцев дополнительной гарантии</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="Wrench" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Сервисное обслуживание</p>
+                      <p className="text-sm text-muted-foreground">Бесплатный ремонт в течение гарантийного срока</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Icon name="FileCheck" className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-medium">Документы</p>
+                      <p className="text-sm text-muted-foreground">Гарантийный талон и чек выдаются при покупке</p>
                     </div>
                   </div>
                 </div>

@@ -43,6 +43,26 @@ const Admin = () => {
     hasRemote: false,
     isDimmable: false,
     hasColorChange: false,
+    article: '',
+    brandCountry: '',
+    manufacturerCountry: '',
+    collection: '',
+    style: '',
+    lampType: '',
+    socketType: '',
+    bulbType: '',
+    lampCount: 0,
+    lampPower: 0,
+    totalPower: 0,
+    lightingArea: 0,
+    voltage: 220,
+    color: '',
+    height: 0,
+    diameter: 0,
+    length: 0,
+    width: 0,
+    depth: 0,
+    chainLength: 0,
   });
 
   useEffect(() => {
@@ -92,6 +112,26 @@ const Admin = () => {
       hasRemote: product.hasRemote || false,
       isDimmable: product.isDimmable || false,
       hasColorChange: product.hasColorChange || false,
+      article: product.article || '',
+      brandCountry: product.brandCountry || '',
+      manufacturerCountry: product.manufacturerCountry || '',
+      collection: product.collection || '',
+      style: product.style || '',
+      lampType: product.lampType || '',
+      socketType: product.socketType || '',
+      bulbType: product.bulbType || '',
+      lampCount: product.lampCount || 0,
+      lampPower: product.lampPower || 0,
+      totalPower: product.totalPower || 0,
+      lightingArea: product.lightingArea || 0,
+      voltage: product.voltage || 220,
+      color: product.color || '',
+      height: product.height || 0,
+      diameter: product.diameter || 0,
+      length: product.length || 0,
+      width: product.width || 0,
+      depth: product.depth || 0,
+      chainLength: product.chainLength || 0,
     });
     setIsNewProduct(false);
     setIsDialogOpen(true);
@@ -112,6 +152,26 @@ const Admin = () => {
       hasRemote: false,
       isDimmable: false,
       hasColorChange: false,
+      article: '',
+      brandCountry: '',
+      manufacturerCountry: '',
+      collection: '',
+      style: '',
+      lampType: '',
+      socketType: '',
+      bulbType: '',
+      lampCount: 0,
+      lampPower: 0,
+      totalPower: 0,
+      lightingArea: 0,
+      voltage: 220,
+      color: '',
+      height: 0,
+      diameter: 0,
+      length: 0,
+      width: 0,
+      depth: 0,
+      chainLength: 0,
     });
     setIsNewProduct(true);
     setIsDialogOpen(true);
@@ -1000,6 +1060,218 @@ const Admin = () => {
                   <Icon name="Palette" className="h-4 w-4 text-purple-500" />
                   <span>Смена цвета освещения</span>
                 </Label>
+              </div>
+            </div>
+
+            <div className="border-t pt-6 mt-6">
+              <h3 className="font-semibold text-lg mb-4">Технические характеристики</h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Основные</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="article">Артикул</Label>
+                      <Input
+                        id="article"
+                        value={formData.article}
+                        onChange={(e) => setFormData({ ...formData, article: e.target.value })}
+                        placeholder="85858"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="brandCountry">Страна бренда</Label>
+                      <Input
+                        id="brandCountry"
+                        value={formData.brandCountry}
+                        onChange={(e) => setFormData({ ...formData, brandCountry: e.target.value })}
+                        placeholder="Австрия"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="manufacturerCountry">Страна производства</Label>
+                      <Input
+                        id="manufacturerCountry"
+                        value={formData.manufacturerCountry}
+                        onChange={(e) => setFormData({ ...formData, manufacturerCountry: e.target.value })}
+                        placeholder="Китай"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="collection">Коллекция</Label>
+                      <Input
+                        id="collection"
+                        value={formData.collection}
+                        onChange={(e) => setFormData({ ...formData, collection: e.target.value })}
+                        placeholder="Marbella"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label htmlFor="style">Стиль</Label>
+                      <Input
+                        id="style"
+                        value={formData.style}
+                        onChange={(e) => setFormData({ ...formData, style: e.target.value })}
+                        placeholder="Классика"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Лампы</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="socketType">Тип цоколя</Label>
+                      <Input
+                        id="socketType"
+                        value={formData.socketType}
+                        onChange={(e) => setFormData({ ...formData, socketType: e.target.value })}
+                        placeholder="E14"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bulbType">Тип лампочки (основной)</Label>
+                      <Input
+                        id="bulbType"
+                        value={formData.bulbType}
+                        onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                        placeholder="Накаливания"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lampCount">Количество ламп</Label>
+                      <Input
+                        id="lampCount"
+                        type="number"
+                        value={formData.lampCount}
+                        onChange={(e) => setFormData({ ...formData, lampCount: Number(e.target.value) })}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lampPower">Мощность лампы, W</Label>
+                      <Input
+                        id="lampPower"
+                        type="number"
+                        value={formData.lampPower}
+                        onChange={(e) => setFormData({ ...formData, lampPower: Number(e.target.value) })}
+                        placeholder="60"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="totalPower">Общая мощность, W</Label>
+                      <Input
+                        id="totalPower"
+                        type="number"
+                        value={formData.totalPower}
+                        onChange={(e) => setFormData({ ...formData, totalPower: Number(e.target.value) })}
+                        placeholder="540"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lightingArea">Площадь освещения, м²</Label>
+                      <Input
+                        id="lightingArea"
+                        type="number"
+                        value={formData.lightingArea}
+                        onChange={(e) => setFormData({ ...formData, lightingArea: Number(e.target.value) })}
+                        placeholder="30"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="voltage">Напряжение, V</Label>
+                      <Input
+                        id="voltage"
+                        type="number"
+                        value={formData.voltage}
+                        onChange={(e) => setFormData({ ...formData, voltage: Number(e.target.value) })}
+                        placeholder="220"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Цвет и материал</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="color">Цвет</Label>
+                      <Input
+                        id="color"
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        placeholder="Бронза"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Размеры (мм)</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="height">Высота</Label>
+                      <Input
+                        id="height"
+                        type="number"
+                        value={formData.height}
+                        onChange={(e) => setFormData({ ...formData, height: Number(e.target.value) })}
+                        placeholder="1100"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="diameter">Диаметр</Label>
+                      <Input
+                        id="diameter"
+                        type="number"
+                        value={formData.diameter}
+                        onChange={(e) => setFormData({ ...formData, diameter: Number(e.target.value) })}
+                        placeholder="740"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="length">Длина</Label>
+                      <Input
+                        id="length"
+                        type="number"
+                        value={formData.length}
+                        onChange={(e) => setFormData({ ...formData, length: Number(e.target.value) })}
+                        placeholder="800"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="width">Ширина</Label>
+                      <Input
+                        id="width"
+                        type="number"
+                        value={formData.width}
+                        onChange={(e) => setFormData({ ...formData, width: Number(e.target.value) })}
+                        placeholder="600"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="depth">Глубина</Label>
+                      <Input
+                        id="depth"
+                        type="number"
+                        value={formData.depth}
+                        onChange={(e) => setFormData({ ...formData, depth: Number(e.target.value) })}
+                        placeholder="400"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="chainLength">Длина цепи</Label>
+                      <Input
+                        id="chainLength"
+                        type="number"
+                        value={formData.chainLength}
+                        onChange={(e) => setFormData({ ...formData, chainLength: Number(e.target.value) })}
+                        placeholder="1000"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
