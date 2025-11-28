@@ -173,10 +173,16 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     }
 
 def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
+    # Try to get ID from path params first, then from query params
     path = event.get('params', {}).get('proxy', '')
     product_id = path.split('/')[-1] if '/' in path else None
     
-    if not product_id or not product_id.isdigit():
+    # If not in path, try query parameters
+    if not product_id or not str(product_id).isdigit():
+        params = event.get('queryStringParameters') or {}
+        product_id = params.get('id')
+    
+    if not product_id or not str(product_id).isdigit():
         cur.close()
         conn.close()
         return {
@@ -281,10 +287,16 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     }
 
 def handle_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
+    # Try to get ID from path params first, then from query params
     path = event.get('params', {}).get('proxy', '')
     product_id = path.split('/')[-1] if '/' in path else None
     
-    if not product_id or not product_id.isdigit():
+    # If not in path, try query parameters
+    if not product_id or not str(product_id).isdigit():
+        params = event.get('queryStringParameters') or {}
+        product_id = params.get('id')
+    
+    if not product_id or not str(product_id).isdigit():
         cur.close()
         conn.close()
         return {

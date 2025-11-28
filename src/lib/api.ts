@@ -155,7 +155,7 @@ export const api = {
   },
 
   async updateProduct(id: number, data: Partial<Omit<Product, 'id'>>): Promise<Product> {
-    const response = await fetch(`${API_URLS.products}/${id}`, {
+    const response = await fetch(`${API_URLS.products}?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -166,7 +166,7 @@ export const api = {
   },
 
   async deleteProduct(id: number): Promise<void> {
-    const response = await fetch(`${API_URLS.products}/${id}`, {
+    const response = await fetch(`${API_URLS.products}?id=${id}`, {
       method: 'DELETE',
     });
     

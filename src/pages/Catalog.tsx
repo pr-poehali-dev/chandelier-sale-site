@@ -26,6 +26,7 @@ const Catalog = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [hoverCategory, setHoverCategory] = useState<string>('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
   const [hasRemote, setHasRemote] = useState(false);
   const [isDimmable, setIsDimmable] = useState(false);
@@ -537,8 +538,12 @@ const Catalog = () => {
               <button
                 key={category.value}
                 ref={(el) => categoryRefs.current[category.value] = el}
-                onMouseEnter={() => category.value && setSelectedCategory(category.value)}
-                onClick={() => setSelectedCategory(selectedCategory === category.value ? '' : category.value)}
+                onMouseEnter={() => category.value && setHoverCategory(category.value)}
+                onMouseLeave={() => setHoverCategory('')}
+                onClick={() => {
+                  setSelectedCategory(selectedCategory === category.value ? '' : category.value);
+                  setHoverCategory('');
+                }}
                 className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${
                   selectedCategory === category.value
                     ? 'text-foreground'
@@ -555,27 +560,28 @@ const Catalog = () => {
             ))}
           </div>
           
-          {selectedCategory && selectedCategory !== '' && (
+          {hoverCategory && hoverCategory !== '' && (
             <div 
               className="absolute top-full left-0 mt-2 z-40 bg-background border rounded-lg shadow-xl p-4 animate-in fade-in slide-in-from-top-2 min-w-[320px] max-w-[600px]"
               style={{
-                left: categoryRefs.current[selectedCategory]?.offsetLeft || 0
+                left: categoryRefs.current[hoverCategory]?.offsetLeft || 0
               }}
-              onMouseLeave={() => setSelectedCategory('')}
+              onMouseEnter={() => setHoverCategory(hoverCategory)}
+              onMouseLeave={() => setHoverCategory('')}
             >
               <h3 className="font-semibold text-sm mb-3 text-foreground">Виды</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-[400px] overflow-y-auto scrollbar-thin pr-2">
               {types
                 .filter((type) => {
-                  if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
-                  if (selectedCategory === 'lights') return type.value.startsWith('light_');
-                  if (selectedCategory === 'lamps') return type.value.startsWith('lamp_');
-                  if (selectedCategory === 'sconce') return type.value === 'sconce';
-                  if (selectedCategory === 'spots') return type.value.startsWith('spot_');
-                  if (selectedCategory === 'outdoor') return type.value.startsWith('outdoor_');
-                  if (selectedCategory === 'track') return type.value.startsWith('track_');
-                  if (selectedCategory === 'electric') return type.value.startsWith('electric_');
-                  if (selectedCategory === 'floor_lamp') return type.value === 'floor_lamp';
+                  if (hoverCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
+                  if (hoverCategory === 'lights') return type.value.startsWith('light_');
+                  if (hoverCategory === 'lamps') return type.value.startsWith('lamp_');
+                  if (hoverCategory === 'sconce') return type.value === 'sconce';
+                  if (hoverCategory === 'spots') return type.value.startsWith('spot_');
+                  if (hoverCategory === 'outdoor') return type.value.startsWith('outdoor_');
+                  if (hoverCategory === 'track') return type.value.startsWith('track_');
+                  if (hoverCategory === 'electric') return type.value.startsWith('electric_');
+                  if (hoverCategory === 'floor_lamp') return type.value === 'floor_lamp';
                   return false;
                 })
                 .map((type) => {
@@ -589,6 +595,8 @@ const Catalog = () => {
                         } else {
                           setSelectedTypes([...selectedTypes, type.value]);
                         }
+                        setSelectedCategory(hoverCategory);
+                        setHoverCategory('');
                       }}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all ${
                         isSelected
