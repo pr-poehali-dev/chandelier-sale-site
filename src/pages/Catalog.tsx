@@ -9,9 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { api, Product, User } from '@/lib/api';
@@ -32,7 +30,6 @@ const Catalog = () => {
   const [isDimmable, setIsDimmable] = useState(false);
   const [hasColorChange, setHasColorChange] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -621,7 +618,7 @@ const Catalog = () => {
                         isBudget ? 'border-green-500/20 hover:border-green-500/40' :
                         'hover:border-primary/20'
                       }`}
-                      onClick={() => setSelectedProduct(product)}
+                      onClick={() => window.location.href = `/product/${product.id}`}
                     >
                       <CardHeader className="p-0 relative">
                         <div className="aspect-square overflow-hidden bg-muted relative">
@@ -730,7 +727,7 @@ const Catalog = () => {
                           className="flex-1"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedProduct(product);
+                            window.location.href = `/product/${product.id}`;
                           }}
                         >
                           <Icon name="Eye" className="mr-2 h-4 w-4" />
@@ -764,290 +761,6 @@ const Catalog = () => {
         onOpenChange={setShowAuth}
         onAuthSuccess={(user) => setUser(user)}
       />
-
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedProduct && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedProduct.name}</DialogTitle>
-              </DialogHeader>
-              
-              <div className="grid md:grid-cols-2 gap-6 mt-4">
-                <div className="space-y-4">
-                  <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-                    <img
-                      src={selectedProduct.image}
-                      alt={selectedProduct.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <Badge variant="secondary" className="mb-3">
-                      {selectedProduct.brand}
-                    </Badge>
-                    <p className="text-3xl font-bold text-primary mb-4">
-                      {selectedProduct.price.toLocaleString()} ₽
-                    </p>
-                    {selectedProduct.inStock ? (
-                      <Badge variant="default" className="bg-green-600">
-                        <Icon name="Check" className="mr-1 h-3 w-3" />
-                        В наличии
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive">Нет в наличии</Badge>
-                    )}
-                  </div>
-
-                  <Tabs defaultValue="description" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="description">Описание</TabsTrigger>
-                      <TabsTrigger value="specs">Характеристики</TabsTrigger>
-                      <TabsTrigger value="reviews">Отзывы</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="description" className="space-y-4 mt-4">
-                      <div>
-                        <h3 className="font-semibold mb-2">О товаре</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {selectedProduct.description || 'Описание товара отсутствует'}
-                        </p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Преимущества</h3>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Высокое качество материалов</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Энергоэффективность</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Гарантия 2 года</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <Icon name="Check" className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>Бесплатная доставка</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="specs" className="mt-4">
-                      <div className="space-y-3">
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Бренд</span>
-                          <span className="font-medium">{selectedProduct.brand}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Тип</span>
-                          <span className="font-medium">
-                            {types.find(t => t.value === selectedProduct.type)?.label || selectedProduct.type}
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Мощность</span>
-                          <span className="font-medium">40-60 Вт</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Световой поток</span>
-                          <span className="font-medium">3000-4000 лм</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Цветовая температура</span>
-                          <span className="font-medium">2700-6500K</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Материал</span>
-                          <span className="font-medium">Металл, стекло</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Диммирование</span>
-                          <span className="font-medium">Да</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Степень защиты</span>
-                          <span className="font-medium">IP20</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Гарантия</span>
-                          <span className="font-medium">2 года</span>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="reviews" className="mt-4">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon
-                                    key={star}
-                                    name="Star"
-                                    className={`h-5 w-5 ${star <= 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="font-semibold text-lg">4.0</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">На основе 12 отзывов</p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                            Оставить отзыв
-                          </Button>
-                        </div>
-
-                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                          <div className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-primary">АМ</span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">Анна М.</p>
-                                  <p className="text-xs text-muted-foreground">15 ноября 2024</p>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon
-                                    key={star}
-                                    name="Star"
-                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              Отличный светильник! Качество сборки на высоте, свет мягкий и приятный. 
-                              Идеально вписался в интерьер гостиной. Рекомендую!
-                            </p>
-                          </div>
-
-                          <div className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-primary">ДП</span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">Дмитрий П.</p>
-                                  <p className="text-xs text-muted-foreground">8 ноября 2024</p>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon
-                                    key={star}
-                                    name="Star"
-                                    className={`h-4 w-4 ${star <= 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              Хороший вариант за свои деньги. Единственный минус - немного долгая доставка, 
-                              но это не критично. Светит отлично, дизайн современный.
-                            </p>
-                          </div>
-
-                          <div className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-primary">ЕС</span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">Елена С.</p>
-                                  <p className="text-xs text-muted-foreground">2 ноября 2024</p>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon
-                                    key={star}
-                                    name="Star"
-                                    className={`h-4 w-4 ${star <= 3 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              В целом неплохо, но ожидала большего по яркости. 
-                              Для небольшой комнаты подходит, но для просторного помещения может быть маловато.
-                            </p>
-                          </div>
-
-                          <div className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-primary">ИВ</span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">Игорь В.</p>
-                                  <p className="text-xs text-muted-foreground">28 октября 2024</p>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Icon
-                                    key={star}
-                                    name="Star"
-                                    className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              Превосходное качество! Установил в офисе - все довольны. 
-                              Энергопотребление низкое, свет равномерный. Цена полностью оправдана.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      className="flex-1"
-                      size="lg"
-                      onClick={() => {
-                        addToCart(selectedProduct);
-                        setSelectedProduct(null);
-                      }}
-                      disabled={!selectedProduct.inStock}
-                    >
-                      <Icon name="ShoppingCart" className="mr-2 h-5 w-5" />
-                      В корзину
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => {
-                        addToCart(selectedProduct);
-                        setSelectedProduct(null);
-                        window.location.href = '/cart';
-                      }}
-                      disabled={!selectedProduct.inStock}
-                    >
-                      Купить сейчас
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Footer />
     </div>
