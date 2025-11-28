@@ -187,7 +187,8 @@ const Catalog = () => {
       (selectedCategory === 'outdoor' && product.type.startsWith('outdoor_')) ||
       (selectedCategory === 'track' && product.type.startsWith('track_')) ||
       (selectedCategory === 'electric' && product.type.startsWith('electric_')) ||
-      (selectedCategory === 'sconce' && product.type === 'sconce');
+      (selectedCategory === 'sconce' && product.type === 'sconce') ||
+      (selectedCategory === 'floor_lamp' && product.type === 'floor_lamp');
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
     const remoteMatch = !hasRemote || product.hasRemote;
     const dimmableMatch = !isDimmable || product.isDimmable;
@@ -337,30 +338,6 @@ const Catalog = () => {
       </div>
 
       <div>
-        <h3 className="font-semibold mb-4">Тип освещения</h3>
-        <div className="space-y-2">
-          {types.map((type) => (
-            <div key={type.value} className="flex items-center space-x-2">
-              <Checkbox
-                id={`type-${type.value}`}
-                checked={selectedTypes.includes(type.value)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedTypes([...selectedTypes, type.value]);
-                  } else {
-                    setSelectedTypes(selectedTypes.filter((t) => t !== type.value));
-                  }
-                }}
-              />
-              <Label htmlFor={`type-${type.value}`} className="cursor-pointer">
-                {type.label}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
         <h3 className="font-semibold mb-4">Дополнительно</h3>
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
@@ -461,8 +438,22 @@ const Catalog = () => {
         </div>
 
         {selectedCategory && selectedCategory !== '' && (
-          <div className="mb-6 bg-muted/30 rounded-lg p-4">
-            <div className="flex flex-col gap-2 overflow-x-auto scrollbar-hide">
+          <>
+            <div 
+              className="fixed inset-0 bg-black/20 z-30 animate-in fade-in"
+              onClick={() => setSelectedCategory('')}
+            />
+            <div className="fixed left-4 top-32 z-40 w-64 bg-background border rounded-lg shadow-xl p-4 animate-in slide-in-from-left-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm">Подразделы</h3>
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Icon name="X" className="h-4 w-4" />
+                </button>
+              </div>
+            <div className="flex flex-col gap-1 max-h-[calc(100vh-200px)] overflow-y-auto">
               {types
                 .filter((type) => {
                   if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
@@ -488,10 +479,10 @@ const Catalog = () => {
                           setSelectedTypes([...selectedTypes, type.value]);
                         }
                       }}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                         isSelected
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'bg-background hover:bg-accent border'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent'
                       }`}
                     >
                       <Icon name={type.icon as any} className={`h-4 w-4 ${isSelected ? '' : type.color}`} />
@@ -501,6 +492,7 @@ const Catalog = () => {
                 })}
             </div>
           </div>
+          </>
         )}
 
         <div className="mb-6 space-y-4">
