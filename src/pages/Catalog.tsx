@@ -50,8 +50,9 @@ const Catalog = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [brandSearch, setBrandSearch] = useState('');
 
-  const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
+  const brands = Array.from(new Set(products.map(p => p.brand))).sort();
   const types = [
     { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
     { value: 'ceiling_chandelier', label: 'Потолочные люстры', icon: 'Circle', color: 'text-amber-500' },
@@ -161,15 +162,18 @@ const Catalog = () => {
       setFavorites(JSON.parse(savedFavorites));
     }
     
-    // Handle URL params
-    const brandParam = searchParams.get('brand');
-    if (brandParam && brands.includes(brandParam)) {
-      setSelectedBrands([brandParam]);
-    }
-    
     updateCartCount();
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    // Handle URL params after products are loaded
+    const brandParam = searchParams.get('brand');
+    if (brandParam && brands.length > 0 && brands.includes(brandParam)) {
+      setSelectedBrands([brandParam]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
 
   const updateCartCount = () => {
     const savedCart = localStorage.getItem('cart');
@@ -331,6 +335,10 @@ const Catalog = () => {
       style.toLowerCase().includes(styleSearch.toLowerCase())
     );
     
+    const filteredBrands = brands.filter(brand => 
+      brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+    
     const currentCategoryTypes = selectedCategory ? types.filter((type) => {
       if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
       if (selectedCategory === 'lights') return type.value.startsWith('light_');
@@ -346,30 +354,6 @@ const Catalog = () => {
 
     return (
     <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold mb-4">Бренд</h3>
-        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
-          {brands.map((brand) => (
-            <div key={brand} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand}`}
-                checked={selectedBrands.includes(brand)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedBrands([...selectedBrands, brand]);
-                  } else {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
-                  }
-                }}
-              />
-              <Label htmlFor={`brand-${brand}`} className="cursor-pointer text-sm">
-                {brand}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {selectedCategory && currentCategoryTypes.length > 0 && (
         <div>
           <h3 className="font-semibold mb-4">Виды</h3>
@@ -514,6 +498,37 @@ const Catalog = () => {
         </div>
       </div>
 
+      <div>
+        <h3 className="font-semibold mb-3">Бренд</h3>
+        <Input
+          type="text"
+          placeholder="Поиск бренда..."
+          value={brandSearch}
+          onChange={(e) => setBrandSearch(e.target.value)}
+          className="mb-3"
+        />
+        <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin">
+          {filteredBrands.map((brand) => (
+            <div key={brand} className="flex items-center space-x-2">
+              <Checkbox
+                id={`sidebar-brand-${brand}`}
+                checked={selectedBrands.includes(brand)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedBrands([...selectedBrands, brand]);
+                  } else {
+                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
+                  }
+                }}
+              />
+              <Label htmlFor={`sidebar-brand-${brand}`} className="cursor-pointer text-sm">
+                {brand}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <Button
         variant="outline"
         className="w-full"
@@ -528,6 +543,8 @@ const Catalog = () => {
           setIsNew(false);
           setIsPickup(false);
           setSelectedStyles([]);
+          setBrandSearch('');
+          setStyleSearch('');
           setSizeRange({
             height: [0, 3000],
             length: [0, 3000],
@@ -683,25 +700,6 @@ const Catalog = () => {
                 </>
               )}
             </Button>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {brands.map((brand) => (
-              <Button
-                key={brand}
-                variant={selectedBrands.includes(brand) ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  if (selectedBrands.includes(brand)) {
-                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
-                  } else {
-                    setSelectedBrands([...selectedBrands, brand]);
-                  }
-                }}
-              >
-                {brand}
-              </Button>
-            ))}
           </div>
           
           {searchQuery && (
