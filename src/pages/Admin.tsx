@@ -332,11 +332,17 @@ const Admin = () => {
 
   const types = [
     { value: 'chandelier', label: 'Люстра' },
+    { value: 'ceiling', label: 'Потолочная' },
+    { value: 'pendant', label: 'Подвесная' },
+    { value: 'cascade', label: 'Каскадная' },
+    { value: 'rod', label: 'Люстра на штанге' },
+    { value: 'large', label: 'Большая люстра' },
+    { value: 'fan', label: 'Люстра-вентилятор' },
+    { value: 'elite', label: 'Элитная люстра' },
     { value: 'lamp', label: 'Настольная лампа' },
     { value: 'sconce', label: 'Бра' },
     { value: 'spotlight', label: 'Спот' },
     { value: 'floor_lamp', label: 'Торшер' },
-    { value: 'pendant', label: 'Подвесной светильник' },
   ];
 
   const brands = Array.from(new Set(products.map(p => p.brand))).sort();

@@ -40,21 +40,33 @@ const Catalog = () => {
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
     { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
+    { value: 'ceiling', label: 'Потолочные', icon: 'Circle', color: 'text-amber-500' },
+    { value: 'pendant', label: 'Подвесные', icon: 'Droplet', color: 'text-cyan-500' },
+    { value: 'cascade', label: 'Каскадные', icon: 'Layers', color: 'text-indigo-500' },
+    { value: 'rod', label: 'Люстры на штанге', icon: 'Minus', color: 'text-slate-500' },
+    { value: 'large', label: 'Большие люстры', icon: 'Maximize2', color: 'text-rose-500' },
+    { value: 'fan', label: 'Люстры-вентиляторы', icon: 'Fan', color: 'text-teal-500' },
+    { value: 'elite', label: 'Элитные люстры', icon: 'Crown', color: 'text-yellow-600' },
     { value: 'lamp', label: 'Настольные лампы', icon: 'Lamp', color: 'text-blue-500' },
     { value: 'sconce', label: 'Бра', icon: 'WallLamp', color: 'text-purple-500' },
     { value: 'spotlight', label: 'Споты', icon: 'Flashlight', color: 'text-orange-500' },
     { value: 'floor_lamp', label: 'Торшеры', icon: 'FlashlightOff', color: 'text-green-500' },
-    { value: 'pendant', label: 'Подвесные светильники', icon: 'Droplet', color: 'text-cyan-500' },
   ];
   
   const categories = [
     { value: '', label: 'Все товары' },
     { value: 'chandelier', label: 'Люстры' },
+    { value: 'ceiling', label: 'Потолочные' },
+    { value: 'pendant', label: 'Подвесные' },
+    { value: 'cascade', label: 'Каскадные' },
+    { value: 'rod', label: 'На штанге' },
+    { value: 'large', label: 'Большие' },
+    { value: 'fan', label: 'Вентиляторы' },
+    { value: 'elite', label: 'Элитные' },
     { value: 'lamp', label: 'Настольные лампы' },
     { value: 'sconce', label: 'Бра' },
     { value: 'spotlight', label: 'Споты' },
     { value: 'floor_lamp', label: 'Торшеры' },
-    { value: 'pendant', label: 'Подвесные' },
   ];
 
   useEffect(() => {
@@ -401,7 +413,6 @@ const Catalog = () => {
               className="hidden"
             />
             <Button
-              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={imageSearchLoading}
               className="whitespace-nowrap"
