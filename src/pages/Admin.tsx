@@ -53,7 +53,7 @@ const Admin = () => {
     }
     
     const userData = JSON.parse(user);
-    if (userData.email !== 'admin@luxlight.ru') {
+    if (userData.email !== 'raaniskakov@gmail.com') {
       navigate('/');
       return;
     }
