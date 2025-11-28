@@ -40,32 +40,91 @@ const Catalog = () => {
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
     { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
-    { value: 'ceiling', label: 'Потолочные', icon: 'Circle', color: 'text-amber-500' },
-    { value: 'pendant', label: 'Подвесные', icon: 'Droplet', color: 'text-cyan-500' },
+    { value: 'ceiling_chandelier', label: 'Потолочные люстры', icon: 'Circle', color: 'text-amber-500' },
+    { value: 'pendant_chandelier', label: 'Подвесные люстры', icon: 'Droplet', color: 'text-cyan-500' },
     { value: 'cascade', label: 'Каскадные', icon: 'Layers', color: 'text-indigo-500' },
-    { value: 'rod', label: 'Люстры на штанге', icon: 'Minus', color: 'text-slate-500' },
+    { value: 'rod', label: 'На штанге', icon: 'Minus', color: 'text-slate-500' },
     { value: 'large', label: 'Большие люстры', icon: 'Maximize2', color: 'text-rose-500' },
-    { value: 'fan', label: 'Люстры-вентиляторы', icon: 'Fan', color: 'text-teal-500' },
-    { value: 'elite', label: 'Элитные люстры', icon: 'Crown', color: 'text-yellow-600' },
-    { value: 'lamp', label: 'Настольные лампы', icon: 'Lamp', color: 'text-blue-500' },
+    { value: 'fan_chandelier', label: 'Люстры-вентиляторы', icon: 'Fan', color: 'text-teal-500' },
+    { value: 'elite_chandelier', label: 'Элитные люстры', icon: 'Crown', color: 'text-yellow-600' },
+    
+    { value: 'light_pendant', label: 'Подвесные светильники', icon: 'Droplet', color: 'text-blue-400' },
+    { value: 'light_ceiling', label: 'Потолочные светильники', icon: 'Circle', color: 'text-slate-400' },
+    { value: 'light_wall', label: 'Настенные светильники', icon: 'Square', color: 'text-purple-400' },
+    { value: 'light_wall_ceiling', label: 'Настенно-потолочные', icon: 'LayoutGrid', color: 'text-indigo-400' },
+    { value: 'light_surface', label: 'Накладные светильники', icon: 'Box', color: 'text-emerald-400' },
+    { value: 'light_recessed', label: 'Встраиваемые светильники', icon: 'CircleDot', color: 'text-teal-400' },
+    { value: 'light_spot', label: 'Точечные светильники', icon: 'Dot', color: 'text-cyan-400' },
+    { value: 'light_night', label: 'Ночники', icon: 'Moon', color: 'text-violet-400' },
+    { value: 'light_furniture', label: 'Мебельные', icon: 'Sofa', color: 'text-amber-400' },
+    { value: 'light_plant', label: 'Для растений', icon: 'Leaf', color: 'text-green-500' },
+    { value: 'light_bactericidal', label: 'Бактерицидные', icon: 'ShieldPlus', color: 'text-red-400' },
+    { value: 'light_kit', label: 'Комплекты светильников', icon: 'Package', color: 'text-orange-400' },
+    { value: 'light_elite', label: 'Элитные светильники', icon: 'Crown', color: 'text-yellow-500' },
+    
+    { value: 'lamp_decorative', label: 'Декоративные лампы', icon: 'Sparkles', color: 'text-pink-500' },
+    { value: 'lamp_office', label: 'Офисные лампы', icon: 'Briefcase', color: 'text-gray-500' },
+    { value: 'lamp_kids', label: 'Детские лампы', icon: 'Baby', color: 'text-pink-400' },
+    { value: 'lamp_clip', label: 'На прищепке', icon: 'Paperclip', color: 'text-blue-500' },
+    { value: 'lamp_clamp', label: 'На струбцине', icon: 'Grip', color: 'text-slate-500' },
+    
     { value: 'sconce', label: 'Бра', icon: 'WallLamp', color: 'text-purple-500' },
-    { value: 'spotlight', label: 'Споты', icon: 'Flashlight', color: 'text-orange-500' },
+    
+    { value: 'spot_one', label: 'Спот с 1 плафоном', icon: 'Circle', color: 'text-orange-500' },
+    { value: 'spot_two', label: 'Спот с 2 плафонами', icon: 'CircleDot', color: 'text-orange-600' },
+    { value: 'spot_three_plus', label: 'Спот с 3+ плафонами', icon: 'CircleEllipsis', color: 'text-orange-700' },
+    { value: 'spot_recessed', label: 'Встраиваемые споты', icon: 'Disc', color: 'text-amber-600' },
+    { value: 'spot_surface', label: 'Накладные споты', icon: 'Box', color: 'text-yellow-600' },
+    
+    { value: 'outdoor_street', label: 'Уличные светильники', icon: 'Lamp', color: 'text-slate-600' },
+    { value: 'outdoor_landscape', label: 'Ландшафтные', icon: 'Trees', color: 'text-green-600' },
+    { value: 'outdoor_architectural', label: 'Архитектурные', icon: 'Building', color: 'text-stone-600' },
+    { value: 'outdoor_park', label: 'Парковые', icon: 'TreePine', color: 'text-emerald-600' },
+    { value: 'outdoor_wall', label: 'Уличные настенные', icon: 'Square', color: 'text-zinc-600' },
+    { value: 'outdoor_console', label: 'Консольные', icon: 'Minus', color: 'text-neutral-600' },
+    { value: 'outdoor_ground', label: 'Грунтовые', icon: 'Mountain', color: 'text-brown-600' },
+    { value: 'outdoor_underwater', label: 'Подводные', icon: 'Waves', color: 'text-blue-600' },
+    { value: 'outdoor_solar', label: 'На солнечных батареях', icon: 'Sun', color: 'text-yellow-500' },
+    { value: 'outdoor_floodlight', label: 'Прожекторы', icon: 'Lightbulb', color: 'text-orange-500' },
+    { value: 'outdoor_flashlight', label: 'Фонарики', icon: 'Flashlight', color: 'text-gray-500' },
+    
+    { value: 'track_complete', label: 'Трековые системы в сборе', icon: 'Workflow', color: 'text-indigo-500' },
+    { value: 'track_light', label: 'Трековые светильники', icon: 'Minus', color: 'text-indigo-600' },
+    { value: 'track_string', label: 'Струнные светильники', icon: 'Cable', color: 'text-violet-500' },
+    { value: 'track_rail', label: 'Шинопроводы', icon: 'Ruler', color: 'text-purple-600' },
+    { value: 'track_accessories', label: 'Комплектующие трековых', icon: 'Wrench', color: 'text-slate-500' },
+    
+    { value: 'electric_switch', label: 'Выключатели', icon: 'ToggleLeft', color: 'text-gray-600' },
+    { value: 'electric_socket', label: 'Розетки', icon: 'Plug', color: 'text-red-600' },
+    { value: 'electric_frame', label: 'Рамки', icon: 'Square', color: 'text-neutral-500' },
+    { value: 'electric_thermostat', label: 'Терморегуляторы', icon: 'Thermometer', color: 'text-red-500' },
+    { value: 'electric_kit', label: 'Комплекты электрики', icon: 'Package', color: 'text-orange-600' },
+    { value: 'electric_stabilizer', label: 'Стабилизаторы', icon: 'Activity', color: 'text-green-600' },
+    { value: 'electric_transformer', label: 'Трансформаторы', icon: 'Zap', color: 'text-yellow-600' },
+    { value: 'electric_motion', label: 'Датчики движения', icon: 'Radar', color: 'text-blue-600' },
+    { value: 'electric_extension', label: 'Удлинители и фильтры', icon: 'Cable', color: 'text-purple-600' },
+    { value: 'electric_cord', label: 'Шнуры', icon: 'Cable', color: 'text-gray-500' },
+    { value: 'electric_accessories', label: 'Комплектующие для ЭУИ', icon: 'Wrench', color: 'text-stone-600' },
+    { value: 'electric_doorbell', label: 'Звонки', icon: 'Bell', color: 'text-amber-500' },
+    { value: 'electric_dimmer', label: 'Диммеры', icon: 'SlidersHorizontal', color: 'text-indigo-500' },
+    { value: 'electric_fan', label: 'Вентиляторы', icon: 'Fan', color: 'text-cyan-500' },
+    { value: 'electric_breaker', label: 'Автоматические выключатели', icon: 'Power', color: 'text-red-700' },
+    { value: 'electric_ammeter', label: 'Амперметры', icon: 'Gauge', color: 'text-teal-600' },
+    { value: 'electric_video_doorbell', label: 'Видеозвонки', icon: 'Video', color: 'text-blue-700' },
+    
     { value: 'floor_lamp', label: 'Торшеры', icon: 'FlashlightOff', color: 'text-green-500' },
   ];
   
   const categories = [
     { value: '', label: 'Все товары' },
     { value: 'chandelier', label: 'Люстры' },
-    { value: 'ceiling', label: 'Потолочные' },
-    { value: 'pendant', label: 'Подвесные' },
-    { value: 'cascade', label: 'Каскадные' },
-    { value: 'rod', label: 'На штанге' },
-    { value: 'large', label: 'Большие' },
-    { value: 'fan', label: 'Вентиляторы' },
-    { value: 'elite', label: 'Элитные' },
-    { value: 'lamp', label: 'Настольные лампы' },
+    { value: 'lights', label: 'Светильники' },
+    { value: 'lamps', label: 'Настольные лампы' },
     { value: 'sconce', label: 'Бра' },
-    { value: 'spotlight', label: 'Споты' },
+    { value: 'spots', label: 'Споты' },
+    { value: 'outdoor', label: 'Уличное освещение' },
+    { value: 'track', label: 'Трековые системы' },
+    { value: 'electric', label: 'Электротовары' },
     { value: 'floor_lamp', label: 'Торшеры' },
   ];
 
@@ -119,8 +178,16 @@ const Catalog = () => {
       (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
-    const categoryMatch = selectedCategory === '' || selectedCategory === 'sale' || product.type === selectedCategory || 
-      (selectedCategory === 'sconce-wall' && product.type === 'sconce');
+    const categoryMatch = selectedCategory === '' || 
+      product.type === selectedCategory || 
+      (selectedCategory === 'chandelier' && product.type.includes('chandelier')) ||
+      (selectedCategory === 'lights' && product.type.startsWith('light_')) ||
+      (selectedCategory === 'lamps' && product.type.startsWith('lamp_')) ||
+      (selectedCategory === 'spots' && product.type.startsWith('spot_')) ||
+      (selectedCategory === 'outdoor' && product.type.startsWith('outdoor_')) ||
+      (selectedCategory === 'track' && product.type.startsWith('track_')) ||
+      (selectedCategory === 'electric' && product.type.startsWith('electric_')) ||
+      (selectedCategory === 'sconce' && product.type === 'sconce');
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
     const remoteMatch = !hasRemote || product.hasRemote;
     const dimmableMatch = !isDimmable || product.isDimmable;
