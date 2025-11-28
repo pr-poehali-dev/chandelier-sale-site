@@ -17,6 +17,7 @@ import { api, Product, User } from '@/lib/api';
 const Catalog = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const categoryRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,9 +320,49 @@ const Catalog = () => {
     const filteredStyles = styles.filter(style => 
       style.toLowerCase().includes(styleSearch.toLowerCase())
     );
+    
+    const currentCategoryTypes = selectedCategory ? types.filter((type) => {
+      if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
+      if (selectedCategory === 'lights') return type.value.startsWith('light_');
+      if (selectedCategory === 'lamps') return type.value.startsWith('lamp_');
+      if (selectedCategory === 'sconce') return type.value === 'sconce';
+      if (selectedCategory === 'spots') return type.value.startsWith('spot_');
+      if (selectedCategory === 'outdoor') return type.value.startsWith('outdoor_');
+      if (selectedCategory === 'track') return type.value.startsWith('track_');
+      if (selectedCategory === 'electric') return type.value.startsWith('electric_');
+      if (selectedCategory === 'floor_lamp') return type.value === 'floor_lamp';
+      return false;
+    }) : [];
 
     return (
     <div className="space-y-6">
+      {selectedCategory && currentCategoryTypes.length > 0 && (
+        <div>
+          <h3 className="font-semibold mb-4">Виды</h3>
+          <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+            {currentCategoryTypes.map((type) => (
+              <div key={type.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`sidebar-type-${type.value}`}
+                  checked={selectedTypes.includes(type.value)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedTypes([...selectedTypes, type.value]);
+                    } else {
+                      setSelectedTypes(selectedTypes.filter((t) => t !== type.value));
+                    }
+                  }}
+                />
+                <Label htmlFor={`sidebar-type-${type.value}`} className="cursor-pointer text-sm flex items-center gap-2">
+                  <Icon name={type.icon as any} className={`h-3 w-3 ${type.color}`} />
+                  {type.label}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <div>
         <h3 className="font-semibold mb-4">Цена</h3>
         <Slider
@@ -495,6 +536,7 @@ const Catalog = () => {
             {categories.map((category) => (
               <button
                 key={category.value}
+                ref={(el) => categoryRefs.current[category.value] = el}
                 onMouseEnter={() => category.value && setSelectedCategory(category.value)}
                 onClick={() => setSelectedCategory(selectedCategory === category.value ? '' : category.value)}
                 className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${
@@ -512,15 +554,17 @@ const Catalog = () => {
               </button>
             ))}
           </div>
-        </div>
-
-        {selectedCategory && selectedCategory !== '' && (
+          
+          {selectedCategory && selectedCategory !== '' && (
             <div 
-              className="fixed left-4 top-32 z-40 w-56 bg-background border rounded-lg shadow-xl p-3 animate-in slide-in-from-left-5"
+              className="absolute top-full left-0 mt-2 z-40 bg-background border rounded-lg shadow-xl p-4 animate-in fade-in slide-in-from-top-2 min-w-[320px] max-w-[600px]"
+              style={{
+                left: categoryRefs.current[selectedCategory]?.offsetLeft || 0
+              }}
               onMouseLeave={() => setSelectedCategory('')}
             >
-              <h3 className="font-semibold text-xs mb-2 text-muted-foreground uppercase">Подразделы</h3>
-            <div className="flex flex-col gap-0.5 max-h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin">
+              <h3 className="font-semibold text-sm mb-3 text-foreground">Виды</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-[400px] overflow-y-auto scrollbar-thin pr-2">
               {types
                 .filter((type) => {
                   if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
@@ -546,10 +590,10 @@ const Catalog = () => {
                           setSelectedTypes([...selectedTypes, type.value]);
                         }
                       }}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs font-medium transition-all ${
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all ${
                         isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-accent'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'hover:bg-accent border border-transparent hover:border-border'
                       }`}
                     >
                       <Icon name={type.icon as any} className={`h-4 w-4 ${isSelected ? '' : type.color}`} />
@@ -559,7 +603,8 @@ const Catalog = () => {
                 })}
             </div>
           </div>
-        )}
+          )}
+        </div>
 
         <div className="mb-6 space-y-4">
           <div className="flex gap-2">
