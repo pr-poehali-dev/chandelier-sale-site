@@ -45,7 +45,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'})
+            'body': json.dumps({'error': 'Method not allowed'}),
+            'isBase64Encoded': False
         }
 
 def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
@@ -114,7 +115,8 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps({'products': products, 'count': len(products)})
+        'body': json.dumps({'products': products, 'count': len(products)}),
+        'isBase64Encoded': False
     }
 
 def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
@@ -174,7 +176,8 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps(result)
+        'body': json.dumps(result),
+        'isBase64Encoded': False
     }
 
 def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
@@ -288,7 +291,8 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps(result)
+        'body': json.dumps(result),
+        'isBase64Encoded': False
     }
 
 def handle_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
@@ -332,7 +336,8 @@ def handle_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps({'message': 'Product deleted successfully'})
+        'body': json.dumps({'message': 'Product deleted successfully'}),
+        'isBase64Encoded': False
     }
 
 def handle_bulk_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
@@ -367,5 +372,6 @@ def handle_bulk_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'body': json.dumps({
             'message': f'Successfully deleted {len(deleted)} products',
             'count': len(deleted)
-        })
+        }),
+        'isBase64Encoded': False
     }
