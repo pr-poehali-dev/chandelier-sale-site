@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthDialog from '@/components/AuthDialog';
@@ -16,6 +17,7 @@ import { api, Product, User } from '@/lib/api';
 
 const Catalog = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const [user, setUser] = useState<User | null>(null);
@@ -158,6 +160,13 @@ const Catalog = () => {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
+    
+    // Handle URL params
+    const brandParam = searchParams.get('brand');
+    if (brandParam && brands.includes(brandParam)) {
+      setSelectedBrands([brandParam]);
+    }
+    
     updateCartCount();
     loadProducts();
   }, []);
@@ -337,6 +346,30 @@ const Catalog = () => {
 
     return (
     <div className="space-y-6">
+      <div>
+        <h3 className="font-semibold mb-4">Бренд</h3>
+        <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
+          {brands.map((brand) => (
+            <div key={brand} className="flex items-center space-x-2">
+              <Checkbox
+                id={`brand-${brand}`}
+                checked={selectedBrands.includes(brand)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedBrands([...selectedBrands, brand]);
+                  } else {
+                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
+                  }
+                }}
+              />
+              <Label htmlFor={`brand-${brand}`} className="cursor-pointer text-sm">
+                {brand}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {selectedCategory && currentCategoryTypes.length > 0 && (
         <div>
           <h3 className="font-semibold mb-4">Виды</h3>
@@ -650,6 +683,25 @@ const Catalog = () => {
                 </>
               )}
             </Button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {brands.map((brand) => (
+              <Button
+                key={brand}
+                variant={selectedBrands.includes(brand) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  if (selectedBrands.includes(brand)) {
+                    setSelectedBrands(selectedBrands.filter((b) => b !== brand));
+                  } else {
+                    setSelectedBrands([...selectedBrands, brand]);
+                  }
+                }}
+              >
+                {brand}
+              </Button>
+            ))}
           </div>
           
           {searchQuery && (

@@ -47,6 +47,9 @@ export interface Product {
   width?: number;
   depth?: number;
   chainLength?: number;
+  
+  // Дополнительные изображения
+  images?: string[];
 }
 
 export interface User {
@@ -171,5 +174,15 @@ export const api = {
     });
     
     if (!response.ok) throw new Error('Failed to delete product');
+  },
+
+  async deleteProducts(ids: number[]): Promise<void> {
+    const response = await fetch(`${API_URLS.products}/bulk`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+    
+    if (!response.ok) throw new Error('Failed to delete products');
   },
 };

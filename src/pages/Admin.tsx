@@ -29,6 +29,7 @@ const Admin = () => {
   const [filterBrand, setFilterBrand] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +64,7 @@ const Admin = () => {
     width: 0,
     depth: 0,
     chainLength: 0,
+    images: [] as string[],
   });
 
   useEffect(() => {
@@ -132,6 +134,7 @@ const Admin = () => {
       width: product.width || 0,
       depth: product.depth || 0,
       chainLength: product.chainLength || 0,
+      images: product.images || [],
     });
     setIsNewProduct(false);
     setIsDialogOpen(true);
@@ -172,6 +175,7 @@ const Admin = () => {
       width: 0,
       depth: 0,
       chainLength: 0,
+      images: [],
     });
     setIsNewProduct(true);
     setIsDialogOpen(true);
@@ -219,6 +223,41 @@ const Admin = () => {
         description: 'Не удалось удалить товар',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) return;
+    if (!confirm(`Удалить ${selectedProducts.length} товаров?`)) return;
+    
+    try {
+      await api.deleteProducts(selectedProducts);
+      toast({
+        title: 'Успешно',
+        description: `Удалено товаров: ${selectedProducts.length}`,
+      });
+      setSelectedProducts([]);
+      loadProducts();
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить товары',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleProductSelection = (id: number) => {
+    setSelectedProducts(prev =>
+      prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
     }
   };
 
@@ -556,6 +595,12 @@ const Admin = () => {
               className="hidden"
               onChange={handleBulkUpload}
             />
+            {selectedProducts.length > 0 && (
+              <Button variant="destructive" onClick={handleBulkDelete}>
+                <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                Удалить ({selectedProducts.length})
+              </Button>
+            )}
             <Button onClick={handleCreate}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Добавить
@@ -795,10 +840,25 @@ const Admin = () => {
           </div>
         </div>
 
+        <div className="mb-4">
+          <Button variant="outline" size="sm" onClick={toggleSelectAll}>
+            <Icon name={selectedProducts.length === filteredProducts.length ? "CheckSquare" : "Square"} className="mr-2 h-4 w-4" />
+            {selectedProducts.length === filteredProducts.length ? 'Снять выделение' : 'Выбрать все'}
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id}>
-              <CardHeader>
+            <Card key={product.id} className={selectedProducts.includes(product.id) ? 'ring-2 ring-primary' : ''}>
+              <CardHeader className="relative">
+                <div className="absolute top-2 left-2 z-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => toggleProductSelection(product.id)}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                </div>
                 <img 
                   src={product.image} 
                   alt={product.name}
@@ -958,6 +1018,104 @@ const Admin = () => {
                     alt="Предпросмотр"
                     className="w-full max-w-xs h-48 object-cover rounded-lg"
                   />
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="additional-images">Дополнительные изображения</Label>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    id="additional-images"
+                    placeholder="https://... URL изображения"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value) {
+                        e.preventDefault();
+                        setFormData({ 
+                          ...formData, 
+                          images: [...formData.images, e.currentTarget.value] 
+                        });
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('additional-upload')?.click()}
+                  >
+                    <Icon name="Upload" className="h-4 w-4" />
+                  </Button>
+                  <input
+                    id="additional-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+                      
+                      for (const file of files) {
+                        if (!file.type.startsWith('image/')) continue;
+                        
+                        try {
+                          const formDataUpload = new FormData();
+                          formDataUpload.append('file', file);
+                          
+                          const response = await fetch('https://api.poehali.dev/upload', {
+                            method: 'POST',
+                            body: formDataUpload,
+                          });
+                          
+                          if (!response.ok) throw new Error('Upload failed');
+                          
+                          const data = await response.json();
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            images: [...prev.images, data.url] 
+                          }));
+                        } catch (error) {
+                          console.error('Upload error:', error);
+                        }
+                      }
+                      
+                      toast({
+                        title: 'Успешно',
+                        description: `Загружено изображений: ${files.length}`,
+                      });
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+                {formData.images.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img 
+                          src={img} 
+                          alt={`Доп ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              images: formData.images.filter((_, i) => i !== idx)
+                            });
+                          }}
+                        >
+                          <Icon name="X" className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

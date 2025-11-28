@@ -13,6 +13,7 @@ const Home = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [selectedBrand, setSelectedBrand] = useState('');
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -94,6 +95,28 @@ const Home = () => {
                 <Link to="/about">О компании</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-8 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">Бренды:</span>
+            {['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'].map((brand) => (
+              <Button
+                key={brand}
+                variant={selectedBrand === brand ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  const newBrand = selectedBrand === brand ? '' : brand;
+                  setSelectedBrand(newBrand);
+                  navigate(newBrand ? `/catalog?brand=${newBrand}` : '/catalog');
+                }}
+              >
+                {brand}
+              </Button>
+            ))}
           </div>
         </div>
       </section>

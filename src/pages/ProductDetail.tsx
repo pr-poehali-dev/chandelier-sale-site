@@ -131,7 +131,9 @@ const ProductDetail = () => {
     return null;
   }
 
-  const images = [product.image, product.image, product.image];
+  const images = product.images && product.images.length > 0 
+    ? [product.image, ...product.images] 
+    : [product.image, product.image, product.image];
 
   return (
     <div className="min-h-screen flex flex-col">

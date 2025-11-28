@@ -26,6 +26,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     
+    # Check if bulk delete
+    path = event.get('params', {}).get('proxy', '')
+    if method == 'DELETE' and '/bulk' in path:
+        return handle_bulk_delete(event, cur, conn)
+    
     if method == 'GET':
         return handle_get(event, cur, conn)
     elif method == 'POST':
@@ -328,4 +333,39 @@ def handle_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Access-Control-Allow-Origin': '*'
         },
         'body': json.dumps({'message': 'Product deleted successfully'})
+    }
+
+def handle_bulk_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
+    body = json.loads(event.get('body', '{}'))
+    ids = body.get('ids', [])
+    
+    if not ids or not isinstance(ids, list):
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Invalid or missing ids'})
+        }
+    
+    placeholders = ','.join(['%s'] * len(ids))
+    query = f"DELETE FROM products WHERE id IN ({placeholders}) RETURNING id"
+    
+    cur.execute(query, ids)
+    deleted = cur.fetchall()
+    conn.commit()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({
+            'message': f'Successfully deleted {len(deleted)} products',
+            'count': len(deleted)
+        })
     }
