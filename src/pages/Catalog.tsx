@@ -462,16 +462,18 @@ const Catalog = () => {
 
         {selectedCategory && selectedCategory !== '' && (
           <div className="mb-6 bg-muted/30 rounded-lg p-4">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            <div className="flex flex-col gap-2 overflow-x-auto scrollbar-hide">
               {types
                 .filter((type) => {
                   if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
                   if (selectedCategory === 'lights') return type.value.startsWith('light_');
                   if (selectedCategory === 'lamps') return type.value.startsWith('lamp_');
+                  if (selectedCategory === 'sconce') return type.value === 'sconce';
                   if (selectedCategory === 'spots') return type.value.startsWith('spot_');
                   if (selectedCategory === 'outdoor') return type.value.startsWith('outdoor_');
                   if (selectedCategory === 'track') return type.value.startsWith('track_');
                   if (selectedCategory === 'electric') return type.value.startsWith('electric_');
+                  if (selectedCategory === 'floor_lamp') return type.value === 'floor_lamp';
                   return false;
                 })
                 .map((type) => {
@@ -486,7 +488,7 @@ const Catalog = () => {
                           setSelectedTypes([...selectedTypes, type.value]);
                         }
                       }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                         isSelected
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'bg-background hover:bg-accent border'
