@@ -35,6 +35,7 @@ const Catalog = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const brands = ['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'];
   const types = [
@@ -440,11 +441,24 @@ const Catalog = () => {
             <FilterSidebar />
           </aside>
 
-          <Sheet>
-            <Button variant="outline" className="lg:hidden mb-4 w-full">
-              <Icon name="SlidersHorizontal" className="mr-2 h-4 w-4" />
-              Фильтры
-            </Button>
+          <Button 
+            variant="outline" 
+            className="lg:hidden mb-4 w-full"
+            onClick={() => setShowMobileFilters(true)}
+          >
+            <Icon name="SlidersHorizontal" className="mr-2 h-4 w-4" />
+            Фильтры
+          </Button>
+
+          <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+            <SheetContent side="left" className="w-80 overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Фильтры</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <FilterSidebar />
+              </div>
+            </SheetContent>
           </Sheet>
 
           <div className="flex-1">
