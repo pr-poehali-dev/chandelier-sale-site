@@ -460,6 +460,47 @@ const Catalog = () => {
           </div>
         </div>
 
+        {selectedCategory && selectedCategory !== '' && (
+          <div className="mb-6 bg-muted/30 rounded-lg p-4">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              {types
+                .filter((type) => {
+                  if (selectedCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
+                  if (selectedCategory === 'lights') return type.value.startsWith('light_');
+                  if (selectedCategory === 'lamps') return type.value.startsWith('lamp_');
+                  if (selectedCategory === 'spots') return type.value.startsWith('spot_');
+                  if (selectedCategory === 'outdoor') return type.value.startsWith('outdoor_');
+                  if (selectedCategory === 'track') return type.value.startsWith('track_');
+                  if (selectedCategory === 'electric') return type.value.startsWith('electric_');
+                  return false;
+                })
+                .map((type) => {
+                  const isSelected = selectedTypes.includes(type.value);
+                  return (
+                    <button
+                      key={type.value}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedTypes(selectedTypes.filter((t) => t !== type.value));
+                        } else {
+                          setSelectedTypes([...selectedTypes, type.value]);
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        isSelected
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'bg-background hover:bg-accent border'
+                      }`}
+                    >
+                      <Icon name={type.icon as any} className={`h-4 w-4 ${isSelected ? '' : type.color}`} />
+                      {type.label}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 space-y-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
