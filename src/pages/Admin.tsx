@@ -24,6 +24,9 @@ const Admin = () => {
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingBulk, setUploadingBulk] = useState(false);
+  const [importingProducts, setImportingProducts] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importUrls, setImportUrls] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBrand, setFilterBrand] = useState('all');
@@ -429,6 +432,58 @@ const Admin = () => {
     });
   };
 
+  const handleImportFromUrls = async () => {
+    if (!importUrls.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите хотя бы одну ссылку на товар',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const urls = importUrls
+      .split('\n')
+      .map(url => url.trim())
+      .filter(url => url.length > 0 && url.startsWith('http'));
+
+    if (urls.length === 0) {
+      toast({
+        title: 'Ошибка',
+        description: 'Нет корректных ссылок для импорта',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setImportingProducts(true);
+
+    try {
+      const result = await api.importProducts(urls);
+      
+      toast({
+        title: 'Импорт завершен',
+        description: `Импортировано: ${result.imported}, Ошибок: ${result.failed}`,
+      });
+
+      if (result.failed > 0 && result.failed_urls.length > 0) {
+        console.log('Failed URLs:', result.failed_urls);
+      }
+
+      setShowImportDialog(false);
+      setImportUrls('');
+      loadProducts();
+    } catch (error) {
+      toast({
+        title: 'Ошибка импорта',
+        description: error instanceof Error ? error.message : 'Не удалось импортировать товары',
+        variant: 'destructive',
+      });
+    } finally {
+      setImportingProducts(false);
+    }
+  };
+
   const types = [
     { value: 'chandelier', label: 'Люстра' },
     { value: 'ceiling_chandelier', label: 'Потолочная люстра' },
@@ -586,7 +641,14 @@ const Admin = () => {
               ) : (
                 <Icon name="FileSpreadsheet" className="mr-2 h-4 w-4" />
               )}
-              Импорт
+              Импорт Excel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowImportDialog(true)}
+            >
+              <Icon name="Globe" className="mr-2 h-4 w-4" />
+              Импорт с сайтов
             </Button>
             <input
               ref={fileInputRef}
@@ -1441,6 +1503,58 @@ const Admin = () => {
             <Button onClick={handleSave}>
               <Icon name="Save" className="mr-2 h-4 w-4" />
               Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Импорт товаров с сайтов</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Ссылки на товары (по одной на строку)</Label>
+              <Textarea
+                value={importUrls}
+                onChange={(e) => setImportUrls(e.target.value)}
+                placeholder="https://example.com/product1&#10;https://example.com/product2&#10;https://example.com/product3"
+                className="min-h-[200px] font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Вставьте ссылки на страницы товаров. Система автоматически извлечёт название, цену, бренд, описание и другие характеристики.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowImportDialog(false);
+                setImportUrls('');
+              }}
+              disabled={importingProducts}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handleImportFromUrls}
+              disabled={importingProducts || !importUrls.trim()}
+            >
+              {importingProducts ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Импортирую...
+                </>
+              ) : (
+                <>
+                  <Icon name="Download" className="mr-2 h-4 w-4" />
+                  Импортировать
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

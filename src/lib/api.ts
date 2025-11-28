@@ -3,6 +3,7 @@ const API_URLS = {
   auth: 'https://functions.poehali.dev/8ff2e88b-9f98-45e4-8e1a-0c1196c9196a',
   seedProducts: 'https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0',
   searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
+  importProducts: 'https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1',
 };
 
 export interface Product {
@@ -184,5 +185,24 @@ export const api = {
     });
     
     if (!response.ok) throw new Error('Failed to delete products');
+  },
+
+  async importProducts(urls: string[]): Promise<{
+    imported: number;
+    failed: number;
+    failed_urls: Array<{ url: string; reason: string }>;
+  }> {
+    const response = await fetch(API_URLS.importProducts, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to import products');
+    }
+    
+    return response.json();
   },
 };

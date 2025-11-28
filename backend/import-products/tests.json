@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Import products endpoint exists",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
