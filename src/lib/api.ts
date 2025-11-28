@@ -177,7 +177,7 @@ export const api = {
   },
 
   async deleteProducts(ids: number[]): Promise<void> {
-    const response = await fetch(`${API_URLS.products}/bulk`, {
+    const response = await fetch(API_URLS.products, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids }),

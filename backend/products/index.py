@@ -26,10 +26,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     
-    # Check if bulk delete
-    path = event.get('params', {}).get('proxy', '')
-    if method == 'DELETE' and '/bulk' in path:
-        return handle_bulk_delete(event, cur, conn)
+    # Check if bulk delete - detect by presence of 'ids' array in body
+    if method == 'DELETE':
+        body_str = event.get('body', '{}')
+        try:
+            body_data = json.loads(body_str) if body_str else {}
+            if 'ids' in body_data and isinstance(body_data['ids'], list):
+                return handle_bulk_delete(event, cur, conn)
+        except:
+            pass  # Not JSON or no ids, proceed to single delete
     
     if method == 'GET':
         return handle_get(event, cur, conn)
