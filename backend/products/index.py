@@ -64,7 +64,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     limit = int(params.get('limit', '50'))
     offset = int(params.get('offset', '0'))
     
-    query = "SELECT id, name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change FROM products WHERE 1=1"
+    query = "SELECT * FROM products WHERE 1=1"
     query_params = []
     
     if brand:
@@ -93,22 +93,47 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     cur.execute(query, query_params)
     rows = cur.fetchall()
     
+    # Get column names from cursor description
+    col_names = [desc[0] for desc in cur.description]
+    
     products = []
     for row in rows:
+        product_dict = dict(zip(col_names, row))
         products.append({
-            'id': row[0],
-            'name': row[1],
-            'description': row[2],
-            'price': float(row[3]),
-            'brand': row[4],
-            'type': row[5],
-            'image': row[6],
-            'inStock': row[7],
-            'rating': float(row[8]) if row[8] else 5.0,
-            'reviews': int(row[9]) if row[9] else 0,
-            'hasRemote': bool(row[10]) if row[10] is not None else False,
-            'isDimmable': bool(row[11]) if row[11] is not None else False,
-            'hasColorChange': bool(row[12]) if row[12] is not None else False
+            'id': product_dict['id'],
+            'name': product_dict['name'],
+            'description': product_dict.get('description'),
+            'price': float(product_dict['price']),
+            'brand': product_dict['brand'],
+            'type': product_dict['type'],
+            'image': product_dict['image_url'],
+            'inStock': product_dict.get('in_stock', True),
+            'rating': float(product_dict.get('rating', 5.0)),
+            'reviews': int(product_dict.get('reviews', 0)),
+            'hasRemote': bool(product_dict.get('has_remote', False)),
+            'isDimmable': bool(product_dict.get('is_dimmable', False)),
+            'hasColorChange': bool(product_dict.get('has_color_change', False)),
+            'article': product_dict.get('article'),
+            'brandCountry': product_dict.get('brand_country'),
+            'manufacturerCountry': product_dict.get('manufacturer_country'),
+            'collection': product_dict.get('collection'),
+            'style': product_dict.get('style'),
+            'lampType': product_dict.get('lamp_type'),
+            'socketType': product_dict.get('socket_type'),
+            'bulbType': product_dict.get('bulb_type'),
+            'lampCount': product_dict.get('lamp_count'),
+            'lampPower': product_dict.get('lamp_power'),
+            'totalPower': product_dict.get('total_power'),
+            'lightingArea': product_dict.get('lighting_area'),
+            'voltage': product_dict.get('voltage'),
+            'color': product_dict.get('color'),
+            'height': product_dict.get('height'),
+            'diameter': product_dict.get('diameter'),
+            'length': product_dict.get('length'),
+            'width': product_dict.get('width'),
+            'depth': product_dict.get('depth'),
+            'chainLength': product_dict.get('chain_length'),
+            'images': json.loads(product_dict.get('images', '[]') or '[]')
         })
     
     cur.close()
