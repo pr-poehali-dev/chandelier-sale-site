@@ -33,6 +33,7 @@ const Admin = () => {
   const [filterType, setFilterType] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [deletingProducts, setDeletingProducts] = useState<number[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -213,6 +214,7 @@ const Admin = () => {
   const handleDelete = async (id: number) => {
     if (!confirm('Удалить этот товар?')) return;
     
+    setDeletingProducts(prev => [...prev, id]);
     try {
       await api.deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
@@ -228,6 +230,8 @@ const Admin = () => {
         variant: 'destructive',
       });
       await loadProducts();
+    } finally {
+      setDeletingProducts(prev => prev.filter(pid => pid !== id));
     }
   };
 
@@ -235,6 +239,7 @@ const Admin = () => {
     if (selectedProducts.length === 0) return;
     if (!confirm(`Удалить ${selectedProducts.length} товаров?`)) return;
     
+    setDeletingProducts(prev => [...prev, ...selectedProducts]);
     try {
       await api.deleteProducts(selectedProducts);
       setProducts(prev => prev.filter(p => !selectedProducts.includes(p.id)));
@@ -251,6 +256,8 @@ const Admin = () => {
         variant: 'destructive',
       });
       await loadProducts();
+    } finally {
+      setDeletingProducts([]);
     }
   };
 
@@ -662,9 +669,22 @@ const Admin = () => {
               onChange={handleBulkUpload}
             />
             {selectedProducts.length > 0 && (
-              <Button variant="destructive" onClick={handleBulkDelete}>
-                <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                Удалить ({selectedProducts.length})
+              <Button 
+                variant="destructive" 
+                onClick={handleBulkDelete}
+                disabled={deletingProducts.length > 0}
+              >
+                {deletingProducts.length > 0 ? (
+                  <>
+                    <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                    Удаление...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                    Удалить ({selectedProducts.length})
+                  </>
+                )}
               </Button>
             )}
             <Button onClick={handleCreate}>
@@ -953,9 +973,19 @@ const Admin = () => {
                     variant="destructive" 
                     className="flex-1"
                     onClick={() => handleDelete(product.id)}
+                    disabled={deletingProducts.includes(product.id)}
                   >
-                    <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                    Удалить
+                    {deletingProducts.includes(product.id) ? (
+                      <>
+                        <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                        Удаление...
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                        Удалить
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
