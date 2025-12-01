@@ -41,7 +41,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center space-x-2">
                 <Icon name="Phone" className="h-4 w-4" />
-                <span>+7 (495) 123-45-67</span>
+                <span>+7 (919) 154-69-41</span>
               </li>
               <li className="flex items-center space-x-2">
                 <Icon name="Mail" className="h-4 w-4" />
@@ -49,7 +49,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-2">
                 <Icon name="MapPin" className="h-4 w-4" />
-                <span>Москва, ул. Примерная, 1</span>
+                <span>г. Уфа, ул. Менделеева, 37к4</span>
               </li>
             </ul>
             <div className="flex space-x-3 mt-4">

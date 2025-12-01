@@ -9,7 +9,7 @@ const Delivery = () => {
     {
       icon: 'Truck',
       title: 'Курьерская доставка',
-      description: 'По Москве и области',
+      description: 'По Уфе',
       price: 'от 500 ₽',
       time: '1-3 дня',
     },
@@ -65,10 +65,7 @@ const Delivery = () => {
       question: 'Что делать, если товар пришел с дефектом?',
       answer: 'Если товар пришел с заводским браком или был поврежден при доставке, мы заменим его на новый или вернем деньги. Просто свяжитесь с нами в течение 14 дней после получения.',
     },
-    {
-      question: 'Есть ли бесплатная доставка?',
-      answer: 'Да, мы предоставляем бесплатную доставку при заказе от 10 000 ₽ по Москве и области.',
-    },
+
     {
       question: 'Когда списываются деньги при оплате картой?',
       answer: 'При оплате картой онлайн деньги списываются сразу после подтверждения заказа. При оплате картой курьеру — в момент получения заказа.',
@@ -117,19 +114,7 @@ const Delivery = () => {
             ))}
           </div>
 
-          <Card className="mt-8 bg-primary/5 border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Icon name="Gift" className="h-6 w-6 text-primary mt-1" />
-                <div>
-                  <h3 className="font-semibold mb-2">Бесплатная доставка</h3>
-                  <p className="text-muted-foreground">
-                    При заказе от 10 000 ₽ доставка по Москве и области — бесплатно!
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </section>
 
         <section className="bg-muted py-16">
