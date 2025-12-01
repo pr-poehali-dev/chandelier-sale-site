@@ -1002,36 +1002,51 @@ const Admin = () => {
             <DialogTitle>
               {isNewProduct ? 'Добавить товар' : 'Редактировать товар'}
             </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              <span className="text-red-500">*</span> — обязательные поля
+            </p>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="name">Название</Label>
+              <Label htmlFor="name" className="flex items-center gap-2">
+                Название
+                <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Название товара"
+                required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price">Цена (₽)</Label>
+                <Label htmlFor="price" className="flex items-center gap-2">
+                  Цена (₽)
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="price"
                   type="number"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                  required
                 />
               </div>
               <div>
-                <Label htmlFor="brand">Бренд</Label>
+                <Label htmlFor="brand" className="flex items-center gap-2">
+                  Бренд
+                  <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="brand"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                   placeholder="Бренд"
+                  required
                 />
               </div>
             </div>
@@ -1219,7 +1234,10 @@ const Admin = () => {
             </div>
 
             <div>
-              <Label htmlFor="type">Тип товара</Label>
+              <Label htmlFor="type" className="flex items-center gap-2">
+                Тип товара
+                <span className="text-red-500">*</span>
+              </Label>
               <Select 
                 value={formData.type} 
                 onValueChange={(value: any) => setFormData({ ...formData, type: value })}
