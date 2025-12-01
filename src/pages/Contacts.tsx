@@ -158,12 +158,12 @@ const Contacts = () => {
               <Card>
                 <CardContent className="p-0">
                   <iframe
-                    src="https://yandex.ru/map-widget/v1/?um=constructor%3A8e5f3c6d8f9a4b2c7d1e0f5a3b8c9d2e&amp;source=constructor"
+                    src="https://yandex.ru/map-widget/v1/?ll=55.957564%2C54.735152&z=17&l=map&pt=55.957564,54.735152,pm2rdm"
                     width="100%"
                     height="480"
                     frameBorder="0"
                     className="rounded-lg"
-                    title="Карта местоположения"
+                    title="г. Уфа, ул. Менделеева, 137к4"
                   ></iframe>
                 </CardContent>
               </Card>
