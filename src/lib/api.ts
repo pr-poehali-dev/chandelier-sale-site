@@ -78,7 +78,12 @@ export const api = {
     }
     
     const url = `${API_URLS.products}${params.toString() ? '?' + params.toString() : ''}`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
     if (!response.ok) throw new Error('Failed to fetch products');
     return response.json();
   },

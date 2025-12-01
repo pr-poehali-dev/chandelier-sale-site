@@ -187,13 +187,7 @@ const Catalog = () => {
     setLoading(true);
     try {
       const data = await api.getProducts({ limit: 200 });
-      if (data.products.length < 50) {
-        await api.seedProducts();
-        const refreshedData = await api.getProducts({ limit: 200 });
-        setProducts(refreshedData.products);
-      } else {
-        setProducts(data.products);
-      }
+      setProducts(data.products);
     } catch (error) {
       toast({
         title: 'Ошибка загрузки',
