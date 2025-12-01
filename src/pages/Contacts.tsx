@@ -157,13 +157,14 @@ const Contacts = () => {
             <div className="max-w-4xl mx-auto">
               <Card>
                 <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                    <div className="text-center">
-                      <Icon name="Map" className="h-16 w-16 text-primary mx-auto mb-4" />
-                      <p className="text-lg font-semibold">Интерактивная карта</p>
-                      <p className="text-sm text-muted-foreground">г. Уфа, ул. Менделеева, 37к4</p>
-                    </div>
-                  </div>
+                  <iframe
+                    src="https://yandex.ru/map-widget/v1/?um=constructor%3A8e5f3c6d8f9a4b2c7d1e0f5a3b8c9d2e&amp;source=constructor"
+                    width="100%"
+                    height="480"
+                    frameBorder="0"
+                    className="rounded-lg"
+                    title="Карта местоположения"
+                  ></iframe>
                 </CardContent>
               </Card>
             </div>
