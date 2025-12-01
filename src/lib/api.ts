@@ -159,7 +159,16 @@ export const api = {
       body: JSON.stringify(data),
     });
     
-    if (!response.ok) throw new Error('Failed to create product');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Create product error:', response.status, errorText);
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || errorJson.message || 'Failed to create product');
+      } catch {
+        throw new Error(`Failed to create product: ${response.status} ${errorText}`);
+      }
+    }
     return response.json();
   },
 
