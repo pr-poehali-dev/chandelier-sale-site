@@ -215,17 +215,19 @@ const Admin = () => {
     
     try {
       await api.deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
       toast({
         title: 'Успешно',
         description: 'Товар удалён',
       });
-      loadProducts();
+      await loadProducts();
     } catch (error) {
       toast({
         title: 'Ошибка',
         description: 'Не удалось удалить товар',
         variant: 'destructive',
       });
+      await loadProducts();
     }
   };
 
@@ -235,18 +237,20 @@ const Admin = () => {
     
     try {
       await api.deleteProducts(selectedProducts);
+      setProducts(prev => prev.filter(p => !selectedProducts.includes(p.id)));
+      setSelectedProducts([]);
       toast({
         title: 'Успешно',
         description: `Удалено товаров: ${selectedProducts.length}`,
       });
-      setSelectedProducts([]);
-      loadProducts();
+      await loadProducts();
     } catch (error) {
       toast({
         title: 'Ошибка',
         description: 'Не удалось удалить товары',
         variant: 'destructive',
       });
+      await loadProducts();
     }
   };
 
