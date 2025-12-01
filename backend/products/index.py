@@ -157,15 +157,15 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     price = body.get('price')
     brand = body.get('brand')
     product_type = body.get('type')
-    image = body.get('image')
+    image = body.get('image', '')
     
-    if not all([name, price, brand, product_type, image]):
+    if not all([name, brand, product_type]) or price is None:
         cur.close()
         conn.close()
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Missing required fields'}),
+            'body': json.dumps({'error': 'Missing required fields: name, price, brand, type'}),
             'isBase64Encoded': False
         }
     
