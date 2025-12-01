@@ -203,9 +203,11 @@ const Admin = () => {
       setIsDialogOpen(false);
       loadProducts();
     } catch (error) {
+      console.error('Save error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось сохранить товар';
       toast({
         title: 'Ошибка',
-        description: 'Не удалось сохранить товар',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
