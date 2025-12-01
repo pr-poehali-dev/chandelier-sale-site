@@ -133,7 +133,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'width': product_dict.get('width'),
             'depth': product_dict.get('depth'),
             'chainLength': product_dict.get('chain_length'),
-            'images': json.loads(product_dict.get('images', '[]') or '[]')
+            'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
         })
     
     cur.close()
@@ -386,7 +386,7 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'width': product_dict.get('width'),
         'depth': product_dict.get('depth'),
         'chainLength': product_dict.get('chain_length'),
-        'images': json.loads(product_dict.get('images', '[]'))
+        'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
     }
     
     cur.close()
