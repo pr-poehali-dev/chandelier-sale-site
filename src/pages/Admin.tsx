@@ -93,9 +93,11 @@ const Admin = () => {
       const data = await api.getProducts({ limit: 200 });
       setProducts(data.products);
     } catch (error) {
+      console.error('Load products error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить товары',
+        title: 'Ошибка загрузки товаров',
+        description: `${errorMessage}. Проверьте подключение к интернету или обновите страницу.`,
         variant: 'destructive',
       });
     } finally {
@@ -204,11 +206,13 @@ const Admin = () => {
       loadProducts();
     } catch (error) {
       console.error('Save error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось сохранить товар';
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      const action = isNewProduct ? 'создать' : 'обновить';
       toast({
-        title: 'Ошибка',
-        description: errorMessage,
+        title: `Не удалось ${action} товар`,
+        description: `${errorMessage}. Проверьте заполнение обязательных полей (название, цена, бренд, тип).`,
         variant: 'destructive',
+        duration: 5000,
       });
     }
   };
@@ -226,10 +230,13 @@ const Admin = () => {
       });
       await loadProducts();
     } catch (error) {
+      console.error('Delete product error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить товар',
+        title: 'Не удалось удалить товар',
+        description: `${errorMessage}. Попробуйте ещё раз или обновите страницу.`,
         variant: 'destructive',
+        duration: 5000,
       });
       await loadProducts();
     } finally {
@@ -252,10 +259,13 @@ const Admin = () => {
       });
       await loadProducts();
     } catch (error) {
+      console.error('Bulk delete error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить товары',
+        title: 'Не удалось удалить товары',
+        description: `${errorMessage}. Возможно, некоторые товары были удалены. Обновите страницу.`,
         variant: 'destructive',
+        duration: 5000,
       });
       await loadProducts();
     } finally {
