@@ -127,18 +127,12 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
 def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     body = json.loads(event.get('body', '{}'))
     
+    # Required fields
     name = body.get('name')
-    description = body.get('description', '')
     price = body.get('price')
     brand = body.get('brand')
     product_type = body.get('type')
     image = body.get('image')
-    in_stock = body.get('inStock', True)
-    rating = body.get('rating', 5.0)
-    reviews = body.get('reviews', 0)
-    has_remote = body.get('hasRemote', False)
-    is_dimmable = body.get('isDimmable', False)
-    has_color_change = body.get('hasColorChange', False)
     
     if not all([name, price, brand, product_type, image]):
         cur.close()
@@ -146,12 +140,56 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Missing required fields'})
+            'body': json.dumps({'error': 'Missing required fields'}),
+            'isBase64Encoded': False
         }
     
+    # Extract all fields with defaults
+    description = body.get('description', '')
+    in_stock = body.get('inStock', True)
+    rating = body.get('rating', 5.0)
+    reviews = body.get('reviews', 0)
+    has_remote = body.get('hasRemote', False)
+    is_dimmable = body.get('isDimmable', False)
+    has_color_change = body.get('hasColorChange', False)
+    
+    # Extended fields
+    article = body.get('article')
+    brand_country = body.get('brandCountry')
+    manufacturer_country = body.get('manufacturerCountry')
+    collection = body.get('collection')
+    style = body.get('style')
+    lamp_type = body.get('lampType')
+    socket_type = body.get('socketType')
+    bulb_type = body.get('bulbType')
+    lamp_count = body.get('lampCount')
+    lamp_power = body.get('lampPower')
+    total_power = body.get('totalPower')
+    lighting_area = body.get('lightingArea')
+    voltage = body.get('voltage', 220)
+    color = body.get('color')
+    height = body.get('height')
+    diameter = body.get('diameter')
+    length = body.get('length')
+    width = body.get('width')
+    depth = body.get('depth')
+    chain_length = body.get('chainLength')
+    images = json.dumps(body.get('images', []))
+    
     cur.execute(
-        "INSERT INTO products (name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-        (name, description, price, brand, product_type, image, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change)
+        """INSERT INTO products (
+            name, description, price, brand, type, image_url, in_stock, rating, reviews,
+            has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
+            collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power,
+            total_power, lighting_area, voltage, color, height, diameter, length, width,
+            depth, chain_length, images
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id""",
+        (name, description, price, brand, product_type, image, in_stock, rating, reviews,
+         has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
+         collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power,
+         total_power, lighting_area, voltage, color, height, diameter, length, width,
+         depth, chain_length, images)
     )
     product_id = cur.fetchone()[0]
     conn.commit()
@@ -160,16 +198,37 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'id': product_id,
         'name': name,
         'description': description,
-        'price': price,
+        'price': float(price),
         'brand': brand,
         'type': product_type,
         'image': image,
         'inStock': in_stock,
-        'rating': rating,
+        'rating': float(rating),
         'reviews': reviews,
         'hasRemote': has_remote,
         'isDimmable': is_dimmable,
-        'hasColorChange': has_color_change
+        'hasColorChange': has_color_change,
+        'article': article,
+        'brandCountry': brand_country,
+        'manufacturerCountry': manufacturer_country,
+        'collection': collection,
+        'style': style,
+        'lampType': lamp_type,
+        'socketType': socket_type,
+        'bulbType': bulb_type,
+        'lampCount': lamp_count,
+        'lampPower': lamp_power,
+        'totalPower': total_power,
+        'lightingArea': lighting_area,
+        'voltage': voltage,
+        'color': color,
+        'height': height,
+        'diameter': diameter,
+        'length': length,
+        'width': width,
+        'depth': depth,
+        'chainLength': chain_length,
+        'images': body.get('images', [])
     }
     
     cur.close()
@@ -201,50 +260,37 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Invalid product ID'})
+            'body': json.dumps({'error': 'Invalid product ID'}),
+            'isBase64Encoded': False
         }
     
     body = json.loads(event.get('body', '{}'))
     
+    # Mapping of JSON keys to database columns
+    field_mapping = {
+        'name': 'name', 'description': 'description', 'price': 'price', 'brand': 'brand',
+        'type': 'type', 'image': 'image_url', 'inStock': 'in_stock', 'rating': 'rating',
+        'reviews': 'reviews', 'hasRemote': 'has_remote', 'isDimmable': 'is_dimmable',
+        'hasColorChange': 'has_color_change', 'article': 'article', 'brandCountry': 'brand_country',
+        'manufacturerCountry': 'manufacturer_country', 'collection': 'collection', 'style': 'style',
+        'lampType': 'lamp_type', 'socketType': 'socket_type', 'bulbType': 'bulb_type',
+        'lampCount': 'lamp_count', 'lampPower': 'lamp_power', 'totalPower': 'total_power',
+        'lightingArea': 'lighting_area', 'voltage': 'voltage', 'color': 'color',
+        'height': 'height', 'diameter': 'diameter', 'length': 'length', 'width': 'width',
+        'depth': 'depth', 'chainLength': 'chain_length'
+    }
+    
     updates = []
     params = []
     
-    if 'name' in body:
-        updates.append("name = %s")
-        params.append(body['name'])
-    if 'description' in body:
-        updates.append("description = %s")
-        params.append(body['description'])
-    if 'price' in body:
-        updates.append("price = %s")
-        params.append(body['price'])
-    if 'brand' in body:
-        updates.append("brand = %s")
-        params.append(body['brand'])
-    if 'type' in body:
-        updates.append("type = %s")
-        params.append(body['type'])
-    if 'image' in body:
-        updates.append("image_url = %s")
-        params.append(body['image'])
-    if 'inStock' in body:
-        updates.append("in_stock = %s")
-        params.append(body['inStock'])
-    if 'rating' in body:
-        updates.append("rating = %s")
-        params.append(body['rating'])
-    if 'reviews' in body:
-        updates.append("reviews = %s")
-        params.append(body['reviews'])
-    if 'hasRemote' in body:
-        updates.append("has_remote = %s")
-        params.append(body['hasRemote'])
-    if 'isDimmable' in body:
-        updates.append("is_dimmable = %s")
-        params.append(body['isDimmable'])
-    if 'hasColorChange' in body:
-        updates.append("has_color_change = %s")
-        params.append(body['hasColorChange'])
+    for json_key, db_column in field_mapping.items():
+        if json_key in body:
+            updates.append(f"{db_column} = %s")
+            params.append(body[json_key])
+    
+    if 'images' in body:
+        updates.append("images = %s")
+        params.append(json.dumps(body['images']))
     
     if not updates:
         cur.close()
@@ -252,15 +298,19 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'No fields to update'})
+            'body': json.dumps({'error': 'No fields to update'}),
+            'isBase64Encoded': False
         }
     
     params.append(int(product_id))
-    query = f"UPDATE products SET {', '.join(updates)} WHERE id = %s RETURNING id, name, description, price, brand, type, image_url, in_stock, rating, reviews, has_remote, is_dimmable, has_color_change"
+    query = f"UPDATE products SET {', '.join(updates)} WHERE id = %s"
     
     cur.execute(query, params)
-    row = cur.fetchone()
     conn.commit()
+    
+    # Fetch the complete updated product
+    cur.execute("SELECT * FROM products WHERE id = %s", (int(product_id),))
+    row = cur.fetchone()
     
     if not row:
         cur.close()
@@ -268,23 +318,50 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         return {
             'statusCode': 404,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Product not found'})
+            'body': json.dumps({'error': 'Product not found'}),
+            'isBase64Encoded': False
         }
     
+    # Get column names
+    col_names = [desc[0] for desc in cur.description]
+    product_dict = dict(zip(col_names, row))
+    
+    # Convert to API format
     result = {
-        'id': row[0],
-        'name': row[1],
-        'description': row[2],
-        'price': float(row[3]),
-        'brand': row[4],
-        'type': row[5],
-        'image': row[6],
-        'inStock': row[7],
-        'rating': float(row[8]),
-        'reviews': int(row[9]),
-        'hasRemote': bool(row[10]) if row[10] is not None else False,
-        'isDimmable': bool(row[11]) if row[11] is not None else False,
-        'hasColorChange': bool(row[12]) if row[12] is not None else False
+        'id': product_dict['id'],
+        'name': product_dict['name'],
+        'description': product_dict.get('description'),
+        'price': float(product_dict['price']),
+        'brand': product_dict['brand'],
+        'type': product_dict['type'],
+        'image': product_dict['image_url'],
+        'inStock': product_dict.get('in_stock', True),
+        'rating': float(product_dict.get('rating', 5.0)),
+        'reviews': int(product_dict.get('reviews', 0)),
+        'hasRemote': bool(product_dict.get('has_remote', False)),
+        'isDimmable': bool(product_dict.get('is_dimmable', False)),
+        'hasColorChange': bool(product_dict.get('has_color_change', False)),
+        'article': product_dict.get('article'),
+        'brandCountry': product_dict.get('brand_country'),
+        'manufacturerCountry': product_dict.get('manufacturer_country'),
+        'collection': product_dict.get('collection'),
+        'style': product_dict.get('style'),
+        'lampType': product_dict.get('lamp_type'),
+        'socketType': product_dict.get('socket_type'),
+        'bulbType': product_dict.get('bulb_type'),
+        'lampCount': product_dict.get('lamp_count'),
+        'lampPower': product_dict.get('lamp_power'),
+        'totalPower': product_dict.get('total_power'),
+        'lightingArea': product_dict.get('lighting_area'),
+        'voltage': product_dict.get('voltage'),
+        'color': product_dict.get('color'),
+        'height': product_dict.get('height'),
+        'diameter': product_dict.get('diameter'),
+        'length': product_dict.get('length'),
+        'width': product_dict.get('width'),
+        'depth': product_dict.get('depth'),
+        'chainLength': product_dict.get('chain_length'),
+        'images': json.loads(product_dict.get('images', '[]'))
     }
     
     cur.close()
