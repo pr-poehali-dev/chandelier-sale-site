@@ -190,6 +190,10 @@ def parse_product_page(url: str, yandex_key: str) -> Optional[Dict[str, Any]]:
             timeout=30
         )
         
+        print(f"DEBUG: Yandex response status: {yandex_response.status_code}")
+        if yandex_response.status_code != 200:
+            print(f"DEBUG: Yandex error: {yandex_response.text}")
+        
         yandex_response.raise_for_status()
         result = yandex_response.json()
         
