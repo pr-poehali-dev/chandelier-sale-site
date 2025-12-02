@@ -7,7 +7,7 @@ import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Import products from external websites using AI parsing
+    Business: Import products from external websites using AI parsing with GPT-4o-mini
     Args: event with httpMethod, body containing url or urls array
     Returns: HTTP response with imported products count and details
     '''
