@@ -50,7 +50,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Temporary hardcode for testing
         if not yandex_key:
-            yandex_key = "AQVN1D_wXNBzWSDqrBTWDDR05H8yXTaSLc7scvFi"
+            yandex_key = "YCMGNO2sDlFWbai8_03o90BJnJ59rCrVAoj4nHBm"
         
         print(f"DEBUG: Yandex key exists: {yandex_key is not None}")
         print(f"DEBUG: Yandex key starts: {yandex_key[:10] if yandex_key else 'None'}...")
