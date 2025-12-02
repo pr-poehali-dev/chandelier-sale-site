@@ -3,8 +3,7 @@ import os
 import re
 from typing import Dict, Any, List, Optional
 import psycopg2
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -100,13 +99,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def parse_product_page(url: str, openai_key: str) -> Optional[Dict[str, Any]]:
     '''Fetch and parse product page using OpenAI'''
     try:
-        # Fetch page content
-        req = Request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        })
+        # Fetch page content with realistic browser headers
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0'
+        }
         
-        with urlopen(req, timeout=10) as response:
-            html_content = response.read().decode('utf-8', errors='ignore')
+        response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+        response.raise_for_status()
+        html_content = response.text
         
         # Clean HTML - remove scripts, styles
         html_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
@@ -117,7 +127,6 @@ def parse_product_page(url: str, openai_key: str) -> Optional[Dict[str, Any]]:
             html_content = html_content[:50000]
         
         # Call OpenAI API
-        import urllib.request
         openai_request = {
             'model': 'gpt-4o-mini',
             'messages': [
@@ -160,17 +169,17 @@ If field not found, omit it. Price must be numeric without currency symbols.'''
             'max_tokens': 1500
         }
         
-        req = urllib.request.Request(
+        openai_response = requests.post(
             'https://api.openai.com/v1/chat/completions',
-            data=json.dumps(openai_request).encode('utf-8'),
+            json=openai_request,
             headers={
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {openai_key}'
-            }
+            },
+            timeout=30
         )
-        
-        with urllib.request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode('utf-8'))
+        openai_response.raise_for_status()
+        result = openai_response.json()
         
         content = result['choices'][0]['message']['content'].strip()
         
