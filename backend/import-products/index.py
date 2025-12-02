@@ -47,6 +47,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         openai_key = os.environ.get('OPENAI_API_KEY')
+        print(f"DEBUG: OPENAI_API_KEY exists: {openai_key is not None}")
+        print(f"DEBUG: OPENAI_API_KEY length: {len(openai_key) if openai_key else 0}")
         if not openai_key:
             return {
                 'statusCode': 500,
