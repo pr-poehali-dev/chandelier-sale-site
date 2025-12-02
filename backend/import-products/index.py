@@ -46,17 +46,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        openai_key = os.environ.get('OPENAI_API_KEY')
+        yandex_key = os.environ.get('YANDEX_API_KEY')
         
-        # TEMPORARY: Hardcode key for testing (REMOVE IN PRODUCTION!)
-        if not openai_key:
-            openai_key = "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"
-        
-        if not openai_key:
+        if not yandex_key:
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'OPENAI_API_KEY not configured'}),
+                'body': json.dumps({'error': 'YANDEX_API_KEY not configured'}),
                 'isBase64Encoded': False
             }
         
@@ -68,7 +64,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for url in urls:
             try:
-                product_data = parse_product_page(url, openai_key)
+                product_data = parse_product_page(url, yandex_key)
                 if product_data:
                     insert_product(cur, product_data)
                     imported_count += 1
@@ -101,8 +97,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
 
-def parse_product_page(url: str, openai_key: str) -> Optional[Dict[str, Any]]:
-    '''Fetch and parse product page using OpenAI'''
+def parse_product_page(url: str, yandex_key: str) -> Optional[Dict[str, Any]]:
+    '''Fetch and parse product page using YandexGPT'''
     try:
         # Fetch page content with realistic browser headers
         headers = {
@@ -131,72 +127,66 @@ def parse_product_page(url: str, openai_key: str) -> Optional[Dict[str, Any]]:
         if len(html_content) > 50000:
             html_content = html_content[:50000]
         
-        # Call OpenAI API
-        openai_request = {
-            'model': 'gpt-4o-mini',
+        # Call YandexGPT API
+        yandex_request = {
+            'modelUri': 'gpt://b1gqkshr48b4l2to9ukh/yandexgpt-lite',
+            'completionOptions': {
+                'stream': False,
+                'temperature': 0.3,
+                'maxTokens': 2000
+            },
             'messages': [
                 {
                     'role': 'system',
-                    'content': '''Extract product information from HTML. Return ONLY valid JSON with this exact structure:
+                    'text': '''Извлеки информацию о товаре из HTML. Верни ТОЛЬКО валидный JSON с такой структурой:
 {
-  "name": "product name",
-  "price": numeric_price,
-  "brand": "brand name",
-  "description": "full description",
-  "type": "chandelier or ceiling_chandelier or pendant_chandelier or sconce or floor_lamp or table_lamp",
-  "image": "main image URL",
+  "name": "название товара",
+  "price": числовая_цена,
+  "brand": "бренд",
+  "description": "полное описание",
+  "type": "chandelier или ceiling_chandelier или pendant_chandelier или sconce или floor_lamp или table_lamp",
+  "image": "URL главной картинки",
   "inStock": true/false,
-  "article": "article number",
-  "brandCountry": "brand country",
-  "manufacturerCountry": "manufacturer country",
-  "collection": "collection name",
-  "style": "style",
-  "lampType": "lamp type",
-  "socketType": "socket type",
-  "lampCount": number,
-  "lampPower": number,
+  "article": "артикул",
+  "brandCountry": "страна бренда",
+  "manufacturerCountry": "страна производства",
+  "collection": "коллекция",
+  "style": "стиль",
+  "lampType": "тип лампы",
+  "socketType": "тип цоколя",
+  "lampCount": число,
+  "lampPower": число,
   "voltage": 220,
-  "color": "color",
-  "height": number_in_cm,
-  "diameter": number_in_cm,
+  "color": "цвет",
+  "height": число_в_см,
+  "diameter": число_в_см,
   "hasRemote": true/false,
   "isDimmable": true/false,
   "hasColorChange": true/false
 }
-If field not found, omit it. Price must be numeric without currency symbols.'''
+Если поле не найдено, не включай его. Цена должна быть числом без символа валюты.'''
                 },
                 {
                     'role': 'user',
-                    'content': f'URL: {url}\n\nHTML:\n{html_content}'
+                    'text': f'URL: {url}\n\nHTML:\n{html_content}'
                 }
-            ],
-            'temperature': 0.3,
-            'max_tokens': 1500
+            ]
         }
         
-        # Debug: Check API key format
-        print(f"DEBUG: API key starts with: {openai_key[:15] if openai_key else 'None'}...")
-        print(f"DEBUG: API key length: {len(openai_key) if openai_key else 0}")
-        
-        openai_response = requests.post(
-            'https://api.openai.com/v1/chat/completions',
-            json=openai_request,
+        yandex_response = requests.post(
+            'https://llm.api.cloud.yandex.net/foundationModels/v1/completion',
+            json=yandex_request,
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {openai_key}'
+                'Authorization': f'Api-Key {yandex_key}'
             },
             timeout=30
         )
         
-        # Debug: Print response status
-        print(f"DEBUG: OpenAI response status: {openai_response.status_code}")
-        if openai_response.status_code != 200:
-            print(f"DEBUG: OpenAI error response: {openai_response.text}")
+        yandex_response.raise_for_status()
+        result = yandex_response.json()
         
-        openai_response.raise_for_status()
-        result = openai_response.json()
-        
-        content = result['choices'][0]['message']['content'].strip()
+        content = result['result']['alternatives'][0]['message']['text'].strip()
         
         # Remove markdown code blocks if present
         content = re.sub(r'^```json\s*', '', content)
