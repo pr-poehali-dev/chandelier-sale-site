@@ -48,6 +48,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         yandex_key = os.environ.get('YANDEX_API_KEY')
         
+        # Temporary hardcode for testing
+        if not yandex_key:
+            yandex_key = "AQVN1D_wXNBzWSDqrBTWDDR05H8yXTaSLc7scvFi"
+        
+        print(f"DEBUG: Yandex key exists: {yandex_key is not None}")
+        print(f"DEBUG: Yandex key starts: {yandex_key[:10] if yandex_key else 'None'}...")
+        
         if not yandex_key:
             return {
                 'statusCode': 500,
