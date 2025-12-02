@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Import products from external websites using HTML parsing
+    Business: Import products from external websites using AI parsing with GPT-4o-mini
     Args: event with httpMethod, body containing url or urls array
     Returns: HTTP response with imported products count and details
     '''
@@ -47,8 +47,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        # No API key needed for BeautifulSoup parsing
-        api_key = None
+        yandex_key = os.environ.get('YANDEX_API_KEY')
+        
+        if not yandex_key:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'YANDEX_API_KEY not configured'}),
+                'isBase64Encoded': False
+            }
         
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
@@ -58,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for url in urls:
             try:
-                product_data = parse_product_page(url, api_key)
+                product_data = parse_product_page(url, yandex_key)
                 if product_data:
                     insert_product(cur, product_data)
                     imported_count += 1
@@ -92,87 +99,75 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 
 def parse_product_page(url: str, api_key: str) -> Optional[Dict[str, Any]]:
-    '''Fetch and parse product page using BeautifulSoup'''
+    '''Fetch and parse product page using GPT-4o-mini through proxy'''
     try:
-        # Fetch page content
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'ru-RU,ru;q=0.9',
-        }
+        # Fetch page through proxy
+        proxy_url = 'https://proxy-basic.vercel.app/api/proxy'
         
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.post(
+            proxy_url,
+            json={'url': url},
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
         response.raise_for_status()
+        html_content = response.text
         
-        soup = BeautifulSoup(response.text, 'lxml')
-        product_data = {}
+        # Parse with GPT
+        yandex_url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
         
-        # Name
-        name_elem = soup.find('h1', class_='product-title') or soup.find('h1')
-        if name_elem:
-            product_data['name'] = name_elem.get_text(strip=True)
+        prompt = f'''Ты парсер товаров с сайтов освещения. Извлеки данные из HTML и верни ТОЛЬКО JSON.
+
+HTML:
+{html_content[:15000]}
+
+Верни JSON:
+{{
+  "name": "название товара",
+  "price": число_без_валюты,
+  "image": "URL изображения",
+  "description": "краткое описание",
+  "article": "артикул",
+  "type": "chandelier/sconce/floor_lamp/table_lamp",
+  "brand": "бренд",
+  "voltage": 220
+}}
+
+Верни ТОЛЬКО JSON, без комментариев.'''
         
-        # Price
-        price_elem = (soup.find('span', class_='price') or 
-                     soup.find('div', class_='product-price') or
-                     soup.find(text=re.compile(r'\d+\s*₽')))
-        if price_elem:
-            price_text = price_elem.get_text(strip=True) if hasattr(price_elem, 'get_text') else str(price_elem)
-            price_match = re.search(r'(\d+[\s\d]*)', price_text.replace(' ', '').replace('\xa0', ''))
-            if price_match:
-                product_data['price'] = int(price_match.group(1))
+        yandex_response = requests.post(
+            yandex_url,
+            headers={
+                'Authorization': f'Api-Key {api_key}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'modelUri': f'gpt://b1gpa30f0b7akheun7sr/yandexgpt-lite/latest',
+                'completionOptions': {
+                    'temperature': 0.1,
+                    'maxTokens': 1000
+                },
+                'messages': [
+                    {'role': 'user', 'text': prompt}
+                ]
+            },
+            timeout=30
+        )
+        yandex_response.raise_for_status()
         
-        # Image
-        img_elem = soup.find('img', class_=re.compile(r'product|main')) or soup.find('img')
-        if img_elem:
-            img_src = img_elem.get('src') or img_elem.get('data-src')
-            if img_src:
-                if img_src.startswith('//'):
-                    img_src = 'https:' + img_src
-                elif img_src.startswith('/'):
-                    img_src = 'https://www.vamsvet.ru' + img_src
-                product_data['image'] = img_src
+        result = yandex_response.json()
+        gpt_text = result['result']['alternatives'][0]['message']['text'].strip()
         
-        # Description
-        desc_elem = soup.find('div', class_=re.compile(r'description|product-description'))
-        if desc_elem:
-            product_data['description'] = desc_elem.get_text(strip=True)[:500]
+        # Extract JSON
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', gpt_text, re.DOTALL)
+        if json_match:
+            product_data = json.loads(json_match.group(0))
+            product_data.setdefault('rating', 5.0)
+            product_data.setdefault('reviews', 0)
+            product_data.setdefault('inStock', True)
+            return product_data
         
-        # Article
-        article_elem = soup.find(text=re.compile(r'Артикул|артикул'))
-        if article_elem and article_elem.parent:
-            article_text = article_elem.parent.get_text(strip=True)
-            article_match = re.search(r'[\d\-]+', article_text)
-            if article_match:
-                product_data['article'] = article_match.group(0)
-        
-        # Type from name
-        if 'name' in product_data:
-            name_lower = product_data['name'].lower()
-            if 'люстра' in name_lower:
-                product_data['type'] = 'chandelier'
-            elif 'бра' in name_lower:
-                product_data['type'] = 'sconce'
-            elif 'торшер' in name_lower:
-                product_data['type'] = 'floor_lamp'
-            elif 'настольная' in name_lower:
-                product_data['type'] = 'table_lamp'
-        
-        # Defaults
-        product_data.setdefault('rating', 5.0)
-        product_data.setdefault('reviews', 0)
-        product_data.setdefault('inStock', True)
-        product_data.setdefault('type', 'chandelier')
-        product_data.setdefault('brand', 'Unknown')
-        product_data.setdefault('voltage', 220)
-        
-        # Validate
-        if not product_data.get('name') or not product_data.get('price'):
-            print(f'Missing fields: name={product_data.get("name")}, price={product_data.get("price")}')
-            return None
-        
-        print(f'Parsed: {product_data.get("name")} - {product_data.get("price")} руб.')
-        return product_data
+        return None
         
     except Exception as e:
         print(f"Error parsing {url}: {e}")
