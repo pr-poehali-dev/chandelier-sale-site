@@ -174,6 +174,10 @@ If field not found, omit it. Price must be numeric without currency symbols.'''
             'max_tokens': 1500
         }
         
+        # Debug: Check API key format
+        print(f"DEBUG: API key starts with: {openai_key[:15] if openai_key else 'None'}...")
+        print(f"DEBUG: API key length: {len(openai_key) if openai_key else 0}")
+        
         openai_response = requests.post(
             'https://api.openai.com/v1/chat/completions',
             json=openai_request,
@@ -183,6 +187,12 @@ If field not found, omit it. Price must be numeric without currency symbols.'''
             },
             timeout=30
         )
+        
+        # Debug: Print response status
+        print(f"DEBUG: OpenAI response status: {openai_response.status_code}")
+        if openai_response.status_code != 200:
+            print(f"DEBUG: OpenAI error response: {openai_response.text}")
+        
         openai_response.raise_for_status()
         result = openai_response.json()
         
