@@ -168,6 +168,7 @@ Return ONLY JSON, no comments.'''
                 'temperature': 0.1,
                 'max_tokens': 1000
             },
+            proxies=None,
             timeout=30
         )
         openai_response.raise_for_status()
