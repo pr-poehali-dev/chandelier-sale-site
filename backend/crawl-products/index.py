@@ -37,43 +37,39 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    # Test OpenAI API key and proxy
-    openai_key = os.environ.get('OPENAI_API_KEY', '')
-    if openai_key:
-        try:
-            # Proxy configuration for test
-            proxy_host = os.environ.get('PROXY_HOST', '')
-            proxy_port = os.environ.get('PROXY_PORT', '')
-            proxy_user = os.environ.get('PROXY_USERNAME', '')
-            proxy_pass = os.environ.get('PROXY_PASSWORD', '')
-            
-            test_proxies = None
-            if proxy_host and proxy_port and proxy_user and proxy_pass:
-                proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-                test_proxies = {'http': proxy_url, 'https': proxy_url}
-                print(f"Testing OpenAI API with proxy: {proxy_host}:{proxy_port}")
-            else:
-                print("Testing OpenAI API without proxy")
-            
-            test_response = requests.post(
-                'https://api.openai.com/v1/chat/completions',
-                headers={
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {openai_key}'
-                },
-                json={
-                    'model': 'gpt-4o-mini',
-                    'messages': [{'role': 'user', 'content': 'Test'}],
-                    'max_tokens': 5
-                },
-                proxies=test_proxies,
-                timeout=10
-            )
-            print(f"✓ OpenAI API test: {test_response.status_code}")
-        except Exception as test_error:
-            print(f"⚠ OpenAI API test failed: {test_error}")
-    else:
-        print("⚠ OPENAI_API_KEY not configured")
+    # Hardcoded proxy and API key for testing
+    proxy_host = "154.196.57.17"
+    proxy_port = "62672"
+    proxy_user = "7U25TWa5"
+    proxy_pass = "AALFpAK9"
+    openai_key = "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"
+    
+    # Test OpenAI API with proxy
+    try:
+        test_proxies = {
+            'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+            'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+        }
+        print(f"Testing OpenAI API with proxy: {proxy_host}:{proxy_port}")
+        
+        test_response = requests.post(
+            'https://api.openai.com/v1/chat/completions',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {openai_key}'
+            },
+            json={
+                'model': 'gpt-4o-mini',
+                'messages': [{'role': 'user', 'content': 'Напиши слово: работает'}],
+                'max_tokens': 10
+            },
+            proxies=test_proxies,
+            timeout=20
+        )
+        print(f"✓ OpenAI API test status: {test_response.status_code}")
+        print(f"✓ OpenAI API response: {test_response.text}")
+    except Exception as test_error:
+        print(f"⚠ OpenAI API test failed: {test_error}")
     
     body_data = json.loads(event.get('body', '{}'))
     start_url: str = body_data.get('start_url', '')
@@ -130,19 +126,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     }
     
-    # Proxy configuration
-    proxy_host = os.environ.get('PROXY_HOST', '')
-    proxy_port = os.environ.get('PROXY_PORT', '')
-    proxy_user = os.environ.get('PROXY_USERNAME', '')
-    proxy_pass = os.environ.get('PROXY_PASSWORD', '')
+    # Hardcoded proxy configuration
+    proxy_host = "154.196.57.17"
+    proxy_port = "62672"
+    proxy_user = "7U25TWa5"
+    proxy_pass = "AALFpAK9"
     
-    proxies = None
-    if proxy_host and proxy_port and proxy_user and proxy_pass:
-        proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-        proxies = {'http': proxy_url, 'https': proxy_url}
-        print(f"✓ Using proxy: {proxy_host}:{proxy_port} (user: {proxy_user})")
-    else:
-        print("⚠ Proxy not configured - using direct connection")
+    proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+    proxies = {'http': proxy_url, 'https': proxy_url}
+    print(f"✓ Using proxy: {proxy_host}:{proxy_port}")
     
     pages_crawled = 0
     
