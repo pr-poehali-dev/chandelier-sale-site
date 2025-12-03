@@ -36,6 +36,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
+        # Test OpenAI API key and proxy
+        openai_key = os.environ.get('OPENAI_API_KEY', '')
+        if openai_key:
+            try:
+                # Proxy configuration for test
+                proxy_host = os.environ.get('PROXY_HOST', '')
+                proxy_port = os.environ.get('PROXY_PORT', '')
+                proxy_user = os.environ.get('PROXY_USERNAME', '')
+                proxy_pass = os.environ.get('PROXY_PASSWORD', '')
+                
+                test_proxies = None
+                if proxy_host and proxy_port and proxy_user and proxy_pass:
+                    proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+                    test_proxies = {'http': proxy_url, 'https': proxy_url}
+                    print(f"Testing OpenAI API with proxy: {proxy_host}:{proxy_port}")
+                else:
+                    print("Testing OpenAI API without proxy")
+                
+                test_response = requests.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Authorization': f'Bearer {openai_key}'
+                    },
+                    json={
+                        'model': 'gpt-4o-mini',
+                        'messages': [{'role': 'user', 'content': 'Test'}],
+                        'max_tokens': 5
+                    },
+                    proxies=test_proxies,
+                    timeout=10
+                )
+                print(f"✓ OpenAI API test: {test_response.status_code}")
+            except Exception as test_error:
+                print(f"⚠ OpenAI API test failed: {test_error}")
+        else:
+            print("⚠ OPENAI_API_KEY not configured")
+        
         body_data = json.loads(event.get('body', '{}'))
         urls = body_data.get('urls', [])
         
