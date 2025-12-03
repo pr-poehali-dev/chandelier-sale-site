@@ -282,18 +282,44 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
                     product_data['description'] = desc_text[:500]
                     print(f"Description (meta): {product_data['description'][:80]}...")
         
-        # === TYPE ===
-        name_lower = product_data['name'].lower()
-        if 'люстра' in name_lower:
+        # === TYPE (Smart detection from breadcrumbs, categories, and name) ===
+        product_data['type'] = 'chandelier'  # default
+        
+        # Collect text from breadcrumbs, categories, and name
+        detection_text = product_data['name'].lower()
+        
+        # Add breadcrumbs
+        breadcrumbs = soup.find('nav', class_=re.compile('breadcrumb|nav-chain', re.I)) or \
+                     soup.find('ul', class_=re.compile('breadcrumb|nav-chain', re.I))
+        if breadcrumbs:
+            detection_text += ' ' + breadcrumbs.get_text(' ', strip=True).lower()
+        
+        # Add category meta
+        cat_meta = soup.find('meta', property='product:category') or \
+                   soup.find('meta', attrs={'name': 'category'})
+        if cat_meta:
+            detection_text += ' ' + cat_meta.get('content', '').lower()
+        
+        # Detection rules (order matters - from specific to general)
+        if 'люстра' in detection_text or 'chandelier' in detection_text:
             product_data['type'] = 'chandelier'
-        elif 'бра' in name_lower or 'настенн' in name_lower:
+            print("Type: chandelier (люстра)")
+        elif 'светильник' in detection_text and ('потолочн' in detection_text or 'подвес' in detection_text):
+            product_data['type'] = 'chandelier'
+            print("Type: chandelier (потолочный светильник)")
+        elif 'бра' in detection_text or 'настенн' in detection_text and 'светильник' in detection_text:
             product_data['type'] = 'sconce'
-        elif 'торшер' in name_lower:
+            print("Type: sconce (бра/настенный)")
+        elif 'торшер' in detection_text or 'floor lamp' in detection_text:
             product_data['type'] = 'floor_lamp'
-        elif 'настольн' in name_lower:
+            print("Type: floor_lamp (торшер)")
+        elif 'настольн' in detection_text or 'table lamp' in detection_text:
             product_data['type'] = 'table_lamp'
-        else:
+            print("Type: table_lamp (настольная лампа)")
+        elif 'светильник' in detection_text:
+            # Generic светильник - default to chandelier
             product_data['type'] = 'chandelier'
+            print("Type: chandelier (светильник)")
         
         # === CHARACTERISTICS TABLE PARSING ===
         # Find characteristics table/list
