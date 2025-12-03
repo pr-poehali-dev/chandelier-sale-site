@@ -27,6 +27,11 @@ const Admin = () => {
   const [importingProducts, setImportingProducts] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importUrls, setImportUrls] = useState('');
+  const [showCrawlDialog, setShowCrawlDialog] = useState(false);
+  const [crawlUrl, setCrawlUrl] = useState('');
+  const [crawlMaxPages, setCrawlMaxPages] = useState(10);
+  const [crawling, setCrawling] = useState(false);
+  const [crawledUrls, setCrawledUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBrand, setFilterBrand] = useState('all');
@@ -508,6 +513,56 @@ const Admin = () => {
     }
   };
 
+  const handleCrawlSite = async () => {
+    if (!crawlUrl.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите ссылку на сайт',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!crawlUrl.startsWith('http')) {
+      toast({
+        title: 'Ошибка',
+        description: 'Ссылка должна начинаться с http:// или https://',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCrawling(true);
+    setCrawledUrls([]);
+
+    try {
+      const result = await api.crawlProducts(crawlUrl, crawlMaxPages);
+      
+      setCrawledUrls(result.product_urls);
+      
+      toast({
+        title: 'Сбор ссылок завершен',
+        description: `Найдено ${result.total_found} товаров на ${result.pages_crawled} страницах`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка сбора ссылок',
+        description: error instanceof Error ? error.message : 'Не удалось собрать ссылки',
+        variant: 'destructive',
+      });
+    } finally {
+      setCrawling(false);
+    }
+  };
+
+  const handleImportCrawledUrls = () => {
+    setImportUrls(crawledUrls.join('\n'));
+    setShowCrawlDialog(false);
+    setShowImportDialog(true);
+    setCrawledUrls([]);
+    setCrawlUrl('');
+  };
+
   const types = [
     { value: 'chandelier', label: 'Люстра' },
     { value: 'ceiling_chandelier', label: 'Потолочная люстра' },
@@ -666,6 +721,13 @@ const Admin = () => {
                 <Icon name="FileSpreadsheet" className="mr-2 h-4 w-4" />
               )}
               Импорт Excel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCrawlDialog(true)}
+            >
+              <Icon name="Search" className="mr-2 h-4 w-4" />
+              Найти товары на сайте
             </Button>
             <Button 
               variant="outline" 
@@ -1645,6 +1707,118 @@ const Admin = () => {
                 </>
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCrawlDialog} onOpenChange={setShowCrawlDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Поиск товаров на сайте</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto">
+            <p className="text-sm text-muted-foreground">
+              Укажите ссылку на каталог сайта. Система автоматически найдет все страницы товаров.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="crawl-url">Ссылка на каталог</Label>
+                <Input
+                  id="crawl-url"
+                  value={crawlUrl}
+                  onChange={(e) => setCrawlUrl(e.target.value)}
+                  placeholder="https://example.com/catalog"
+                  disabled={crawling}
+                />
+              </div>
+              <div>
+                <Label htmlFor="max-pages">Максимум страниц для просмотра</Label>
+                <Input
+                  id="max-pages"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={crawlMaxPages}
+                  onChange={(e) => setCrawlMaxPages(Number(e.target.value))}
+                  disabled={crawling}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Чем больше страниц, тем дольше поиск (макс. 50)
+                </p>
+              </div>
+            </div>
+
+            {crawling && (
+              <div className="flex items-center gap-2 p-4 border rounded-lg bg-muted/50">
+                <Icon name="Loader2" className="h-5 w-5 animate-spin text-primary" />
+                <span className="text-sm">Ищу товары на сайте...</span>
+              </div>
+            )}
+
+            {crawledUrls.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">
+                    Найдено товаров: {crawledUrls.length}
+                  </Label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(crawledUrls.join('\n'));
+                      toast({ title: 'Ссылки скопированы' });
+                    }}
+                  >
+                    <Icon name="Copy" className="h-4 w-4 mr-2" />
+                    Копировать все
+                  </Button>
+                </div>
+                <div className="border rounded-lg p-3 max-h-64 overflow-y-auto bg-muted/30">
+                  <div className="space-y-1 font-mono text-xs">
+                    {crawledUrls.map((url, i) => (
+                      <div key={i} className="text-muted-foreground break-all">
+                        {i + 1}. {url}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCrawlDialog(false);
+                setCrawledUrls([]);
+                setCrawlUrl('');
+              }}
+            >
+              Закрыть
+            </Button>
+            {crawledUrls.length === 0 ? (
+              <Button
+                onClick={handleCrawlSite}
+                disabled={crawling || !crawlUrl.trim()}
+              >
+                {crawling ? (
+                  <>
+                    <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                    Ищу...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Search" className="mr-2 h-4 w-4" />
+                    Найти товары
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleImportCrawledUrls}>
+                <Icon name="Download" className="mr-2 h-4 w-4" />
+                Импортировать найденные ({crawledUrls.length})
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

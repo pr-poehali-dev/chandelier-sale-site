@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Crawl products endpoint exists",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "start_url": "https://example.com",
+        "max_pages": 1
+      },
+      "expectedStatus": 200
+    }
+  ]
+}

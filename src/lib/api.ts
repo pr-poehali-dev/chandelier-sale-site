@@ -4,6 +4,7 @@ const API_URLS = {
   seedProducts: 'https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0',
   searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
   importProducts: 'https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1',
+  crawlProducts: 'https://functions.poehali.dev/5845aa6f-cc5c-416c-86f8-13f4d13f0f2e',
 };
 
 export interface Product {
@@ -218,6 +219,26 @@ export const api = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to import products');
+    }
+    
+    return response.json();
+  },
+
+  async crawlProducts(startUrl: string, maxPages: number = 10): Promise<{
+    success: boolean;
+    pages_crawled: number;
+    product_urls: string[];
+    total_found: number;
+  }> {
+    const response = await fetch(API_URLS.crawlProducts, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ start_url: startUrl, max_pages: maxPages }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to crawl products');
     }
     
     return response.json();
