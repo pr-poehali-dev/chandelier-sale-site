@@ -118,27 +118,57 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         soup = BeautifulSoup(response.text, 'lxml')
         
-        # Parse vamsvet.ru structure
+        # Parse product page structure
         product_data = {}
+        html_text = response.text
         
         # Name - usually in h1
         name_tag = soup.find('h1', class_='product-name') or soup.find('h1')
         product_data['name'] = name_tag.get_text(strip=True) if name_tag else 'Unnamed Product'
         
-        # Price - common patterns
-        price_tag = (
-            soup.find('span', class_='product-price') or
-            soup.find('div', class_='price') or
-            soup.find('span', {'itemprop': 'price'}) or
-            soup.find(string=re.compile(r'₽|\bруб\b'))
-        )
+        # Price - multiple strategies
+        product_data['price'] = 0
         
-        if price_tag:
-            price_text = price_tag.get_text() if hasattr(price_tag, 'get_text') else str(price_tag)
-            price_match = re.search(r'(\d[\d\s]*)', price_text.replace('\xa0', ''))
-            product_data['price'] = float(price_match.group(1).replace(' ', '')) if price_match else 0
-        else:
-            product_data['price'] = 0
+        # Strategy 1: Search in HTML for price patterns
+        price_patterns = [
+            r'купить по цене (\d+(?:\s?\d+)*)\s*(?:RUB|руб|₽)',
+            r'цена[:\s]+(\d+(?:\s?\d+)*)\s*(?:RUB|руб|₽)',
+            r'"price"[:\s]+"?(\d+(?:\s?\d+)*)"?',
+            r'<meta[^>]+itemprop="price"[^>]+content="(\d+(?:\.\d+)?)"',
+        ]
+        
+        for pattern in price_patterns:
+            price_match = re.search(pattern, html_text, re.I)
+            if price_match:
+                price_str = price_match.group(1).replace(' ', '').replace('\xa0', '')
+                try:
+                    product_data['price'] = float(price_str)
+                    print(f"Found price: {product_data['price']}")
+                    break
+                except ValueError:
+                    continue
+        
+        # Strategy 2: BeautifulSoup selectors
+        if product_data['price'] == 0:
+            price_tag = (
+                soup.find('span', {'itemprop': 'price'}) or
+                soup.find('meta', {'itemprop': 'price'}) or
+                soup.find('div', class_='price') or
+                soup.find('span', class_=re.compile(r'price', re.I))
+            )
+            
+            if price_tag:
+                if price_tag.name == 'meta':
+                    price_text = price_tag.get('content', '')
+                else:
+                    price_text = price_tag.get_text()
+                    
+                price_match = re.search(r'(\d+(?:\s?\d+)*)', price_text.replace('\xa0', ''))
+                if price_match:
+                    try:
+                        product_data['price'] = float(price_match.group(1).replace(' ', ''))
+                    except ValueError:
+                        product_data['price'] = 0
         
         # Image - og:image or first product image
         image_tag = (
@@ -152,33 +182,75 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         else:
             product_data['image'] = ''
         
-        # Description
-        desc_tag = (
-            soup.find('div', class_='product-description') or
-            soup.find('meta', property='og:description') or
-            soup.find('div', {'itemprop': 'description'})
-        )
+        # Description - avoid og:description with price
+        desc_tag = soup.find('div', class_='product-description') or soup.find('div', {'itemprop': 'description'})
         
         if desc_tag:
-            if desc_tag.name == 'meta':
-                product_data['description'] = desc_tag.get('content', '')[:500]
+            product_data['description'] = desc_tag.get_text(strip=True)[:500]
+        else:
+            # Fallback but clean from price patterns
+            meta_desc = soup.find('meta', property='og:description')
+            if meta_desc:
+                desc = meta_desc.get('content', '')
+                # Remove price mentions from description
+                desc = re.sub(r'купить по цене \d+.*?(?:RUB|руб|₽)', '', desc, flags=re.I)
+                desc = re.sub(r'цена[:\s]+\d+.*?(?:RUB|руб|₽)', '', desc, flags=re.I)
+                product_data['description'] = desc.strip()[:500]
             else:
-                product_data['description'] = desc_tag.get_text(strip=True)[:500]
-        else:
-            product_data['description'] = ''
+                product_data['description'] = ''
         
-        # Article number - common patterns
-        article_tag = soup.find(string=re.compile(r'Артикул|Код товара|SKU', re.I))
-        if article_tag:
-            article_parent = article_tag.parent
-            article_match = re.search(r'[A-Z0-9\-]+', article_parent.get_text())
-            product_data['article'] = article_match.group(0) if article_match else ''
-        else:
-            product_data['article'] = ''
+        # Article number - multiple strategies
+        product_data['article'] = ''
         
-        # Brand
-        brand_tag = soup.find('span', class_='brand') or soup.find('a', class_='brand')
-        product_data['brand'] = brand_tag.get_text(strip=True) if brand_tag else 'Неизвестный'
+        # From name (common pattern: Brand Name 12345)
+        name_parts = product_data['name'].split()
+        if len(name_parts) > 0:
+            last_part = name_parts[-1]
+            if re.match(r'^[A-Z0-9\-]+$', last_part):
+                product_data['article'] = last_part
+        
+        # From HTML text
+        if not product_data['article']:
+            article_tag = soup.find(string=re.compile(r'Артикул|Код товара|SKU', re.I))
+            if article_tag:
+                article_parent = article_tag.parent
+                article_match = re.search(r'[A-Z0-9\-]+', article_parent.get_text())
+                product_data['article'] = article_match.group(0) if article_match else ''
+        
+        # Brand - extract from name (e.g., "Подвесная люстра Eglo Marbella 85858")
+        product_data['brand'] = 'Неизвестный'
+        
+        # Strategy 1: Extract from name (brand usually after type)
+        name_lower = product_data['name'].lower()
+        type_keywords = ['люстра', 'светильник', 'бра', 'торшер', 'лампа']
+        
+        for keyword in type_keywords:
+            if keyword in name_lower:
+                # Find text after type keyword
+                parts = product_data['name'].split()
+                try:
+                    type_index = next(i for i, p in enumerate(parts) if keyword in p.lower())
+                    if type_index + 1 < len(parts):
+                        # Next word is likely brand
+                        potential_brand = parts[type_index + 1]
+                        # Brand should start with capital and not be a number
+                        if potential_brand[0].isupper() and not potential_brand.isdigit():
+                            product_data['brand'] = potential_brand
+                            break
+                except (StopIteration, IndexError):
+                    pass
+        
+        # Strategy 2: Search in HTML
+        if product_data['brand'] == 'Неизвестный':
+            brand_tag = soup.find('span', class_='brand') or soup.find('a', class_='brand')
+            if brand_tag:
+                product_data['brand'] = brand_tag.get_text(strip=True)
+        
+        # Strategy 3: Search for "Бренд:" in text
+        if product_data['brand'] == 'Неизвестный':
+            brand_match = re.search(r'Бренд[:\s]+([А-ЯA-Z][а-яa-zA-Z\s]+?)(?:\n|<|,|\||$)', html_text)
+            if brand_match:
+                product_data['brand'] = brand_match.group(1).strip()
         
         # Type - detect from name or category
         name_lower = product_data['name'].lower()
@@ -194,7 +266,43 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             product_data['type'] = 'chandelier'
         
         # Parse characteristics from HTML
-        html_text = response.text
+        
+        # Country of manufacture
+        country_patterns = [
+            r'Страна[- ]производител[ья][:\s]+([А-ЯA-Zа-яa-z]+)',
+            r'Страна[:\s]+([А-ЯA-Zа-яa-z]+)',
+            r'Производ[ство|итель][:\s]+([А-ЯA-Zа-яa-z]+)',
+            r'Made in ([A-Z][a-z]+)',
+        ]
+        
+        product_data['manufacturerCountry'] = None
+        product_data['brandCountry'] = None
+        
+        for pattern in country_patterns:
+            country_match = re.search(pattern, html_text, re.I)
+            if country_match:
+                country = country_match.group(1).strip().lower()
+                # Normalize country names
+                country_map = {
+                    'китай': 'Китай',
+                    'china': 'Китай',
+                    'россия': 'Россия',
+                    'russia': 'Россия',
+                    'германия': 'Германия',
+                    'germany': 'Германия',
+                    'италия': 'Италия',
+                    'italy': 'Италия',
+                    'австрия': 'Австрия',
+                    'austria': 'Австрия',
+                    'польша': 'Польша',
+                    'poland': 'Польша',
+                    'чехия': 'Чехия',
+                }
+                
+                normalized = country_map.get(country, country.capitalize())
+                product_data['manufacturerCountry'] = normalized
+                product_data['brandCountry'] = normalized
+                break
         
         # Voltage
         voltage_match = re.search(r'(\d+)\s*В', html_text)
