@@ -202,40 +202,64 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         # === DESCRIPTION (clean) ===
         product_data['description'] = ''
         
-        # Try to find description in specific sections for vamsvet.ru
-        desc_section = soup.find('div', id=re.compile('description|desc', re.I)) or \
-                      soup.find('div', class_=re.compile('description|product-desc|detail-text', re.I))
+        # Strategy 1: Look for vamsvet.ru specific description header
+        desc_header = soup.find('h2', class_='pr-page__title _type-1', text=re.compile('Описание', re.I))
+        if desc_header:
+            # Find next div with pr-page__text class
+            desc_section = desc_header.find_next_sibling('div', class_='pr-page__text')
+            if desc_section:
+                text = desc_section.get_text(strip=True)
+                # Clean from price mentions
+                text = re.sub(r'\d+\s*(?:руб|₽|рублей)', '', text)
+                text = re.sub(r'купить|заказ|цена', '', text, flags=re.I)
+                text = text.strip()
+                if len(text) > 20:
+                    product_data['description'] = text[:500]
+                    print(f"Description (header): {product_data['description'][:80]}...")
         
-        if desc_section:
-            # Get all paragraphs from description
-            paragraphs = desc_section.find_all(['p', 'div'], recursive=False)
-            desc_parts = []
-            for p in paragraphs:
-                text = p.get_text(strip=True)
-                # Skip empty or very short texts
-                if len(text) < 20:
-                    continue
-                # Skip if contains price mentions
-                if re.search(r'\d+\s*(?:руб|₽|рублей)|купить|заказ|цена', text, re.I):
-                    continue
-                desc_parts.append(text)
+        # Strategy 2: Direct search for pr-page__text div
+        if not product_data['description']:
+            desc_section = soup.find('div', class_='pr-page__text')
+            if desc_section:
+                text = desc_section.get_text(strip=True)
+                # Clean from price mentions
+                text = re.sub(r'\d+\s*(?:руб|₽|рублей)', '', text)
+                text = re.sub(r'купить|заказ|цена', '', text, flags=re.I)
+                text = text.strip()
+                if len(text) > 20:
+                    product_data['description'] = text[:500]
+                    print(f"Description (direct): {product_data['description'][:80]}...")
+        
+        # Strategy 3: Generic description section
+        if not product_data['description']:
+            desc_section = soup.find('div', id=re.compile('description|desc', re.I)) or \
+                          soup.find('div', class_=re.compile('description|product-desc|detail-text', re.I))
             
-            if desc_parts:
-                product_data['description'] = ' '.join(desc_parts[:3])[:500]
+            if desc_section:
+                paragraphs = desc_section.find_all(['p', 'div'], recursive=False)
+                desc_parts = []
+                for p in paragraphs:
+                    text = p.get_text(strip=True)
+                    if len(text) < 20:
+                        continue
+                    if re.search(r'\d+\s*(?:руб|₽|рублей)|купить|заказ|цена', text, re.I):
+                        continue
+                    desc_parts.append(text)
+                
+                if desc_parts:
+                    product_data['description'] = ' '.join(desc_parts[:3])[:500]
+                    print(f"Description (generic): {product_data['description'][:80]}...")
         
-        # Fallback: try meta description
+        # Strategy 4: Fallback to meta description
         if not product_data['description']:
             meta_desc = soup.find('meta', property='og:description') or soup.find('meta', attrs={'name': 'description'})
             if meta_desc:
                 desc_text = meta_desc.get('content', '')
-                # Clean from price mentions
                 desc_text = re.sub(r'купить.*?\d+.*?руб', '', desc_text, flags=re.I)
                 desc_text = desc_text.strip()
                 if len(desc_text) > 20:
                     product_data['description'] = desc_text[:500]
-        
-        if product_data['description']:
-            print(f"Description: {product_data['description'][:80]}...")
+                    print(f"Description (meta): {product_data['description'][:80]}...")
         
         # === TYPE ===
         name_lower = product_data['name'].lower()
