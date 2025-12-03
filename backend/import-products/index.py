@@ -100,16 +100,18 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         }
         
         # Proxy configuration
-        proxy_host = os.environ.get('PROXY_HOST')
-        proxy_port = os.environ.get('PROXY_PORT')
-        proxy_user = os.environ.get('PROXY_USERNAME')
-        proxy_pass = os.environ.get('PROXY_PASSWORD')
+        proxy_host = os.environ.get('PROXY_HOST', '')
+        proxy_port = os.environ.get('PROXY_PORT', '')
+        proxy_user = os.environ.get('PROXY_USERNAME', '')
+        proxy_pass = os.environ.get('PROXY_PASSWORD', '')
         
         proxies = None
         if proxy_host and proxy_port and proxy_user and proxy_pass:
             proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
             proxies = {'http': proxy_url, 'https': proxy_url}
-            print(f"Using proxy: {proxy_host}:{proxy_port}")
+            print(f"✓ Using proxy: {proxy_host}:{proxy_port} (user: {proxy_user})")
+        else:
+            print("⚠ Proxy not configured - using direct connection")
         
         response = requests.get(url, headers=headers, proxies=proxies, timeout=30)
         response.raise_for_status()
