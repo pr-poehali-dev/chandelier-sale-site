@@ -47,13 +47,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        yandex_key = os.environ.get('YANDEX_API_KEY')
+        openai_key = os.environ.get('OPENAI_API_KEY')
         
-        if not yandex_key:
+        if not openai_key:
             return {
                 'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'YANDEX_API_KEY not configured'}),
+                'body': json.dumps({'error': 'OPENAI_API_KEY not configured'}),
                 'isBase64Encoded': False
             }
         
@@ -65,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for url in urls:
             try:
-                product_data = parse_product_page(url, yandex_key)
+                product_data = parse_product_page(url, openai_key)
                 if product_data:
                     insert_product(cur, product_data)
                     imported_count += 1
@@ -130,50 +130,50 @@ def parse_product_page(url: str, api_key: str) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         html_content = response.text
         
-        # Parse with GPT
-        yandex_url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion'
+        # Parse with OpenAI GPT-4o-mini
+        openai_url = 'https://api.openai.com/v1/chat/completions'
         
-        prompt = f'''Ты парсер товаров с сайтов освещения. Извлеки данные из HTML и верни ТОЛЬКО JSON.
+        prompt = f'''Extract product data from this HTML and return ONLY valid JSON.
 
 HTML:
 {html_content[:15000]}
 
-Верни JSON:
+Return JSON:
 {{
-  "name": "название товара",
-  "price": число_без_валюты,
-  "image": "URL изображения",
-  "description": "краткое описание",
-  "article": "артикул",
+  "name": "product name",
+  "price": number_without_currency,
+  "image": "image URL",
+  "description": "brief description",
+  "article": "article number",
   "type": "chandelier/sconce/floor_lamp/table_lamp",
-  "brand": "бренд",
-  "voltage": 220
+  "brand": "brand name",
+  "voltage": 220,
+  "color": "color name"
 }}
 
-Верни ТОЛЬКО JSON, без комментариев.'''
+Return ONLY JSON, no comments.'''
         
-        yandex_response = requests.post(
-            yandex_url,
+        openai_response = requests.post(
+            openai_url,
             headers={
-                'Authorization': f'Api-Key {api_key}',
+                'Authorization': f'Bearer {api_key}',
                 'Content-Type': 'application/json'
             },
             json={
-                'modelUri': f'gpt://b1gpa30f0b7akheun7sr/yandexgpt-lite/latest',
-                'completionOptions': {
-                    'temperature': 0.1,
-                    'maxTokens': 1000
-                },
+                'model': 'gpt-4o-mini',
                 'messages': [
-                    {'role': 'user', 'text': prompt}
-                ]
+                    {'role': 'system', 'content': 'You are a product data parser. Return only valid JSON.'},
+                    {'role': 'user', 'content': prompt}
+                ],
+                'temperature': 0.1,
+                'max_tokens': 1000
             },
             timeout=30
         )
-        yandex_response.raise_for_status()
+        openai_response.raise_for_status()
         
-        result = yandex_response.json()
-        gpt_text = result['result']['alternatives'][0]['message']['text'].strip()
+        result = openai_response.json()
+        gpt_text = result['choices'][0]['message']['content'].strip()
         
         # Extract JSON
         json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', gpt_text, re.DOTALL)
