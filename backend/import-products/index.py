@@ -377,6 +377,13 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             characteristics_html = html_text[:8000]
         
         # Use GPT to extract characteristics
+        # Hardcoded proxy credentials (same as above)
+        proxy_host_gpt = "154.196.57.17"
+        proxy_port_gpt = "62672"
+        proxy_user_gpt = "7U25TWa5"
+        proxy_pass_gpt = "AALFpAK9"
+        openai_key_gpt = "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"
+        
         try:
             gpt_prompt = f'''Извлеки все характеристики товара из HTML. Верни ТОЛЬКО JSON объект без markdown форматирования.
             
@@ -406,15 +413,17 @@ HTML:
             {characteristics_html}'''
             
             proxies_gpt = {
-                'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
-                'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+                'http': f'http://{proxy_user_gpt}:{proxy_pass_gpt}@{proxy_host_gpt}:{proxy_port_gpt}',
+                'https': f'http://{proxy_user_gpt}:{proxy_pass_gpt}@{proxy_host_gpt}:{proxy_port_gpt}'
             }
+            
+            print(f"🔧 Using proxy for GPT: {proxy_host_gpt}:{proxy_port_gpt} with user {proxy_user_gpt}")
             
             gpt_response = requests.post(
                 'https://api.openai.com/v1/chat/completions',
                 headers={
                     'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {openai_key}'
+                    'Authorization': f'Bearer {openai_key_gpt}'
                 },
                 json={
                     'model': 'gpt-4o-mini',
@@ -426,8 +435,12 @@ HTML:
                 timeout=30
             )
             
+            print(f"📡 GPT API response status: {gpt_response.status_code}")
+            
             if gpt_response.status_code == 200:
                 gpt_data = gpt_response.json()
+                print(f"📊 GPT tokens used: prompt={gpt_data.get('usage', {}).get('prompt_tokens', 0)}, completion={gpt_data.get('usage', {}).get('completion_tokens', 0)}, total={gpt_data.get('usage', {}).get('total_tokens', 0)}")
+                
                 gpt_text = gpt_data['choices'][0]['message']['content'].strip()
                 
                 # Remove markdown code blocks if present
@@ -435,17 +448,19 @@ HTML:
                 gpt_text = re.sub(r'\s*```$', '', gpt_text)
                 gpt_text = gpt_text.strip()
                 
-                print(f"GPT response: {gpt_text[:500]}...")
+                print(f"📝 GPT response preview: {gpt_text[:300]}...")
                 
                 try:
                     characteristics_dict = json.loads(gpt_text)
                     print(f"✓ GPT extracted {len(characteristics_dict)} characteristics")
                     print(f"Keys: {list(characteristics_dict.keys())}")
+                    print(f"Values preview: {json.dumps(characteristics_dict, ensure_ascii=False)[:500]}")
                 except json.JSONDecodeError as e:
                     print(f"⚠ Failed to parse GPT JSON: {e}")
                     print(f"Raw response: {gpt_text}")
             else:
-                print(f"⚠ GPT API failed: {gpt_response.status_code} - {gpt_response.text}")
+                print(f"❌ GPT API failed: {gpt_response.status_code}")
+                print(f"Error details: {gpt_response.text[:500]}")
                 
         except Exception as gpt_error:
             print(f"⚠ GPT extraction failed: {gpt_error}")
