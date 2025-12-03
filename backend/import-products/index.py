@@ -154,10 +154,20 @@ Return ONLY JSON, no comments.'''
             proxies=None,
             timeout=30
         )
+        
+        print(f"OpenAI Response Status: {openai_response.status_code}")
+        
+        if openai_response.status_code != 200:
+            error_body = openai_response.text
+            print(f"OpenAI Error Response: {error_body}")
+            return None
+            
         openai_response.raise_for_status()
         
         result = openai_response.json()
         gpt_text = result['choices'][0]['message']['content'].strip()
+        
+        print(f"GPT Response: {gpt_text[:200]}")
         
         # Extract JSON
         json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', gpt_text, re.DOTALL)
@@ -166,12 +176,16 @@ Return ONLY JSON, no comments.'''
             product_data.setdefault('rating', 5.0)
             product_data.setdefault('reviews', 0)
             product_data.setdefault('inStock', True)
+            print(f"Parsed product: {product_data.get('name')}")
             return product_data
         
+        print("Failed to extract JSON from GPT response")
         return None
         
     except Exception as e:
         print(f"Error parsing {url}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
