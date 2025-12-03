@@ -141,31 +141,11 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
                 except ValueError:
                     continue
         
-        # === BRAND from name ===
+        # === BRAND - will be extracted from characteristics table ===
         product_data['brand'] = 'Неизвестный'
-        name_parts = product_data['name'].split()
         
-        # After type keyword (люстра, светильник, бра, торшер)
-        type_keywords = ['люстра', 'светильник', 'бра', 'торшер', 'лампа']
-        for keyword in type_keywords:
-            try:
-                idx = next(i for i, p in enumerate(name_parts) if keyword.lower() in p.lower())
-                if idx + 1 < len(name_parts):
-                    brand_candidate = name_parts[idx + 1]
-                    if brand_candidate[0].isupper() and not brand_candidate.isdigit():
-                        product_data['brand'] = brand_candidate
-                        print(f"Brand: {product_data['brand']}")
-                        break
-            except (StopIteration, IndexError):
-                pass
-        
-        # === ARTICLE from name (last alphanumeric) ===
+        # === ARTICLE - will be extracted from characteristics table ===
         product_data['article'] = ''
-        if len(name_parts) > 0:
-            last_part = name_parts[-1]
-            if re.match(r'^[A-Z0-9\-]+$', last_part, re.I):
-                product_data['article'] = last_part
-                print(f"Article: {product_data['article']}")
         
         # === IMAGE (main) ===
         image_tag = soup.find('meta', property='og:image') or soup.find('img', class_=re.compile('product|main', re.I))
@@ -232,19 +212,129 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         # === CHARACTERISTICS TABLE PARSING ===
         # Find characteristics table/list
-        chars_section = soup.find('table', class_=re.compile('char|spec|param', re.I)) or \
-                       soup.find('div', class_=re.compile('char|spec|param', re.I))
+        chars_section = soup.find('table', class_=re.compile('char|spec|param|properties', re.I)) or \
+                       soup.find('div', class_=re.compile('char|spec|param|properties', re.I)) or \
+                       soup.find('ul', class_=re.compile('char|spec|param|properties', re.I))
         
         characteristics_text = html_text
+        characteristics_dict = {}
+        
         if chars_section:
             characteristics_text = chars_section.get_text()
+            
+            # Parse table rows to extract key-value pairs
+            rows = chars_section.find_all(['tr', 'li', 'div'])
+            for row in rows:
+                text = row.get_text('|', strip=True)
+                # Split by common separators
+                parts = re.split(r'[:|]', text, maxsplit=1)
+                if len(parts) == 2:
+                    key = parts[0].strip().lower()
+                    value = parts[1].strip()
+                    characteristics_dict[key] = value
+        
+        print(f"Found {len(characteristics_dict)} characteristics")
+        
+        # === ARTICLE from characteristics ===
+        article_patterns = [
+            r'Артикул[:\s]+([A-Z0-9\-\/]+)',
+            r'Код товара[:\s]+([A-Z0-9\-\/]+)',
+            r'Модель[:\s]+([A-Z0-9\-\/]+)',
+        ]
+        for pattern in article_patterns:
+            match = re.search(pattern, characteristics_text, re.I)
+            if match:
+                product_data['article'] = match.group(1).strip()
+                print(f"Article: {product_data['article']}")
+                break
+        
+        # === BRAND from characteristics ===
+        brand_patterns = [
+            r'Бренд[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
+            r'Производитель[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
+            r'Торговая марка[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
+        ]
+        for pattern in brand_patterns:
+            match = re.search(pattern, characteristics_text, re.I)
+            if match:
+                brand = match.group(1).strip()
+                if brand and not re.search(r'\d{4}|страна|город', brand, re.I):
+                    product_data['brand'] = brand
+                    print(f"Brand: {product_data['brand']}")
+                    break
+        
+        # === BRAND COUNTRY ===
+        product_data['brandCountry'] = None
+        brand_country_patterns = [
+            r'Страна бренда[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
+            r'Бренд страны[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
+        ]
+        for pattern in brand_country_patterns:
+            match = re.search(pattern, characteristics_text, re.I)
+            if match:
+                product_data['brandCountry'] = match.group(1).strip().capitalize()
+                print(f"Brand country: {product_data['brandCountry']}")
+                break
+        
+        # === MANUFACTURER COUNTRY ===
+        product_data['manufacturerCountry'] = None
+        country_patterns = [
+            r'Страна[-\s]производител[ья][:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
+            r'Страна производства[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
+            r'Сделано в[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
+        ]
+        for pattern in country_patterns:
+            match = re.search(pattern, characteristics_text, re.I)
+            if match:
+                country = match.group(1).strip()
+                country_map = {
+                    'китай': 'Китай', 'россия': 'Россия', 'германия': 'Германия',
+                    'италия': 'Италия', 'австрия': 'Австрия', 'польша': 'Польша',
+                    'чехия': 'Чехия', 'испания': 'Испания', 'франция': 'Франция',
+                    'турция': 'Турция', 'венгрия': 'Венгрия', 'бельгия': 'Бельгия',
+                }
+                product_data['manufacturerCountry'] = country_map.get(country.lower(), country.capitalize())
+                print(f"Manufacturer country: {product_data['manufacturerCountry']}")
+                break
+        
+        # === COLLECTION ===
+        product_data['collection'] = None
+        collection_patterns = [
+            r'Коллекция[:\s]+([А-ЯЁA-Za-zа-яё0-9\s\-]+?)(?:\||$|\n)',
+            r'Серия[:\s]+([А-ЯЁA-Za-zа-яё0-9\s\-]+?)(?:\||$|\n)',
+        ]
+        for pattern in collection_patterns:
+            match = re.search(pattern, characteristics_text, re.I)
+            if match:
+                collection = match.group(1).strip()
+                if collection and len(collection) > 2:
+                    product_data['collection'] = collection
+                    print(f"Collection: {product_data['collection']}")
+                    break
+        
+        # === ASSEMBLY INSTRUCTION PDF ===
+        product_data['assemblyInstructionUrl'] = None
+        pdf_link = soup.find('a', href=re.compile(r'\.pdf$', re.I), text=re.compile('инструкц|сборк', re.I))
+        if pdf_link:
+            pdf_url = pdf_link.get('href', '')
+            if pdf_url:
+                if pdf_url.startswith('//'):
+                    pdf_url = 'https:' + pdf_url
+                elif pdf_url.startswith('/'):
+                    from urllib.parse import urlparse
+                    parsed = urlparse(url)
+                    pdf_url = f"{parsed.scheme}://{parsed.netloc}{pdf_url}"
+                product_data['assemblyInstructionUrl'] = pdf_url
+                print(f"Assembly instruction: {pdf_url}")
         
         # === LAMP COUNT (quantity) ===
         product_data['lampCount'] = None
         lamp_count_patterns = [
             r'Количество ламп[:\s]+(\d+)',
+            r'Количество источников света[:\s]+(\d+)',
             r'Число ламп[:\s]+(\d+)',
-            r'(\d+)\s*x\s*\d+\s*Вт',  # "3 x 60 Вт"
+            r'Кол-во ламп[:\s]+(\d+)',
+            r'(\d+)\s*x\s*\d+\s*Вт',
             r'(\d+)\s*плафон',
         ]
         for pattern in lamp_count_patterns:
@@ -254,28 +344,52 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
                 print(f"Lamp count: {product_data['lampCount']}")
                 break
         
-        # === SOCKET TYPE ===
+        # === SOCKET TYPE (Цоколь) ===
         product_data['socketType'] = None
-        socket_patterns = ['E27', 'E14', 'GU10', 'GU5.3', 'G9', 'G4', 'GX53']
-        for socket in socket_patterns:
-            if re.search(rf'\b{socket}\b', characteristics_text, re.I):
-                product_data['socketType'] = socket
-                print(f"Socket type: {product_data['socketType']}")
-                break
+        socket_match = re.search(r'Цоколь[:\s]+([A-Z0-9\.]+(?:[,\s]+[A-Z0-9\.]+)*)', characteristics_text, re.I)
+        if socket_match:
+            socket_str = socket_match.group(1).strip()
+            # Take first socket type if multiple
+            socket_str = re.split(r'[,\s]+', socket_str)[0]
+            product_data['socketType'] = socket_str.upper()
+            print(f"Socket type: {product_data['socketType']}")
+        else:
+            # Fallback: search for common socket types
+            socket_patterns = ['E27', 'E14', 'GU10', 'GU5.3', 'G9', 'G4', 'GX53', 'G53', 'GX70']
+            for socket in socket_patterns:
+                if re.search(rf'\b{socket}\b', characteristics_text, re.I):
+                    product_data['socketType'] = socket
+                    print(f"Socket type (fallback): {product_data['socketType']}")
+                    break
         
-        # === LAMP TYPE ===
+        # === LAMP TYPE (Тип лампочки) ===
         product_data['lampType'] = None
-        if re.search(r'\bLED\b|светодиод', characteristics_text, re.I):
-            product_data['lampType'] = 'LED'
-        elif re.search(r'галоген', characteristics_text, re.I):
-            product_data['lampType'] = 'Галогенная'
-        elif re.search(r'накалива', characteristics_text, re.I):
-            product_data['lampType'] = 'Накаливания'
-        elif re.search(r'энергосбере', characteristics_text, re.I):
-            product_data['lampType'] = 'Энергосберегающая'
-        
-        if product_data['lampType']:
+        lamp_type_match = re.search(r'Тип (?:лампы|лампочки|источника света)[:\s]+([А-ЯЁа-яёA-Z\s,\-]+?)(?:\||$|\n)', characteristics_text, re.I)
+        if lamp_type_match:
+            lamp_type_str = lamp_type_match.group(1).strip()
+            # Map to standard types
+            if re.search(r'LED|светодиод', lamp_type_str, re.I):
+                product_data['lampType'] = 'LED'
+            elif re.search(r'галоген', lamp_type_str, re.I):
+                product_data['lampType'] = 'Галогенная'
+            elif re.search(r'накалива', lamp_type_str, re.I):
+                product_data['lampType'] = 'Накаливания'
+            elif re.search(r'энергосбере', lamp_type_str, re.I):
+                product_data['lampType'] = 'Энергосберегающая'
+            else:
+                product_data['lampType'] = lamp_type_str[:50]
             print(f"Lamp type: {product_data['lampType']}")
+        else:
+            # Fallback: search in all text
+            if re.search(r'\bLED\b|светодиод', characteristics_text, re.I):
+                product_data['lampType'] = 'LED'
+            elif re.search(r'галоген', characteristics_text, re.I):
+                product_data['lampType'] = 'Галогенная'
+            elif re.search(r'накалива', characteristics_text, re.I):
+                product_data['lampType'] = 'Накаливания'
+            
+            if product_data['lampType']:
+                print(f"Lamp type (fallback): {product_data['lampType']}")
         
         # === LAMP POWER ===
         product_data['lampPower'] = None
@@ -370,26 +484,7 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         print(f"Remote: {product_data['hasRemote']}, Dimmable: {product_data['isDimmable']}, RGB: {product_data['hasColorChange']}")
         
-        # === COUNTRY ===
-        country_patterns = [
-            r'Страна-производитель[:\s]+([А-ЯЁа-яё]+)',
-            r'Страна производства[:\s]+([А-ЯЁа-яё]+)',
-            r'Производитель[:\s]+([А-ЯЁа-яё]+)',
-        ]
-        
-        product_data['manufacturerCountry'] = None
-        for pattern in country_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                country = match.group(1).strip()
-                country_map = {
-                    'китай': 'Китай', 'россия': 'Россия', 'германия': 'Германия',
-                    'италия': 'Италия', 'австрия': 'Австрия', 'польша': 'Польша',
-                    'чехия': 'Чехия', 'испания': 'Испания', 'франция': 'Франция',
-                }
-                product_data['manufacturerCountry'] = country_map.get(country.lower(), country.capitalize())
-                print(f"Country: {product_data['manufacturerCountry']}")
-                break
+        # Country parsing moved above with other characteristics
         
         # === DEFAULTS ===
         product_data['rating'] = 5.0
@@ -414,11 +509,12 @@ def insert_product(cur, data: Dict[str, Any]) -> None:
             article, brand_country, manufacturer_country, collection, style,
             lamp_type, socket_type, bulb_type, lamp_count, lamp_power, 
             total_power, lighting_area, voltage, color, 
-            height, diameter, length, width, depth, chain_length, images
+            height, diameter, length, width, depth, chain_length, images,
+            assembly_instruction_url
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s
         )
     ''', (
         data.get('name', 'Без названия'),
@@ -453,5 +549,6 @@ def insert_product(cur, data: Dict[str, Any]) -> None:
         int(data.get('width')) if data.get('width') else None,
         int(data.get('depth')) if data.get('depth') else None,
         int(data.get('chainLength')) if data.get('chainLength') else None,
-        json.dumps(data.get('images', []))
+        json.dumps(data.get('images', [])),
+        data.get('assemblyInstructionUrl', None)
     ))
