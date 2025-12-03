@@ -191,14 +191,31 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         print(f"Additional images: {len(product_data['images'])}")
         
         # === DESCRIPTION (clean) ===
-        desc_tag = soup.find('div', class_=re.compile('description|about', re.I))
-        if desc_tag:
-            desc_text = desc_tag.get_text(strip=True)
-            # Remove price mentions
-            desc_text = re.sub(r'купить.*?(?:руб|₽).*?\n', '', desc_text, flags=re.I)
-            product_data['description'] = desc_text[:500]
-        else:
-            product_data['description'] = ''
+        desc_patterns = [
+            soup.find('div', class_=re.compile('description|about|product-desc', re.I)),
+            soup.find('meta', property='og:description'),
+            soup.find('meta', attrs={'name': 'description'}),
+        ]
+        
+        product_data['description'] = ''
+        for desc_source in desc_patterns:
+            if desc_source:
+                if desc_source.name == 'meta':
+                    desc_text = desc_source.get('content', '')
+                else:
+                    desc_text = desc_source.get_text(strip=True)
+                
+                if desc_text:
+                    # Clean description from prices and purchase calls
+                    desc_text = re.sub(r'купить.*?(?:руб|₽|рублей).*?(?:\.|$)', '', desc_text, flags=re.I | re.DOTALL)
+                    desc_text = re.sub(r'\d+\s*(?:руб|₽|рублей)', '', desc_text, flags=re.I)
+                    desc_text = re.sub(r'цена[:\s]+\d+', '', desc_text, flags=re.I)
+                    desc_text = desc_text.strip()
+                    
+                    if len(desc_text) > 20:
+                        product_data['description'] = desc_text[:500]
+                        print(f"Description: {desc_text[:80]}...")
+                        break
         
         # === TYPE ===
         name_lower = product_data['name'].lower()
