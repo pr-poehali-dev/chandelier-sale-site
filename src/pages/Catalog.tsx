@@ -39,6 +39,8 @@ const Catalog = () => {
   const [isPickup, setIsPickup] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [styleSearch, setStyleSearch] = useState('');
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [colorSearch, setColorSearch] = useState('');
   const [sizeRange, setSizeRange] = useState({
     height: [0, 3000],
     length: [0, 3000],
@@ -53,6 +55,7 @@ const Catalog = () => {
   const [brandSearch, setBrandSearch] = useState('');
 
   const brands = Array.from(new Set(products.map(p => p.brand))).sort();
+  const colors = Array.from(new Set(products.map(p => p.color).filter(Boolean))).sort();
   const types = [
     { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
     { value: 'ceiling_chandelier', label: 'Потолочные люстры', icon: 'Circle', color: 'text-amber-500' },
@@ -221,7 +224,8 @@ const Catalog = () => {
     const remoteMatch = !hasRemote || product.hasRemote;
     const dimmableMatch = !isDimmable || product.isDimmable;
     const colorChangeMatch = !hasColorChange || product.hasColorChange;
-    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch && remoteMatch && dimmableMatch && colorChangeMatch;
+    const colorMatch = selectedColors.length === 0 || (product.color && selectedColors.includes(product.color));
+    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch && remoteMatch && dimmableMatch && colorChangeMatch && colorMatch;
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,6 +335,10 @@ const Catalog = () => {
     
     const filteredBrands = brands.filter(brand => 
       brand.toLowerCase().includes(brandSearch.toLowerCase())
+    );
+    
+    const filteredColors = colors.filter(color => 
+      color.toLowerCase().includes(colorSearch.toLowerCase())
     );
     
     const currentCategoryTypes = selectedCategory ? types.filter((type) => {
@@ -493,6 +501,37 @@ const Catalog = () => {
       </div>
 
       <div>
+        <h3 className="font-semibold mb-3">Цвет</h3>
+        <Input
+          type="text"
+          placeholder="Поиск цвета..."
+          value={colorSearch}
+          onChange={(e) => setColorSearch(e.target.value)}
+          className="mb-3"
+        />
+        <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin">
+          {filteredColors.map((color) => (
+            <div key={color} className="flex items-center space-x-2">
+              <Checkbox
+                id={`color-${color}`}
+                checked={selectedColors.includes(color)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedColors([...selectedColors, color]);
+                  } else {
+                    setSelectedColors(selectedColors.filter((c) => c !== color));
+                  }
+                }}
+              />
+              <Label htmlFor={`color-${color}`} className="cursor-pointer text-sm capitalize">
+                {color}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
         <h3 className="font-semibold mb-3">Бренд</h3>
         <Input
           type="text"
@@ -537,8 +576,10 @@ const Catalog = () => {
           setIsNew(false);
           setIsPickup(false);
           setSelectedStyles([]);
+          setSelectedColors([]);
           setBrandSearch('');
           setStyleSearch('');
+          setColorSearch('');
           setSizeRange({
             height: [0, 3000],
             length: [0, 3000],
@@ -748,7 +789,7 @@ const Catalog = () => {
                   <span className="text-sm text-muted-foreground">
                     Найдено товаров: {filteredProducts.length}
                   </span>
-                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange || isSale || isNew || isPickup || selectedStyles.length > 0) && (
+                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange || isSale || isNew || isPickup || selectedStyles.length > 0 || selectedColors.length > 0) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -765,6 +806,7 @@ const Catalog = () => {
                         setIsNew(false);
                         setIsPickup(false);
                         setSelectedStyles([]);
+                        setSelectedColors([]);
                         setSizeRange({
                           height: [0, 3000],
                           length: [0, 3000],
