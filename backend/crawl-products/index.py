@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from typing import Dict, Any, List, Set
 from urllib.parse import urljoin, urlparse
@@ -86,8 +87,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     ]
     
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     }
+    
+    # Proxy configuration
+    proxy_host = os.environ.get('PROXY_HOST')
+    proxy_port = os.environ.get('PROXY_PORT')
+    proxy_user = os.environ.get('PROXY_USERNAME')
+    proxy_pass = os.environ.get('PROXY_PASSWORD')
+    
+    proxies = None
+    if proxy_host and proxy_port and proxy_user and proxy_pass:
+        proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+        proxies = {'http': proxy_url, 'https': proxy_url}
+        print(f"Using proxy: {proxy_host}:{proxy_port}")
     
     pages_crawled = 0
     
@@ -107,7 +122,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f"Crawling [{pages_crawled}/{max_pages}]: {current_url[:60]}...")
         
         try:
-            response = requests.get(current_url, headers=headers, timeout=10)
+            response = requests.get(current_url, headers=headers, proxies=proxies, timeout=10)
             if response.status_code != 200:
                 print(f"Failed: HTTP {response.status_code}")
                 continue

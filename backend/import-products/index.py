@@ -99,6 +99,7 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         }
         
+        # Proxy configuration
         proxy_host = os.environ.get('PROXY_HOST')
         proxy_port = os.environ.get('PROXY_PORT')
         proxy_user = os.environ.get('PROXY_USERNAME')
@@ -108,6 +109,7 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         if proxy_host and proxy_port and proxy_user and proxy_pass:
             proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
             proxies = {'http': proxy_url, 'https': proxy_url}
+            print(f"Using proxy: {proxy_host}:{proxy_port}")
         
         response = requests.get(url, headers=headers, proxies=proxies, timeout=30)
         response.raise_for_status()
