@@ -36,40 +36,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        # Hardcoded proxy and API key for testing
-        proxy_host = "154.196.57.17"
-        proxy_port = "62672"
-        proxy_user = "7U25TWa5"
-        proxy_pass = "AALFpAK9"
-        openai_key = "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"
-        
-        # Test OpenAI API with proxy
-        try:
-            test_proxies = {
-                'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
-                'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-            }
-            print(f"Testing OpenAI API with proxy: {proxy_host}:{proxy_port}")
-            
-            test_response = requests.post(
-                'https://api.openai.com/v1/chat/completions',
-                headers={
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {openai_key}'
-                },
-                json={
-                    'model': 'gpt-4o-mini',
-                    'messages': [{'role': 'user', 'content': 'Напиши слово: работает'}],
-                    'max_tokens': 10
-                },
-                proxies=test_proxies,
-                timeout=20
-            )
-            print(f"✓ OpenAI API test status: {test_response.status_code}")
-            print(f"✓ OpenAI API response: {test_response.text}")
-        except Exception as test_error:
-            print(f"⚠ OpenAI API test failed: {test_error}")
-        
         body_data = json.loads(event.get('body', '{}'))
         urls = body_data.get('urls', [])
         
@@ -133,17 +99,7 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
         }
         
-        # Hardcoded proxy configuration
-        proxy_host = "154.196.57.17"
-        proxy_port = "62672"
-        proxy_user = "7U25TWa5"
-        proxy_pass = "AALFpAK9"
-        
-        proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-        proxies = {'http': proxy_url, 'https': proxy_url}
-        print(f"✓ Using proxy: {proxy_host}:{proxy_port}")
-        
-        response = requests.get(url, headers=headers, proxies=proxies, timeout=30)
+        response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'lxml')
@@ -358,133 +314,41 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             product_data['type'] = 'light_ceiling'
             print("Type: light_ceiling (светильник общий)")
         
-        # === AI-POWERED CHARACTERISTICS EXTRACTION ===
-        print(f"\n=== Using GPT-4o-mini for smart characteristics extraction ===")
-        
-        # Extract relevant HTML section with characteristics
-        chars_section = soup.find('div', class_='pr-params__wrap') or \
-                       soup.find('table', class_=re.compile('char|spec|param|properties', re.I)) or \
-                       soup.find('div', class_=re.compile('char|spec|param|properties', re.I)) or \
-                       soup.find('ul', class_=re.compile('char|spec|param|properties', re.I))
-        
+        # === CHARACTERISTICS EXTRACTION ===
+        chars_section = soup.find('div', class_='pr-params__wrap')
         characteristics_text = html_text
-        characteristics_dict = {}
         
+        # Extract brand from characteristics table
         if chars_section:
-            characteristics_html = str(chars_section)[:8000]  # Limit to 8000 chars for GPT
-        else:
-            # Take full page text if no specific section found
-            characteristics_html = html_text[:8000]
+            brand_row = chars_section.find('span', class_='pr-params__label', text=re.compile('Бренд', re.I))
+            if brand_row:
+                brand_value = brand_row.find_next_sibling('span', class_='pr-params__value')
+                if brand_value:
+                    product_data['brand'] = brand_value.get_text(strip=True)
+                    print(f"Brand: {product_data['brand']}")
         
-        # Use GPT to extract characteristics
-        # Hardcoded proxy credentials (same as above)
-        proxy_host_gpt = "154.196.57.17"
-        proxy_port_gpt = "62672"
-        proxy_user_gpt = "7U25TWa5"
-        proxy_pass_gpt = "AALFpAK9"
-        openai_key_gpt = "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"
+        # Extract article
+        article_match = re.search(r'(?:артикул|арт\.|article)[:\s]+([\w\d-]+)', characteristics_text, re.I)
+        if article_match:
+            product_data['article'] = article_match.group(1)
+            print(f"Article: {product_data['article']}")
         
-        try:
-            gpt_prompt = f'''Извлеки все характеристики товара из HTML. Верни ТОЛЬКО JSON объект без markdown форматирования.
-            
-Формат ответа (только JSON, без ```json и без лишнего текста):
-            {{
-              "brand": "название бренда",
-              "article": "артикул товара",
-              "brandCountry": "страна бренда",
-              "manufacturerCountry": "страна производства",
-              "collection": "коллекция",
-              "lampCount": число_ламп,
-              "socketType": "тип цоколя E14/E27/GU10",
-              "lampType": "тип лампы LED/Галогенная/Накаливания",
-              "lampPower": мощность_одной_лампы_в_ваттах,
-              "totalPower": общая_мощность_в_ваттах,
-              "voltage": напряжение_в_вольтах,
-              "color": "цвет",
-              "height": высота_в_мм,
-              "diameter": диаметр_в_мм,
-              "length": длина_в_мм,
-              "width": ширина_в_мм
-            }}
-            
-Если значение не найдено - используй null. Числа без кавычек. Размеры конвертируй в миллиметры.
-            
-HTML:
-            {characteristics_html}'''
-            
-            proxies_gpt = {
-                'http': f'http://{proxy_user_gpt}:{proxy_pass_gpt}@{proxy_host_gpt}:{proxy_port_gpt}',
-                'https': f'http://{proxy_user_gpt}:{proxy_pass_gpt}@{proxy_host_gpt}:{proxy_port_gpt}'
-            }
-            
-            print(f"🔧 Using proxy for GPT: {proxy_host_gpt}:{proxy_port_gpt} with user {proxy_user_gpt}")
-            
-            gpt_response = requests.post(
-                'https://api.openai.com/v1/chat/completions',
-                headers={
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {openai_key_gpt}'
-                },
-                json={
-                    'model': 'gpt-4o-mini',
-                    'messages': [{'role': 'user', 'content': gpt_prompt}],
-                    'max_tokens': 1000,
-                    'temperature': 0.1
-                },
-                proxies=proxies_gpt,
-                timeout=30
-            )
-            
-            print(f"📡 GPT API response status: {gpt_response.status_code}")
-            
-            if gpt_response.status_code == 200:
-                gpt_data = gpt_response.json()
-                print(f"📊 GPT tokens used: prompt={gpt_data.get('usage', {}).get('prompt_tokens', 0)}, completion={gpt_data.get('usage', {}).get('completion_tokens', 0)}, total={gpt_data.get('usage', {}).get('total_tokens', 0)}")
-                
-                gpt_text = gpt_data['choices'][0]['message']['content'].strip()
-                
-                # Remove markdown code blocks if present
-                gpt_text = re.sub(r'^```json\s*', '', gpt_text)
-                gpt_text = re.sub(r'\s*```$', '', gpt_text)
-                gpt_text = gpt_text.strip()
-                
-                print(f"📝 GPT response preview: {gpt_text[:300]}...")
-                
-                try:
-                    characteristics_dict = json.loads(gpt_text)
-                    print(f"✓ GPT extracted {len(characteristics_dict)} characteristics")
-                    print(f"Keys: {list(characteristics_dict.keys())}")
-                    print(f"Values preview: {json.dumps(characteristics_dict, ensure_ascii=False)[:500]}")
-                except json.JSONDecodeError as e:
-                    print(f"⚠ Failed to parse GPT JSON: {e}")
-                    print(f"Raw response: {gpt_text}")
-            else:
-                print(f"❌ GPT API failed: {gpt_response.status_code}")
-                print(f"Error details: {gpt_response.text[:500]}")
-                
-        except Exception as gpt_error:
-            print(f"⚠ GPT extraction failed: {gpt_error}")
+        # Extract countries
+        country_brand = re.search(r'(?:страна бренда)[:\s]+([а-яА-Яa-zA-Z]+)', characteristics_text, re.I)
+        if country_brand:
+            product_data['brandCountry'] = country_brand.group(1)
+            print(f"Brand country: {product_data['brandCountry']}")
         
-        # === APPLY GPT-EXTRACTED CHARACTERISTICS ===
-        if characteristics_dict.get('brand') and characteristics_dict['brand'] != 'null':
-            product_data['brand'] = characteristics_dict['brand']
-            print(f"Brand (GPT): {product_data['brand']}")
+        country_mfr = re.search(r'(?:страна производства)[:\s]+([а-яА-Яa-zA-Z]+)', characteristics_text, re.I)
+        if country_mfr:
+            product_data['manufacturerCountry'] = country_mfr.group(1)
+            print(f"Manufacturer country: {product_data['manufacturerCountry']}")
         
-        if characteristics_dict.get('article'):
-            product_data['article'] = str(characteristics_dict['article'])
-            print(f"Article (GPT): {product_data['article']}")
-        
-        product_data['brandCountry'] = characteristics_dict.get('brandCountry')
-        if product_data['brandCountry']:
-            print(f"Brand country (GPT): {product_data['brandCountry']}")
-        
-        product_data['manufacturerCountry'] = characteristics_dict.get('manufacturerCountry')
-        if product_data['manufacturerCountry']:
-            print(f"Manufacturer country (GPT): {product_data['manufacturerCountry']}")
-        
-        product_data['collection'] = characteristics_dict.get('collection')
-        if product_data['collection']:
-            print(f"Collection (GPT): {product_data['collection']}")
+        # Extract collection
+        collection_match = re.search(r'(?:коллекция)[:\s]+([\w\s-]+)', characteristics_text, re.I)
+        if collection_match:
+            product_data['collection'] = collection_match.group(1).strip()
+            print(f"Collection: {product_data['collection']}")
         
         # === ASSEMBLY INSTRUCTION PDF ===
         product_data['assemblyInstructionUrl'] = None
@@ -501,50 +365,60 @@ HTML:
                 product_data['assemblyInstructionUrl'] = pdf_url
                 print(f"Assembly instruction: {pdf_url}")
         
-        # === LAMP SPECIFICATIONS (from GPT) ===
-        if characteristics_dict.get('lampCount'):
-            product_data['lampCount'] = int(characteristics_dict['lampCount'])
-            print(f"Lamp count (GPT): {product_data['lampCount']}")
+        # === LAMP SPECIFICATIONS ===
+        lamp_count_match = re.search(r'(?:количество ламп)[:\s]+(\d+)', characteristics_text, re.I)
+        if lamp_count_match:
+            product_data['lampCount'] = int(lamp_count_match.group(1))
+            print(f"Lamp count: {product_data['lampCount']}")
         
-        if characteristics_dict.get('socketType'):
-            product_data['socketType'] = characteristics_dict['socketType']
-            print(f"Socket type (GPT): {product_data['socketType']}")
+        socket_match = re.search(r'(?:цоколь|тип цоколя)[:\s]+(E\d+|GU\d+)', characteristics_text, re.I)
+        if socket_match:
+            product_data['socketType'] = socket_match.group(1)
+            print(f"Socket type: {product_data['socketType']}")
         
-        if characteristics_dict.get('lampType'):
-            product_data['lampType'] = characteristics_dict['lampType']
-            print(f"Lamp type (GPT): {product_data['lampType']}")
+        lamp_type_match = re.search(r'(?:тип лампы)[:\s]+([а-яА-Яa-zA-Z]+)', characteristics_text, re.I)
+        if lamp_type_match:
+            product_data['lampType'] = lamp_type_match.group(1)
+            print(f"Lamp type: {product_data['lampType']}")
         
-        if characteristics_dict.get('lampPower'):
-            product_data['lampPower'] = int(characteristics_dict['lampPower'])
-            print(f"Lamp power (GPT): {product_data['lampPower']} W")
+        power_match = re.search(r'(?:мощность)[:\s]+(\d+)\s*(?:Вт|W)', characteristics_text, re.I)
+        if power_match:
+            product_data['lampPower'] = int(power_match.group(1))
+            print(f"Lamp power: {product_data['lampPower']} W")
         
-        if characteristics_dict.get('totalPower'):
-            product_data['totalPower'] = int(characteristics_dict['totalPower'])
-        elif product_data.get('lampCount') and product_data.get('lampPower'):
+        if product_data.get('lampCount') and product_data.get('lampPower'):
             product_data['totalPower'] = product_data['lampCount'] * product_data['lampPower']
         
-        product_data['voltage'] = int(characteristics_dict.get('voltage', 220))
+        product_data['voltage'] = 220
+        voltage_match = re.search(r'(?:напряжение)[:\s]+(\d+)', characteristics_text, re.I)
+        if voltage_match:
+            product_data['voltage'] = int(voltage_match.group(1))
         
-        if characteristics_dict.get('color'):
-            product_data['color'] = characteristics_dict['color']
-            print(f"Color (GPT): {product_data['color']}")
+        color_match = re.search(r'(?:цвет)[:\s]+([а-яА-Я\s]+)', characteristics_text, re.I)
+        if color_match:
+            product_data['color'] = color_match.group(1).strip()
+            print(f"Color: {product_data['color']}")
         
-        # === DIMENSIONS (from GPT) ===
-        if characteristics_dict.get('height'):
-            product_data['height'] = int(characteristics_dict['height'])
-            print(f"Height (GPT): {product_data['height']} mm")
+        # === DIMENSIONS ===
+        height_match = re.search(r'(?:высота)[:\s]+(\d+)', characteristics_text, re.I)
+        if height_match:
+            product_data['height'] = int(height_match.group(1))
+            print(f"Height: {product_data['height']} mm")
         
-        if characteristics_dict.get('diameter'):
-            product_data['diameter'] = int(characteristics_dict['diameter'])
-            print(f"Diameter (GPT): {product_data['diameter']} mm")
+        diameter_match = re.search(r'(?:диаметр)[:\s]+(\d+)', characteristics_text, re.I)
+        if diameter_match:
+            product_data['diameter'] = int(diameter_match.group(1))
+            print(f"Diameter: {product_data['diameter']} mm")
         
-        if characteristics_dict.get('length'):
-            product_data['length'] = int(characteristics_dict['length'])
-            print(f"Length (GPT): {product_data['length']} mm")
+        length_match = re.search(r'(?:длина)[:\s]+(\d+)', characteristics_text, re.I)
+        if length_match:
+            product_data['length'] = int(length_match.group(1))
+            print(f"Length: {product_data['length']} mm")
         
-        if characteristics_dict.get('width'):
-            product_data['width'] = int(characteristics_dict['width'])
-            print(f"Width (GPT): {product_data['width']} mm")
+        width_match = re.search(r'(?:ширина)[:\s]+(\d+)', characteristics_text, re.I)
+        if width_match:
+            product_data['width'] = int(width_match.group(1))
+            print(f"Width: {product_data['width']} mm")
         
         # === CONTROL FEATURES ===
         product_data['hasRemote'] = bool(re.search(r'пульт[а-я\s]*управлен', characteristics_text, re.I))

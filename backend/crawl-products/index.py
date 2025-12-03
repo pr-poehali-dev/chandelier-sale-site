@@ -37,40 +37,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    # Hardcoded proxy and API key for testing
-    proxy_host = "154.196.57.17"
-    proxy_port = "62672"
-    proxy_user = "7U25TWa5"
-    proxy_pass = "AALFpAK9"
-    openai_key = "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"
-    
-    # Test OpenAI API with proxy
-    try:
-        test_proxies = {
-            'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
-            'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-        }
-        print(f"Testing OpenAI API with proxy: {proxy_host}:{proxy_port}")
-        
-        test_response = requests.post(
-            'https://api.openai.com/v1/chat/completions',
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {openai_key}'
-            },
-            json={
-                'model': 'gpt-4o-mini',
-                'messages': [{'role': 'user', 'content': 'Напиши слово: работает'}],
-                'max_tokens': 10
-            },
-            proxies=test_proxies,
-            timeout=20
-        )
-        print(f"✓ OpenAI API test status: {test_response.status_code}")
-        print(f"✓ OpenAI API response: {test_response.text}")
-    except Exception as test_error:
-        print(f"⚠ OpenAI API test failed: {test_error}")
-    
     body_data = json.loads(event.get('body', '{}'))
     start_url: str = body_data.get('start_url', '')
     max_pages: int = min(int(body_data.get('max_pages', 10)), 50)  # Limit to 50 pages max
@@ -126,16 +92,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     }
     
-    # Hardcoded proxy configuration
-    proxy_host = "154.196.57.17"
-    proxy_port = "62672"
-    proxy_user = "7U25TWa5"
-    proxy_pass = "AALFpAK9"
-    
-    proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
-    proxies = {'http': proxy_url, 'https': proxy_url}
-    print(f"✓ Using proxy: {proxy_host}:{proxy_port}")
-    
     pages_crawled = 0
     
     while to_visit and pages_crawled < max_pages:
@@ -154,7 +110,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         print(f"Crawling [{pages_crawled}/{max_pages}]: {current_url[:60]}...")
         
         try:
-            response = requests.get(current_url, headers=headers, proxies=proxies, timeout=10)
+            response = requests.get(current_url, headers=headers, timeout=10)
             if response.status_code != 200:
                 print(f"Failed: HTTP {response.status_code}")
                 continue
