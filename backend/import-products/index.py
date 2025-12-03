@@ -329,20 +329,55 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         # === LAMP COUNT (quantity) ===
         product_data['lampCount'] = None
-        lamp_count_patterns = [
-            r'Количество ламп[:\s]+(\d+)',
-            r'Количество источников света[:\s]+(\d+)',
-            r'Число ламп[:\s]+(\d+)',
-            r'Кол-во ламп[:\s]+(\d+)',
-            r'(\d+)\s*x\s*\d+\s*Вт',
-            r'(\d+)\s*плафон',
-        ]
-        for pattern in lamp_count_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                product_data['lampCount'] = int(match.group(1))
-                print(f"Lamp count: {product_data['lampCount']}")
-                break
+        
+        # First try: Find green highlighted number (vamsvet.ru specific)
+        # Look for spans/badges with green styling near "Количество ламп"
+        green_badges = soup.find_all(['span', 'div', 'button'], class_=re.compile('green|badge|count', re.I))
+        for badge in green_badges:
+            parent_text = ''
+            if badge.parent:
+                parent_text = badge.parent.get_text()
+            
+            if 'количество' in parent_text.lower() or 'лампы' in parent_text.lower():
+                badge_text = badge.get_text(strip=True)
+                if badge_text.isdigit():
+                    product_data['lampCount'] = int(badge_text)
+                    print(f"Lamp count (green badge): {product_data['lampCount']}")
+                    break
+        
+        # Second try: Find in characteristics by looking for green/highlighted elements
+        if not product_data['lampCount'] and chars_section:
+            lamp_elements = chars_section.find_all(string=re.compile(r'количество.*ламп', re.I))
+            for elem in lamp_elements:
+                # Check siblings for badges/spans with numbers
+                parent = elem.parent
+                if parent:
+                    siblings = parent.find_next_siblings()
+                    for sib in siblings[:3]:
+                        numbers = re.findall(r'\b(\d+)\b', sib.get_text())
+                        if numbers:
+                            product_data['lampCount'] = int(numbers[0])
+                            print(f"Lamp count (sibling): {product_data['lampCount']}")
+                            break
+                if product_data['lampCount']:
+                    break
+        
+        # Third try: Text patterns in characteristics
+        if not product_data['lampCount']:
+            lamp_count_patterns = [
+                r'Количество ламп[:\s]+(\d+)',
+                r'Количество источников света[:\s]+(\d+)',
+                r'Число ламп[:\s]+(\d+)',
+                r'Кол-во ламп[:\s]+(\d+)',
+                r'(\d+)\s*x\s*\d+\s*Вт',
+                r'(\d+)\s*плафон',
+            ]
+            for pattern in lamp_count_patterns:
+                match = re.search(pattern, characteristics_text, re.I)
+                if match:
+                    product_data['lampCount'] = int(match.group(1))
+                    print(f"Lamp count (pattern): {product_data['lampCount']}")
+                    break
         
         # === SOCKET TYPE (Цоколь) ===
         product_data['socketType'] = None

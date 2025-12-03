@@ -69,6 +69,7 @@ const Admin = () => {
     depth: 0,
     chainLength: 0,
     images: [] as string[],
+    assemblyInstructionUrl: '',
   });
 
   useEffect(() => {
@@ -1554,6 +1555,30 @@ const Admin = () => {
                         placeholder="1000"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Инструкция по сборке</Label>
+                  <div>
+                    <Label htmlFor="assemblyInstructionUrl">Ссылка на PDF инструкцию</Label>
+                    <Input
+                      id="assemblyInstructionUrl"
+                      value={formData.assemblyInstructionUrl}
+                      onChange={(e) => setFormData({ ...formData, assemblyInstructionUrl: e.target.value })}
+                      placeholder="https://example.com/instruction.pdf"
+                    />
+                    {formData.assemblyInstructionUrl && (
+                      <a 
+                        href={formData.assemblyInstructionUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
+                      >
+                        <Icon name="ExternalLink" className="h-3 w-3" />
+                        Открыть PDF
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

@@ -51,6 +51,9 @@ export interface Product {
   
   // Дополнительные изображения
   images?: string[];
+  
+  // Инструкция по сборке
+  assemblyInstructionUrl?: string;
 }
 
 export interface User {
