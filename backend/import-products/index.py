@@ -101,17 +101,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def parse_product_page(url: str, api_key: str) -> Optional[Dict[str, Any]]:
     '''Fetch and parse product page using GPT-4o-mini through proxy'''
     try:
-        # Fetch page through public proxy service
-        proxy_url = 'https://proxy-basic.vercel.app/api/proxy'
+        # Try direct request first, then fallback to proxy if needed
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+        }
         
-        response = requests.post(
-            proxy_url,
-            json={'url': url},
-            headers={'Content-Type': 'application/json'},
+        # Setup proxy if configured
+        proxy_host = os.environ.get('PROXY_HOST')
+        proxy_port = os.environ.get('PROXY_PORT')
+        proxy_user = os.environ.get('PROXY_USERNAME')
+        proxy_pass = os.environ.get('PROXY_PASSWORD')
+        
+        proxies = None
+        if proxy_host and proxy_port and proxy_user and proxy_pass:
+            proxy_url = f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+            proxies = {
+                'http': proxy_url,
+                'https': proxy_url
+            }
+            print(f"Using proxy: {proxy_host}:{proxy_port}")
+        
+        response = requests.get(
+            url,
+            headers=headers,
+            proxies=proxies,
             timeout=30
         )
         response.raise_for_status()
         html_content = response.text
+        print(f"Fetched HTML, length: {len(html_content)}")
         
         # Parse with OpenAI GPT-4o-mini
         openai_url = 'https://api.openai.com/v1/chat/completions'
