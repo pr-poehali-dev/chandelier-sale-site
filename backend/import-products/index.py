@@ -156,46 +156,86 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         # === ADDITIONAL IMAGES ===
         product_data['images'] = []
-        image_gallery = soup.find_all('img', class_=re.compile('gallery|thumbnail|preview', re.I))
-        for img in image_gallery[:5]:  # Limit to 5 additional images
-            img_url = img.get('src') or img.get('data-src')
-            if img_url and img_url not in product_data['images'] and img_url != product_data['image']:
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                elif img_url.startswith('/'):
-                    from urllib.parse import urlparse
-                    parsed = urlparse(url)
-                    img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
-                product_data['images'].append(img_url)
         
+        # Try multiple strategies for vamsvet.ru
+        # Strategy 1: Look for slider/gallery containers
+        gallery_containers = soup.find_all(['div', 'ul'], class_=re.compile('slider|gallery|photos|images|product-images', re.I))
+        
+        for container in gallery_containers:
+            imgs = container.find_all('img')
+            for img in imgs:
+                img_url = img.get('data-src') or img.get('src') or img.get('data-lazy')
+                if img_url and img_url not in product_data['images']:
+                    # Skip small images (thumbnails)
+                    if 'thumb' in img_url or 'small' in img_url:
+                        continue
+                    # Make absolute URL
+                    if img_url.startswith('//'):
+                        img_url = 'https:' + img_url
+                    elif img_url.startswith('/'):
+                        from urllib.parse import urlparse
+                        parsed = urlparse(url)
+                        img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                    # Skip if it's the main image
+                    if img_url != product_data['image']:
+                        product_data['images'].append(img_url)
+        
+        # Strategy 2: Look for all product images with common patterns
+        if len(product_data['images']) == 0:
+            all_imgs = soup.find_all('img')
+            for img in all_imgs:
+                img_url = img.get('data-src') or img.get('src')
+                if img_url and '/upload/iblock/' in img_url:  # vamsvet.ru specific path
+                    if img_url.startswith('//'):
+                        img_url = 'https:' + img_url
+                    elif img_url.startswith('/'):
+                        from urllib.parse import urlparse
+                        parsed = urlparse(url)
+                        img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                    if img_url != product_data['image'] and img_url not in product_data['images']:
+                        product_data['images'].append(img_url)
+        
+        # Limit to 5 images
+        product_data['images'] = product_data['images'][:5]
         print(f"Additional images: {len(product_data['images'])}")
         
         # === DESCRIPTION (clean) ===
-        desc_patterns = [
-            soup.find('div', class_=re.compile('description|about|product-desc', re.I)),
-            soup.find('meta', property='og:description'),
-            soup.find('meta', attrs={'name': 'description'}),
-        ]
-        
         product_data['description'] = ''
-        for desc_source in desc_patterns:
-            if desc_source:
-                if desc_source.name == 'meta':
-                    desc_text = desc_source.get('content', '')
-                else:
-                    desc_text = desc_source.get_text(strip=True)
-                
-                if desc_text:
-                    # Clean description from prices and purchase calls
-                    desc_text = re.sub(r'купить.*?(?:руб|₽|рублей).*?(?:\.|$)', '', desc_text, flags=re.I | re.DOTALL)
-                    desc_text = re.sub(r'\d+\s*(?:руб|₽|рублей)', '', desc_text, flags=re.I)
-                    desc_text = re.sub(r'цена[:\s]+\d+', '', desc_text, flags=re.I)
-                    desc_text = desc_text.strip()
-                    
-                    if len(desc_text) > 20:
-                        product_data['description'] = desc_text[:500]
-                        print(f"Description: {desc_text[:80]}...")
-                        break
+        
+        # Try to find description in specific sections for vamsvet.ru
+        desc_section = soup.find('div', id=re.compile('description|desc', re.I)) or \
+                      soup.find('div', class_=re.compile('description|product-desc|detail-text', re.I))
+        
+        if desc_section:
+            # Get all paragraphs from description
+            paragraphs = desc_section.find_all(['p', 'div'], recursive=False)
+            desc_parts = []
+            for p in paragraphs:
+                text = p.get_text(strip=True)
+                # Skip empty or very short texts
+                if len(text) < 20:
+                    continue
+                # Skip if contains price mentions
+                if re.search(r'\d+\s*(?:руб|₽|рублей)|купить|заказ|цена', text, re.I):
+                    continue
+                desc_parts.append(text)
+            
+            if desc_parts:
+                product_data['description'] = ' '.join(desc_parts[:3])[:500]
+        
+        # Fallback: try meta description
+        if not product_data['description']:
+            meta_desc = soup.find('meta', property='og:description') or soup.find('meta', attrs={'name': 'description'})
+            if meta_desc:
+                desc_text = meta_desc.get('content', '')
+                # Clean from price mentions
+                desc_text = re.sub(r'купить.*?\d+.*?руб', '', desc_text, flags=re.I)
+                desc_text = desc_text.strip()
+                if len(desc_text) > 20:
+                    product_data['description'] = desc_text[:500]
+        
+        if product_data['description']:
+            print(f"Description: {product_data['description'][:80]}...")
         
         # === TYPE ===
         name_lower = product_data['name'].lower()
@@ -330,54 +370,62 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         # === LAMP COUNT (quantity) ===
         product_data['lampCount'] = None
         
-        # First try: Find green highlighted number (vamsvet.ru specific)
-        # Look for spans/badges with green styling near "Количество ламп"
-        green_badges = soup.find_all(['span', 'div', 'button'], class_=re.compile('green|badge|count', re.I))
-        for badge in green_badges:
-            parent_text = ''
-            if badge.parent:
-                parent_text = badge.parent.get_text()
-            
-            if 'количество' in parent_text.lower() or 'лампы' in parent_text.lower():
-                badge_text = badge.get_text(strip=True)
-                if badge_text.isdigit():
-                    product_data['lampCount'] = int(badge_text)
-                    print(f"Lamp count (green badge): {product_data['lampCount']}")
-                    break
-        
-        # Second try: Find in characteristics by looking for green/highlighted elements
-        if not product_data['lampCount'] and chars_section:
-            lamp_elements = chars_section.find_all(string=re.compile(r'количество.*ламп', re.I))
-            for elem in lamp_elements:
-                # Check siblings for badges/spans with numbers
-                parent = elem.parent
-                if parent:
-                    siblings = parent.find_next_siblings()
-                    for sib in siblings[:3]:
-                        numbers = re.findall(r'\b(\d+)\b', sib.get_text())
-                        if numbers:
-                            product_data['lampCount'] = int(numbers[0])
-                            print(f"Lamp count (sibling): {product_data['lampCount']}")
+        # Strategy 1: Find in HTML all elements with numbers near "Количество ламп"
+        # Look for the exact structure: label "Количество ламп" then value
+        if chars_section:
+            # Find all rows/items in characteristics
+            rows = chars_section.find_all(['tr', 'li', 'div'], recursive=True)
+            for row in rows:
+                row_text = row.get_text()
+                if re.search(r'количество.*ламп', row_text, re.I):
+                    # Look for all numbers in this row and following elements
+                    numbers = re.findall(r'\b(\d+)\b', row_text)
+                    for num in numbers:
+                        num_int = int(num)
+                        # Filter reasonable lamp counts (1-50)
+                        if 1 <= num_int <= 50:
+                            product_data['lampCount'] = num_int
+                            print(f"Lamp count (row): {product_data['lampCount']}")
                             break
-                if product_data['lampCount']:
-                    break
+                    if product_data['lampCount']:
+                        break
         
-        # Third try: Text patterns in characteristics
+        # Strategy 2: Look in HTML for green/highlighted badges with "Количество ламп"
+        if not product_data['lampCount']:
+            # Find all spans, divs, buttons
+            all_elements = soup.find_all(['span', 'div', 'button', 'td', 'dd'])
+            for i, elem in enumerate(all_elements):
+                elem_text = elem.get_text(strip=True)
+                if re.search(r'количество.*ламп', elem_text, re.I):
+                    # Check next 3 siblings for numbers
+                    for j in range(i+1, min(i+4, len(all_elements))):
+                        next_elem = all_elements[j]
+                        next_text = next_elem.get_text(strip=True)
+                        if next_text.isdigit():
+                            num = int(next_text)
+                            if 1 <= num <= 50:
+                                product_data['lampCount'] = num
+                                print(f"Lamp count (next elem): {product_data['lampCount']}")
+                                break
+                    if product_data['lampCount']:
+                        break
+        
+        # Strategy 3: Regex patterns in full text
         if not product_data['lampCount']:
             lamp_count_patterns = [
-                r'Количество ламп[:\s]+(\d+)',
-                r'Количество источников света[:\s]+(\d+)',
-                r'Число ламп[:\s]+(\d+)',
-                r'Кол-во ламп[:\s]+(\d+)',
+                r'Количество ламп[^\d]*(\d+)',
+                r'Количество источников света[^\d]*(\d+)',
+                r'Число ламп[^\d]*(\d+)',
                 r'(\d+)\s*x\s*\d+\s*Вт',
-                r'(\d+)\s*плафон',
             ]
             for pattern in lamp_count_patterns:
                 match = re.search(pattern, characteristics_text, re.I)
                 if match:
-                    product_data['lampCount'] = int(match.group(1))
-                    print(f"Lamp count (pattern): {product_data['lampCount']}")
-                    break
+                    num = int(match.group(1))
+                    if 1 <= num <= 50:
+                        product_data['lampCount'] = num
+                        print(f"Lamp count (regex): {product_data['lampCount']}")
+                        break
         
         # === SOCKET TYPE (Цоколь) ===
         product_data['socketType'] = None
