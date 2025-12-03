@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Import products from external websites using AI parsing with GPT-4o-mini
+    Business: Import products from external websites using BeautifulSoup parsing
     Args: event with httpMethod, body containing url or urls array
     Returns: HTTP response with imported products count and details
     '''
@@ -47,16 +47,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        
-        if not openai_key:
-            return {
-                'statusCode': 500,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'OPENAI_API_KEY not configured'}),
-                'isBase64Encoded': False
-            }
-        
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         
@@ -65,14 +55,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         for url in urls:
             try:
-                product_data = parse_product_page(url, openai_key)
+                product_data = parse_product_page(url)
                 if product_data:
                     insert_product(cur, product_data)
                     imported_count += 1
+                    print(f"✓ Imported: {product_data.get('name')}")
                 else:
                     failed_urls.append({'url': url, 'reason': 'Failed to parse'})
             except Exception as e:
                 failed_urls.append({'url': url, 'reason': str(e)})
+                print(f"✗ Failed {url}: {e}")
         
         conn.commit()
         cur.close()
@@ -98,10 +90,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
 
-def parse_product_page(url: str, api_key: str) -> Optional[Dict[str, Any]]:
-    '''Fetch and parse product page using GPT-4o-mini through proxy'''
+def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
+    '''Fetch and parse product page using BeautifulSoup (no AI)'''
     try:
-        # Try direct request first, then fallback to proxy if needed
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -121,86 +112,103 @@ def parse_product_page(url: str, api_key: str) -> Optional[Dict[str, Any]]:
                 'http': proxy_url,
                 'https': proxy_url
             }
-            print(f"Using proxy: {proxy_host}:{proxy_port}")
         
-        response = requests.get(
-            url,
-            headers=headers,
-            proxies=proxies,
-            timeout=30
-        )
+        response = requests.get(url, headers=headers, proxies=proxies, timeout=30)
         response.raise_for_status()
-        html_content = response.text
-        print(f"Fetched HTML, length: {len(html_content)}")
         
-        # Parse with OpenAI GPT-4o-mini
-        openai_url = 'https://api.openai.com/v1/chat/completions'
+        soup = BeautifulSoup(response.text, 'lxml')
         
-        prompt = f'''Extract product data from this HTML and return ONLY valid JSON.
-
-HTML:
-{html_content[:15000]}
-
-Return JSON:
-{{
-  "name": "product name",
-  "price": number_without_currency,
-  "image": "image URL",
-  "description": "brief description",
-  "article": "article number",
-  "type": "chandelier/sconce/floor_lamp/table_lamp",
-  "brand": "brand name",
-  "voltage": 220,
-  "color": "color name"
-}}
-
-Return ONLY JSON, no comments.'''
+        # Parse vamsvet.ru structure
+        product_data = {}
         
-        openai_response = requests.post(
-            openai_url,
-            headers={
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                'model': 'gpt-4o-mini',
-                'messages': [
-                    {'role': 'system', 'content': 'You are a product data parser. Return only valid JSON.'},
-                    {'role': 'user', 'content': prompt}
-                ],
-                'temperature': 0.1,
-                'max_tokens': 1000
-            },
-            proxies=None,
-            timeout=30
+        # Name - usually in h1
+        name_tag = soup.find('h1', class_='product-name') or soup.find('h1')
+        product_data['name'] = name_tag.get_text(strip=True) if name_tag else 'Unnamed Product'
+        
+        # Price - common patterns
+        price_tag = (
+            soup.find('span', class_='product-price') or
+            soup.find('div', class_='price') or
+            soup.find('span', {'itemprop': 'price'}) or
+            soup.find(string=re.compile(r'₽|\bруб\b'))
         )
         
-        print(f"OpenAI Response Status: {openai_response.status_code}")
+        if price_tag:
+            price_text = price_tag.get_text() if hasattr(price_tag, 'get_text') else str(price_tag)
+            price_match = re.search(r'(\d[\d\s]*)', price_text.replace('\xa0', ''))
+            product_data['price'] = float(price_match.group(1).replace(' ', '')) if price_match else 0
+        else:
+            product_data['price'] = 0
         
-        if openai_response.status_code != 200:
-            error_body = openai_response.text
-            print(f"OpenAI Error Response: {error_body}")
-            return None
-            
-        openai_response.raise_for_status()
+        # Image - og:image or first product image
+        image_tag = (
+            soup.find('meta', property='og:image') or
+            soup.find('img', class_='product-image') or
+            soup.find('img', {'itemprop': 'image'})
+        )
         
-        result = openai_response.json()
-        gpt_text = result['choices'][0]['message']['content'].strip()
+        if image_tag:
+            product_data['image'] = image_tag.get('content') or image_tag.get('src', '')
+        else:
+            product_data['image'] = ''
         
-        print(f"GPT Response: {gpt_text[:200]}")
+        # Description
+        desc_tag = (
+            soup.find('div', class_='product-description') or
+            soup.find('meta', property='og:description') or
+            soup.find('div', {'itemprop': 'description'})
+        )
         
-        # Extract JSON
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', gpt_text, re.DOTALL)
-        if json_match:
-            product_data = json.loads(json_match.group(0))
-            product_data.setdefault('rating', 5.0)
-            product_data.setdefault('reviews', 0)
-            product_data.setdefault('inStock', True)
-            print(f"Parsed product: {product_data.get('name')}")
-            return product_data
+        if desc_tag:
+            if desc_tag.name == 'meta':
+                product_data['description'] = desc_tag.get('content', '')[:500]
+            else:
+                product_data['description'] = desc_tag.get_text(strip=True)[:500]
+        else:
+            product_data['description'] = ''
         
-        print("Failed to extract JSON from GPT response")
-        return None
+        # Article number - common patterns
+        article_tag = soup.find(string=re.compile(r'Артикул|Код товара|SKU', re.I))
+        if article_tag:
+            article_parent = article_tag.parent
+            article_match = re.search(r'[A-Z0-9\-]+', article_parent.get_text())
+            product_data['article'] = article_match.group(0) if article_match else ''
+        else:
+            product_data['article'] = ''
+        
+        # Brand
+        brand_tag = soup.find('span', class_='brand') or soup.find('a', class_='brand')
+        product_data['brand'] = brand_tag.get_text(strip=True) if brand_tag else 'Неизвестный'
+        
+        # Type - detect from name or category
+        name_lower = product_data['name'].lower()
+        if 'люстра' in name_lower:
+            product_data['type'] = 'chandelier'
+        elif 'бра' in name_lower or 'настенн' in name_lower:
+            product_data['type'] = 'sconce'
+        elif 'торшер' in name_lower:
+            product_data['type'] = 'floor_lamp'
+        elif 'настольн' in name_lower:
+            product_data['type'] = 'table_lamp'
+        else:
+            product_data['type'] = 'chandelier'
+        
+        # Voltage
+        voltage_match = re.search(r'(\d+)\s*В', response.text)
+        product_data['voltage'] = int(voltage_match.group(1)) if voltage_match else 220
+        
+        # Color - search for common color keywords
+        color_keywords = ['белый', 'черный', 'золото', 'хром', 'бронза', 'медь']
+        text_lower = response.text.lower()
+        found_color = next((color for color in color_keywords if color in text_lower), 'разноцветный')
+        product_data['color'] = found_color
+        
+        # Defaults
+        product_data['rating'] = 5.0
+        product_data['reviews'] = 0
+        product_data['inStock'] = True
+        
+        return product_data
         
     except Exception as e:
         print(f"Error parsing {url}: {e}")
@@ -236,15 +244,15 @@ def insert_product(cur, data: Dict[str, Any]) -> None:
         data.get('isDimmable', False),
         data.get('hasColorChange', False),
         data.get('article'),
-        data.get('brandCountry'),
-        data.get('manufacturerCountry'),
+        data.get('brandCountry', 'Россия'),
+        data.get('manufacturerCountry', 'Россия'),
         data.get('collection'),
         data.get('style'),
         data.get('lampType'),
         data.get('socketType'),
-        data.get('lampCount'),
+        data.get('lampCount', 1),
         data.get('lampPower'),
-        data.get('voltage'),
+        data.get('voltage', 220),
         data.get('color'),
         data.get('height'),
         data.get('diameter')
