@@ -359,8 +359,9 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             print("Type: light_ceiling (светильник общий)")
         
         # === CHARACTERISTICS TABLE PARSING ===
-        # Find characteristics table/list
-        chars_section = soup.find('table', class_=re.compile('char|spec|param|properties', re.I)) or \
+        # Strategy 1: Look for vamsvet.ru specific characteristics section
+        chars_section = soup.find('div', class_='pr-params__wrap') or \
+                       soup.find('table', class_=re.compile('char|spec|param|properties', re.I)) or \
                        soup.find('div', class_=re.compile('char|spec|param|properties', re.I)) or \
                        soup.find('ul', class_=re.compile('char|spec|param|properties', re.I))
         
@@ -369,19 +370,36 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         
         if chars_section:
             characteristics_text = chars_section.get_text()
+            print(f"\n=== Characteristics section found ===")
+            print(f"Section preview: {characteristics_text[:500]}...")
             
-            # Parse table rows to extract key-value pairs
-            rows = chars_section.find_all(['tr', 'li', 'div'])
-            for row in rows:
-                text = row.get_text('|', strip=True)
-                # Split by common separators
-                parts = re.split(r'[:|]', text, maxsplit=1)
-                if len(parts) == 2:
-                    key = parts[0].strip().lower()
-                    value = parts[1].strip()
-                    characteristics_dict[key] = value
+            # Strategy 2: Parse key-value pairs from vamsvet.ru structure
+            # Look for <span class="pr-params__label"> and <span class="pr-params__value">
+            labels = chars_section.find_all('span', class_='pr-params__label')
+            values = chars_section.find_all('span', class_='pr-params__value')
+            
+            if labels and values and len(labels) == len(values):
+                for label, value in zip(labels, values):
+                    key = label.get_text(strip=True).lower()
+                    val = value.get_text(strip=True)
+                    characteristics_dict[key] = val
+                    print(f"  {key}: {val}")
+            else:
+                # Fallback: Parse table rows to extract key-value pairs
+                rows = chars_section.find_all(['tr', 'li', 'div'])
+                for row in rows:
+                    text = row.get_text('|', strip=True)
+                    # Split by common separators
+                    parts = re.split(r'[:|]', text, maxsplit=1)
+                    if len(parts) == 2:
+                        key = parts[0].strip().lower()
+                        value = parts[1].strip()
+                        if key and value and len(key) < 100:
+                            characteristics_dict[key] = value
         
-        print(f"Found {len(characteristics_dict)} characteristics")
+        print(f"\nTotal characteristics extracted: {len(characteristics_dict)}")
+        if characteristics_dict:
+            print("Keys:", list(characteristics_dict.keys())[:10])
         
         # === ARTICLE from characteristics ===
         article_patterns = [
