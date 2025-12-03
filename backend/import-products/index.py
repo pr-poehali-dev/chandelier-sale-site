@@ -358,8 +358,10 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
             product_data['type'] = 'light_ceiling'
             print("Type: light_ceiling (светильник общий)")
         
-        # === CHARACTERISTICS TABLE PARSING ===
-        # Strategy 1: Look for vamsvet.ru specific characteristics section
+        # === AI-POWERED CHARACTERISTICS EXTRACTION ===
+        print(f"\n=== Using GPT-4o-mini for smart characteristics extraction ===")
+        
+        # Extract relevant HTML section with characteristics
         chars_section = soup.find('div', class_='pr-params__wrap') or \
                        soup.find('table', class_=re.compile('char|spec|param|properties', re.I)) or \
                        soup.find('div', class_=re.compile('char|spec|param|properties', re.I)) or \
@@ -369,114 +371,105 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         characteristics_dict = {}
         
         if chars_section:
-            characteristics_text = chars_section.get_text()
-            print(f"\n=== Characteristics section found ===")
-            print(f"Section preview: {characteristics_text[:500]}...")
+            characteristics_html = str(chars_section)[:8000]  # Limit to 8000 chars for GPT
+        else:
+            # Take full page text if no specific section found
+            characteristics_html = html_text[:8000]
+        
+        # Use GPT to extract characteristics
+        try:
+            gpt_prompt = f'''Извлеки все характеристики товара из HTML. Верни ТОЛЬКО JSON объект без markdown форматирования.
             
-            # Strategy 2: Parse key-value pairs from vamsvet.ru structure
-            # Look for <span class="pr-params__label"> and <span class="pr-params__value">
-            labels = chars_section.find_all('span', class_='pr-params__label')
-            values = chars_section.find_all('span', class_='pr-params__value')
+Формат ответа (только JSON, без ```json и без лишнего текста):
+            {{
+              "brand": "название бренда",
+              "article": "артикул товара",
+              "brandCountry": "страна бренда",
+              "manufacturerCountry": "страна производства",
+              "collection": "коллекция",
+              "lampCount": число_ламп,
+              "socketType": "тип цоколя E14/E27/GU10",
+              "lampType": "тип лампы LED/Галогенная/Накаливания",
+              "lampPower": мощность_одной_лампы_в_ваттах,
+              "totalPower": общая_мощность_в_ваттах,
+              "voltage": напряжение_в_вольтах,
+              "color": "цвет",
+              "height": высота_в_мм,
+              "diameter": диаметр_в_мм,
+              "length": длина_в_мм,
+              "width": ширина_в_мм
+            }}
             
-            if labels and values and len(labels) == len(values):
-                for label, value in zip(labels, values):
-                    key = label.get_text(strip=True).lower()
-                    val = value.get_text(strip=True)
-                    characteristics_dict[key] = val
-                    print(f"  {key}: {val}")
+Если значение не найдено - используй null. Числа без кавычек. Размеры конвертируй в миллиметры.
+            
+HTML:
+            {characteristics_html}'''
+            
+            proxies_gpt = {
+                'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+                'https': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}'
+            }
+            
+            gpt_response = requests.post(
+                'https://api.openai.com/v1/chat/completions',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {openai_key}'
+                },
+                json={
+                    'model': 'gpt-4o-mini',
+                    'messages': [{'role': 'user', 'content': gpt_prompt}],
+                    'max_tokens': 1000,
+                    'temperature': 0.1
+                },
+                proxies=proxies_gpt,
+                timeout=30
+            )
+            
+            if gpt_response.status_code == 200:
+                gpt_data = gpt_response.json()
+                gpt_text = gpt_data['choices'][0]['message']['content'].strip()
+                
+                # Remove markdown code blocks if present
+                gpt_text = re.sub(r'^```json\s*', '', gpt_text)
+                gpt_text = re.sub(r'\s*```$', '', gpt_text)
+                gpt_text = gpt_text.strip()
+                
+                print(f"GPT response: {gpt_text[:500]}...")
+                
+                try:
+                    characteristics_dict = json.loads(gpt_text)
+                    print(f"✓ GPT extracted {len(characteristics_dict)} characteristics")
+                    print(f"Keys: {list(characteristics_dict.keys())}")
+                except json.JSONDecodeError as e:
+                    print(f"⚠ Failed to parse GPT JSON: {e}")
+                    print(f"Raw response: {gpt_text}")
             else:
-                # Fallback: Parse table rows to extract key-value pairs
-                rows = chars_section.find_all(['tr', 'li', 'div'])
-                for row in rows:
-                    text = row.get_text('|', strip=True)
-                    # Split by common separators
-                    parts = re.split(r'[:|]', text, maxsplit=1)
-                    if len(parts) == 2:
-                        key = parts[0].strip().lower()
-                        value = parts[1].strip()
-                        if key and value and len(key) < 100:
-                            characteristics_dict[key] = value
+                print(f"⚠ GPT API failed: {gpt_response.status_code} - {gpt_response.text}")
+                
+        except Exception as gpt_error:
+            print(f"⚠ GPT extraction failed: {gpt_error}")
         
-        print(f"\nTotal characteristics extracted: {len(characteristics_dict)}")
-        if characteristics_dict:
-            print("Keys:", list(characteristics_dict.keys())[:10])
+        # === APPLY GPT-EXTRACTED CHARACTERISTICS ===
+        if characteristics_dict.get('brand') and characteristics_dict['brand'] != 'null':
+            product_data['brand'] = characteristics_dict['brand']
+            print(f"Brand (GPT): {product_data['brand']}")
         
-        # === ARTICLE from characteristics ===
-        article_patterns = [
-            r'Артикул[:\s]+([A-Z0-9\-\/]+)',
-            r'Код товара[:\s]+([A-Z0-9\-\/]+)',
-            r'Модель[:\s]+([A-Z0-9\-\/]+)',
-        ]
-        for pattern in article_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                product_data['article'] = match.group(1).strip()
-                print(f"Article: {product_data['article']}")
-                break
+        if characteristics_dict.get('article'):
+            product_data['article'] = str(characteristics_dict['article'])
+            print(f"Article (GPT): {product_data['article']}")
         
-        # === BRAND from characteristics ===
-        brand_patterns = [
-            r'Бренд[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
-            r'Производитель[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
-            r'Торговая марка[:\s]+([А-ЯЁA-Z][А-ЯЁA-Za-zа-яё\s\-]+?)(?:\||$|\n)',
-        ]
-        for pattern in brand_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                brand = match.group(1).strip()
-                if brand and not re.search(r'\d{4}|страна|город', brand, re.I):
-                    product_data['brand'] = brand
-                    print(f"Brand: {product_data['brand']}")
-                    break
+        product_data['brandCountry'] = characteristics_dict.get('brandCountry')
+        if product_data['brandCountry']:
+            print(f"Brand country (GPT): {product_data['brandCountry']}")
         
-        # === BRAND COUNTRY ===
-        product_data['brandCountry'] = None
-        brand_country_patterns = [
-            r'Страна бренда[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
-            r'Бренд страны[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
-        ]
-        for pattern in brand_country_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                product_data['brandCountry'] = match.group(1).strip().capitalize()
-                print(f"Brand country: {product_data['brandCountry']}")
-                break
+        product_data['manufacturerCountry'] = characteristics_dict.get('manufacturerCountry')
+        if product_data['manufacturerCountry']:
+            print(f"Manufacturer country (GPT): {product_data['manufacturerCountry']}")
         
-        # === MANUFACTURER COUNTRY ===
-        product_data['manufacturerCountry'] = None
-        country_patterns = [
-            r'Страна[-\s]производител[ья][:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
-            r'Страна производства[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
-            r'Сделано в[:\s]+([А-ЯЁа-яё\s\-]+?)(?:\||$|\n)',
-        ]
-        for pattern in country_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                country = match.group(1).strip()
-                country_map = {
-                    'китай': 'Китай', 'россия': 'Россия', 'германия': 'Германия',
-                    'италия': 'Италия', 'австрия': 'Австрия', 'польша': 'Польша',
-                    'чехия': 'Чехия', 'испания': 'Испания', 'франция': 'Франция',
-                    'турция': 'Турция', 'венгрия': 'Венгрия', 'бельгия': 'Бельгия',
-                }
-                product_data['manufacturerCountry'] = country_map.get(country.lower(), country.capitalize())
-                print(f"Manufacturer country: {product_data['manufacturerCountry']}")
-                break
-        
-        # === COLLECTION ===
-        product_data['collection'] = None
-        collection_patterns = [
-            r'Коллекция[:\s]+([А-ЯЁA-Za-zа-яё0-9\s\-]+?)(?:\||$|\n)',
-            r'Серия[:\s]+([А-ЯЁA-Za-zа-яё0-9\s\-]+?)(?:\||$|\n)',
-        ]
-        for pattern in collection_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                collection = match.group(1).strip()
-                if collection and len(collection) > 2:
-                    product_data['collection'] = collection
-                    print(f"Collection: {product_data['collection']}")
-                    break
+        product_data['collection'] = characteristics_dict.get('collection')
+        if product_data['collection']:
+            print(f"Collection (GPT): {product_data['collection']}")
         
         # === ASSEMBLY INSTRUCTION PDF ===
         product_data['assemblyInstructionUrl'] = None
@@ -493,198 +486,50 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
                 product_data['assemblyInstructionUrl'] = pdf_url
                 print(f"Assembly instruction: {pdf_url}")
         
-        # === LAMP COUNT (quantity) ===
-        product_data['lampCount'] = None
+        # === LAMP SPECIFICATIONS (from GPT) ===
+        if characteristics_dict.get('lampCount'):
+            product_data['lampCount'] = int(characteristics_dict['lampCount'])
+            print(f"Lamp count (GPT): {product_data['lampCount']}")
         
-        # Strategy 1: Find in HTML all elements with numbers near "Количество ламп"
-        # Look for the exact structure: label "Количество ламп" then value
-        if chars_section:
-            # Find all rows/items in characteristics
-            rows = chars_section.find_all(['tr', 'li', 'div'], recursive=True)
-            for row in rows:
-                row_text = row.get_text()
-                if re.search(r'количество.*ламп', row_text, re.I):
-                    # Look for all numbers in this row and following elements
-                    numbers = re.findall(r'\b(\d+)\b', row_text)
-                    for num in numbers:
-                        num_int = int(num)
-                        # Filter reasonable lamp counts (1-50)
-                        if 1 <= num_int <= 50:
-                            product_data['lampCount'] = num_int
-                            print(f"Lamp count (row): {product_data['lampCount']}")
-                            break
-                    if product_data['lampCount']:
-                        break
+        if characteristics_dict.get('socketType'):
+            product_data['socketType'] = characteristics_dict['socketType']
+            print(f"Socket type (GPT): {product_data['socketType']}")
         
-        # Strategy 2: Look in HTML for green/highlighted badges with "Количество ламп"
-        if not product_data['lampCount']:
-            # Find all spans, divs, buttons
-            all_elements = soup.find_all(['span', 'div', 'button', 'td', 'dd'])
-            for i, elem in enumerate(all_elements):
-                elem_text = elem.get_text(strip=True)
-                if re.search(r'количество.*ламп', elem_text, re.I):
-                    # Check next 3 siblings for numbers
-                    for j in range(i+1, min(i+4, len(all_elements))):
-                        next_elem = all_elements[j]
-                        next_text = next_elem.get_text(strip=True)
-                        if next_text.isdigit():
-                            num = int(next_text)
-                            if 1 <= num <= 50:
-                                product_data['lampCount'] = num
-                                print(f"Lamp count (next elem): {product_data['lampCount']}")
-                                break
-                    if product_data['lampCount']:
-                        break
+        if characteristics_dict.get('lampType'):
+            product_data['lampType'] = characteristics_dict['lampType']
+            print(f"Lamp type (GPT): {product_data['lampType']}")
         
-        # Strategy 3: Regex patterns in full text
-        if not product_data['lampCount']:
-            lamp_count_patterns = [
-                r'Количество ламп[^\d]*(\d+)',
-                r'Количество источников света[^\d]*(\d+)',
-                r'Число ламп[^\d]*(\d+)',
-                r'(\d+)\s*x\s*\d+\s*Вт',
-            ]
-            for pattern in lamp_count_patterns:
-                match = re.search(pattern, characteristics_text, re.I)
-                if match:
-                    num = int(match.group(1))
-                    if 1 <= num <= 50:
-                        product_data['lampCount'] = num
-                        print(f"Lamp count (regex): {product_data['lampCount']}")
-                        break
+        if characteristics_dict.get('lampPower'):
+            product_data['lampPower'] = int(characteristics_dict['lampPower'])
+            print(f"Lamp power (GPT): {product_data['lampPower']} W")
         
-        # === SOCKET TYPE (Цоколь) ===
-        product_data['socketType'] = None
-        socket_match = re.search(r'Цоколь[:\s]+([A-Z0-9\.]+(?:[,\s]+[A-Z0-9\.]+)*)', characteristics_text, re.I)
-        if socket_match:
-            socket_str = socket_match.group(1).strip()
-            # Take first socket type if multiple
-            socket_str = re.split(r'[,\s]+', socket_str)[0]
-            product_data['socketType'] = socket_str.upper()
-            print(f"Socket type: {product_data['socketType']}")
-        else:
-            # Fallback: search for common socket types
-            socket_patterns = ['E27', 'E14', 'GU10', 'GU5.3', 'G9', 'G4', 'GX53', 'G53', 'GX70']
-            for socket in socket_patterns:
-                if re.search(rf'\b{socket}\b', characteristics_text, re.I):
-                    product_data['socketType'] = socket
-                    print(f"Socket type (fallback): {product_data['socketType']}")
-                    break
-        
-        # === LAMP TYPE (Тип лампочки) ===
-        product_data['lampType'] = None
-        lamp_type_match = re.search(r'Тип (?:лампы|лампочки|источника света)[:\s]+([А-ЯЁа-яёA-Z\s,\-]+?)(?:\||$|\n)', characteristics_text, re.I)
-        if lamp_type_match:
-            lamp_type_str = lamp_type_match.group(1).strip()
-            # Map to standard types
-            if re.search(r'LED|светодиод', lamp_type_str, re.I):
-                product_data['lampType'] = 'LED'
-            elif re.search(r'галоген', lamp_type_str, re.I):
-                product_data['lampType'] = 'Галогенная'
-            elif re.search(r'накалива', lamp_type_str, re.I):
-                product_data['lampType'] = 'Накаливания'
-            elif re.search(r'энергосбере', lamp_type_str, re.I):
-                product_data['lampType'] = 'Энергосберегающая'
-            else:
-                product_data['lampType'] = lamp_type_str[:50]
-            print(f"Lamp type: {product_data['lampType']}")
-        else:
-            # Fallback: search in all text
-            if re.search(r'\bLED\b|светодиод', characteristics_text, re.I):
-                product_data['lampType'] = 'LED'
-            elif re.search(r'галоген', characteristics_text, re.I):
-                product_data['lampType'] = 'Галогенная'
-            elif re.search(r'накалива', characteristics_text, re.I):
-                product_data['lampType'] = 'Накаливания'
-            
-            if product_data['lampType']:
-                print(f"Lamp type (fallback): {product_data['lampType']}")
-        
-        # === LAMP POWER ===
-        product_data['lampPower'] = None
-        power_patterns = [
-            r'Мощность лампы[:\s]+(\d+)\s*Вт',
-            r'(\d+)\s*Вт\s*(?:на лампу|каждая)',
-            r'\d+\s*x\s*(\d+)\s*Вт',
-        ]
-        for pattern in power_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                product_data['lampPower'] = int(match.group(1))
-                print(f"Lamp power: {product_data['lampPower']} W")
-                break
-        
-        # === TOTAL POWER ===
-        if product_data.get('lampCount') and product_data.get('lampPower'):
+        if characteristics_dict.get('totalPower'):
+            product_data['totalPower'] = int(characteristics_dict['totalPower'])
+        elif product_data.get('lampCount') and product_data.get('lampPower'):
             product_data['totalPower'] = product_data['lampCount'] * product_data['lampPower']
-        else:
-            total_match = re.search(r'Общая мощность[:\s]+(\d+)\s*Вт', characteristics_text, re.I)
-            if total_match:
-                product_data['totalPower'] = int(total_match.group(1))
         
-        # === VOLTAGE ===
-        voltage_match = re.search(r'Напряжение[:\s]+(\d+)\s*В', characteristics_text, re.I)
-        product_data['voltage'] = int(voltage_match.group(1)) if voltage_match else 220
+        product_data['voltage'] = int(characteristics_dict.get('voltage', 220))
         
-        # === COLOR ===
-        product_data['color'] = None
-        color_patterns = [
-            r'Цвет[:\s]+([а-яА-ЯёЁ\-]+)',
-            r'Цветовая гамма[:\s]+([а-яА-ЯёЁ\-]+)',
-        ]
-        for pattern in color_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                product_data['color'] = match.group(1).strip()
-                print(f"Color: {product_data['color']}")
-                break
+        if characteristics_dict.get('color'):
+            product_data['color'] = characteristics_dict['color']
+            print(f"Color (GPT): {product_data['color']}")
         
-        # === DIMENSIONS ===
-        # Height
-        height_patterns = [
-            r'Высота[:\s]+(\d+)\s*(мм|см)',
-            r'Длина подвеса[:\s]+(\d+)\s*(мм|см)',
-        ]
-        product_data['height'] = None
-        for pattern in height_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                val = int(match.group(1))
-                unit = match.group(2).lower()
-                product_data['height'] = val * 10 if unit == 'см' else val
-                print(f"Height: {product_data['height']} mm")
-                break
+        # === DIMENSIONS (from GPT) ===
+        if characteristics_dict.get('height'):
+            product_data['height'] = int(characteristics_dict['height'])
+            print(f"Height (GPT): {product_data['height']} mm")
         
-        # Diameter
-        diameter_patterns = [
-            r'Диаметр[:\s]+(\d+)\s*(мм|см)',
-            r'Ширина[:\s]+(\d+)\s*(мм|см)',
-        ]
-        product_data['diameter'] = None
-        for pattern in diameter_patterns:
-            match = re.search(pattern, characteristics_text, re.I)
-            if match:
-                val = int(match.group(1))
-                unit = match.group(2).lower()
-                product_data['diameter'] = val * 10 if unit == 'см' else val
-                print(f"Diameter: {product_data['diameter']} mm")
-                break
+        if characteristics_dict.get('diameter'):
+            product_data['diameter'] = int(characteristics_dict['diameter'])
+            print(f"Diameter (GPT): {product_data['diameter']} mm")
         
-        # Length
-        length_match = re.search(r'Длина[:\s]+(\d+)\s*(мм|см)', characteristics_text, re.I)
-        product_data['length'] = None
-        if length_match:
-            val = int(length_match.group(1))
-            unit = length_match.group(2).lower()
-            product_data['length'] = val * 10 if unit == 'см' else val
+        if characteristics_dict.get('length'):
+            product_data['length'] = int(characteristics_dict['length'])
+            print(f"Length (GPT): {product_data['length']} mm")
         
-        # Width
-        width_match = re.search(r'Ширина[:\s]+(\d+)\s*(мм|см)', characteristics_text, re.I)
-        product_data['width'] = None
-        if width_match:
-            val = int(width_match.group(1))
-            unit = width_match.group(2).lower()
-            product_data['width'] = val * 10 if unit == 'см' else val
+        if characteristics_dict.get('width'):
+            product_data['width'] = int(characteristics_dict['width'])
+            print(f"Width (GPT): {product_data['width']} mm")
         
         # === CONTROL FEATURES ===
         product_data['hasRemote'] = bool(re.search(r'пульт[а-я\s]*управлен', characteristics_text, re.I))
