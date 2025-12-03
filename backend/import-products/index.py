@@ -221,7 +221,7 @@ def insert_product(cur, data: Dict[str, Any]) -> None:
     '''Insert product into database'''
     cur.execute('''
         INSERT INTO products (
-            name, price, brand, description, type, image, in_stock,
+            name, price, brand, description, type, image_url, in_stock,
             rating, reviews, has_remote, is_dimmable, has_color_change,
             article, brand_country, manufacturer_country, collection, style,
             lamp_type, socket_type, lamp_count, lamp_power, voltage,
