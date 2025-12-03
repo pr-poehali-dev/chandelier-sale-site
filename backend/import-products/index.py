@@ -193,15 +193,71 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         else:
             product_data['type'] = 'chandelier'
         
+        # Parse characteristics from HTML
+        html_text = response.text
+        
         # Voltage
-        voltage_match = re.search(r'(\d+)\s*В', response.text)
+        voltage_match = re.search(r'(\d+)\s*В', html_text)
         product_data['voltage'] = int(voltage_match.group(1)) if voltage_match else 220
         
+        # Lamp count
+        lamp_count_match = re.search(r'(\d+)\s*(?:ламп|лампочк|плафон)', html_text, re.I)
+        product_data['lampCount'] = int(lamp_count_match.group(1)) if lamp_count_match else None
+        
+        # Lamp power (Watts)
+        lamp_power_match = re.search(r'(\d+)\s*Вт', html_text, re.I)
+        product_data['lampPower'] = int(lamp_power_match.group(1)) if lamp_power_match else None
+        
+        # Total power
+        if product_data.get('lampCount') and product_data.get('lampPower'):
+            product_data['totalPower'] = product_data['lampCount'] * product_data['lampPower']
+        
+        # Dimensions (height, diameter, etc)
+        height_match = re.search(r'высот[а|у].*?(\d+)\s*(?:мм|см)', html_text, re.I)
+        if height_match:
+            height_val = int(height_match.group(1))
+            product_data['height'] = height_val if 'см' in height_match.group(0).lower() else height_val * 10
+        
+        diameter_match = re.search(r'диаметр.*?(\d+)\s*(?:мм|см)', html_text, re.I)
+        if diameter_match:
+            diameter_val = int(diameter_match.group(1))
+            product_data['diameter'] = diameter_val if 'см' in diameter_match.group(0).lower() else diameter_val * 10
+        
+        length_match = re.search(r'длин[а|у].*?(\d+)\s*(?:мм|см)', html_text, re.I)
+        if length_match:
+            length_val = int(length_match.group(1))
+            product_data['length'] = length_val if 'см' in length_match.group(0).lower() else length_val * 10
+        
+        width_match = re.search(r'ширин[а|у].*?(\d+)\s*(?:мм|см)', html_text, re.I)
+        if width_match:
+            width_val = int(width_match.group(1))
+            product_data['width'] = width_val if 'см' in width_match.group(0).lower() else width_val * 10
+        
+        # Socket type
+        socket_patterns = ['E27', 'E14', 'GU10', 'G9', 'G4']
+        for socket in socket_patterns:
+            if socket in html_text:
+                product_data['socketType'] = socket
+                break
+        
+        # Lamp type
+        if 'LED' in html_text or 'светодиод' in html_text.lower():
+            product_data['lampType'] = 'LED'
+        elif 'галоген' in html_text.lower():
+            product_data['lampType'] = 'Галогенная'
+        elif 'накалива' in html_text.lower():
+            product_data['lampType'] = 'Накаливания'
+        
         # Color - search for common color keywords
-        color_keywords = ['белый', 'черный', 'золото', 'хром', 'бронза', 'медь']
-        text_lower = response.text.lower()
-        found_color = next((color for color in color_keywords if color in text_lower), 'разноцветный')
+        color_keywords = ['белый', 'черный', 'золото', 'хром', 'бронза', 'медь', 'серебр']
+        text_lower = html_text.lower()
+        found_color = next((color for color in color_keywords if color in text_lower), None)
         product_data['color'] = found_color
+        
+        # Features
+        product_data['hasRemote'] = 'пульт' in text_lower or 'ду' in text_lower
+        product_data['isDimmable'] = 'диммер' in text_lower or 'диммируем' in text_lower
+        product_data['hasColorChange'] = 'RGB' in html_text or 'смена цвет' in text_lower
         
         # Defaults
         product_data['rating'] = 5.0
@@ -218,42 +274,51 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
 
 
 def insert_product(cur, data: Dict[str, Any]) -> None:
-    '''Insert product into database'''
+    '''Insert product into database with proper column mapping'''
     cur.execute('''
         INSERT INTO products (
             name, price, brand, description, type, image_url, in_stock,
             rating, reviews, has_remote, is_dimmable, has_color_change,
             article, brand_country, manufacturer_country, collection, style,
-            lamp_type, socket_type, lamp_count, lamp_power, voltage,
-            color, height, diameter
+            lamp_type, socket_type, bulb_type, lamp_count, lamp_power, 
+            total_power, lighting_area, voltage, color, 
+            height, diameter, length, width, depth, chain_length
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s
         )
     ''', (
-        data.get('name'),
-        data.get('price'),
-        data.get('brand'),
+        data.get('name', 'Без названия'),
+        float(data.get('price', 0)),
+        data.get('brand', 'Неизвестный'),
         data.get('description', ''),
-        data.get('type'),
-        data.get('image'),
+        data.get('type', 'chandelier'),
+        data.get('image', ''),
         data.get('inStock', True),
-        data.get('rating', 5.0),
-        data.get('reviews', 0),
+        float(data.get('rating', 5.0)),
+        int(data.get('reviews', 0)),
         data.get('hasRemote', False),
         data.get('isDimmable', False),
         data.get('hasColorChange', False),
-        data.get('article'),
+        data.get('article', ''),
         data.get('brandCountry', 'Россия'),
         data.get('manufacturerCountry', 'Россия'),
-        data.get('collection'),
-        data.get('style'),
-        data.get('lampType'),
-        data.get('socketType'),
-        data.get('lampCount', 1),
-        data.get('lampPower'),
-        data.get('voltage', 220),
-        data.get('color'),
-        data.get('height'),
-        data.get('diameter')
+        data.get('collection', None),
+        data.get('style', None),
+        data.get('lampType', None),
+        data.get('socketType', None),
+        data.get('bulbType', None),
+        int(data.get('lampCount', 0)) if data.get('lampCount') else None,
+        int(data.get('lampPower', 0)) if data.get('lampPower') else None,
+        int(data.get('totalPower', 0)) if data.get('totalPower') else None,
+        int(data.get('lightingArea', 0)) if data.get('lightingArea') else None,
+        int(data.get('voltage', 220)),
+        data.get('color', None),
+        int(data.get('height', 0)) if data.get('height') else None,
+        int(data.get('diameter', 0)) if data.get('diameter') else None,
+        int(data.get('length', 0)) if data.get('length') else None,
+        int(data.get('width', 0)) if data.get('width') else None,
+        int(data.get('depth', 0)) if data.get('depth') else None,
+        int(data.get('chainLength', 0)) if data.get('chainLength') else None
     ))
