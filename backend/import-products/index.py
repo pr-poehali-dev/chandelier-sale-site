@@ -157,18 +157,13 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         # === ADDITIONAL IMAGES ===
         product_data['images'] = []
         
-        # Try multiple strategies for vamsvet.ru
-        # Strategy 1: Look for slider/gallery containers
-        gallery_containers = soup.find_all(['div', 'ul'], class_=re.compile('slider|gallery|photos|images|product-images', re.I))
-        
-        for container in gallery_containers:
-            imgs = container.find_all('img')
-            for img in imgs:
-                img_url = img.get('data-src') or img.get('src') or img.get('data-lazy')
-                if img_url and img_url not in product_data['images']:
-                    # Skip small images (thumbnails)
-                    if 'thumb' in img_url or 'small' in img_url:
-                        continue
+        # Strategy 1: vamsvet.ru specific - look for thumbnail images in product-pic__tumb-img-wrap
+        thumb_wraps = soup.find_all('span', class_='product-pic__tumb-img-wrap')
+        for wrap in thumb_wraps:
+            img = wrap.find('img')
+            if img:
+                img_url = img.get('data-src') or img.get('src')
+                if img_url:
                     # Make absolute URL
                     if img_url.startswith('//'):
                         img_url = 'https:' + img_url
@@ -176,28 +171,54 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
                         from urllib.parse import urlparse
                         parsed = urlparse(url)
                         img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
-                    # Skip if it's the main image
-                    if img_url != product_data['image']:
+                    
+                    # Get full-size version (replace thumb with original)
+                    img_url = img_url.replace('/thumb/', '/').replace('_thumb', '')
+                    
+                    if img_url != product_data['image'] and img_url not in product_data['images']:
                         product_data['images'].append(img_url)
+                        print(f"Image (thumb): {img_url[:60]}...")
         
-        # Strategy 2: Look for all product images with common patterns
-        if len(product_data['images']) == 0:
-            all_imgs = soup.find_all('img')
-            for img in all_imgs:
-                img_url = img.get('data-src') or img.get('src')
-                if img_url and '/upload/iblock/' in img_url:  # vamsvet.ru specific path
+        # Strategy 2: Look for <a href="..."> links to full images
+        if len(product_data['images']) < 5:
+            image_links = soup.find_all('a', href=re.compile(r'\.(jpg|jpeg|png|webp)$', re.I))
+            for link in image_links:
+                img_url = link.get('href')
+                if img_url and '/upload/' in img_url:
+                    # Make absolute URL
                     if img_url.startswith('//'):
                         img_url = 'https:' + img_url
                     elif img_url.startswith('/'):
                         from urllib.parse import urlparse
                         parsed = urlparse(url)
                         img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                    
                     if img_url != product_data['image'] and img_url not in product_data['images']:
                         product_data['images'].append(img_url)
+                        print(f"Image (link): {img_url[:60]}...")
+        
+        # Strategy 3: Generic gallery search
+        if len(product_data['images']) == 0:
+            gallery_containers = soup.find_all(['div', 'ul'], class_=re.compile('slider|gallery|photos|images|product-images', re.I))
+            for container in gallery_containers:
+                imgs = container.find_all('img')
+                for img in imgs:
+                    img_url = img.get('data-src') or img.get('src') or img.get('data-lazy')
+                    if img_url and img_url not in product_data['images']:
+                        if 'thumb' in img_url or 'small' in img_url:
+                            continue
+                        if img_url.startswith('//'):
+                            img_url = 'https:' + img_url
+                        elif img_url.startswith('/'):
+                            from urllib.parse import urlparse
+                            parsed = urlparse(url)
+                            img_url = f"{parsed.scheme}://{parsed.netloc}{img_url}"
+                        if img_url != product_data['image']:
+                            product_data['images'].append(img_url)
         
         # Limit to 5 images
         product_data['images'] = product_data['images'][:5]
-        print(f"Additional images: {len(product_data['images'])}")
+        print(f"Additional images total: {len(product_data['images'])}")
         
         # === DESCRIPTION (clean) ===
         product_data['description'] = ''
