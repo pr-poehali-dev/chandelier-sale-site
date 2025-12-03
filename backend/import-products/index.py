@@ -304,10 +304,7 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         if 'люстра' in detection_text or 'chandelier' in detection_text:
             product_data['type'] = 'chandelier'
             print("Type: chandelier (люстра)")
-        elif 'светильник' in detection_text and ('потолочн' in detection_text or 'подвес' in detection_text):
-            product_data['type'] = 'chandelier'
-            print("Type: chandelier (потолочный светильник)")
-        elif 'бра' in detection_text or 'настенн' in detection_text and 'светильник' in detection_text:
+        elif 'бра' in detection_text or ('настенн' in detection_text and 'светильник' in detection_text):
             product_data['type'] = 'sconce'
             print("Type: sconce (бра/настенный)")
         elif 'торшер' in detection_text or 'floor lamp' in detection_text:
@@ -316,10 +313,16 @@ def parse_product_page(url: str) -> Optional[Dict[str, Any]]:
         elif 'настольн' in detection_text or 'table lamp' in detection_text:
             product_data['type'] = 'table_lamp'
             print("Type: table_lamp (настольная лампа)")
+        elif 'потолочн' in detection_text and 'светильник' in detection_text:
+            product_data['type'] = 'light_ceiling'
+            print("Type: light_ceiling (потолочный светильник)")
+        elif 'подвес' in detection_text and 'светильник' in detection_text:
+            product_data['type'] = 'light_pendant'
+            print("Type: light_pendant (подвесной светильник)")
         elif 'светильник' in detection_text:
-            # Generic светильник - default to chandelier
-            product_data['type'] = 'chandelier'
-            print("Type: chandelier (светильник)")
+            # Generic светильник - отдельная категория
+            product_data['type'] = 'light_ceiling'
+            print("Type: light_ceiling (светильник общий)")
         
         # === CHARACTERISTICS TABLE PARSING ===
         # Find characteristics table/list
