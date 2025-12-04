@@ -292,13 +292,13 @@ const Admin = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const validExtensions = ['.xlsx', '.xls', '.csv', '.json'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
     
     if (!validExtensions.includes(fileExtension)) {
       toast({
         title: 'Ошибка',
-        description: 'Поддерживаются только Excel (.xlsx, .xls) и CSV файлы',
+        description: 'Поддерживаются только Excel (.xlsx, .xls), CSV и JSON файлы',
         variant: 'destructive',
       });
       return;
@@ -312,17 +312,24 @@ const Admin = () => {
       reader.onload = async (event) => {
         try {
           const data = event.target?.result;
-          let workbook: XLSX.WorkBook;
+          let jsonData: any[];
           
-          if (fileExtension === '.csv') {
-            workbook = XLSX.read(data, { type: 'binary' });
+          if (fileExtension === '.json') {
+            const parsedData = JSON.parse(data as string);
+            jsonData = Array.isArray(parsedData) ? parsedData : [parsedData];
           } else {
-            workbook = XLSX.read(data, { type: 'array' });
+            let workbook: XLSX.WorkBook;
+            
+            if (fileExtension === '.csv') {
+              workbook = XLSX.read(data, { type: 'binary' });
+            } else {
+              workbook = XLSX.read(data, { type: 'array' });
+            }
+            
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
           }
-          
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
           if (jsonData.length === 0) {
             toast({
@@ -380,7 +387,9 @@ const Admin = () => {
         }
       };
 
-      if (fileExtension === '.csv') {
+      if (fileExtension === '.json') {
+        reader.readAsText(file);
+      } else if (fileExtension === '.csv') {
         reader.readAsBinaryString(file);
       } else {
         reader.readAsArrayBuffer(file);
@@ -418,6 +427,33 @@ const Admin = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Товары');
     XLSX.writeFile(wb, 'template_products.xlsx');
+  };
+
+  const downloadJsonTemplate = () => {
+    const template = [
+      {
+        name: 'Пример: Люстра Crystal',
+        description: 'Роскошный светильник из хрусталя',
+        price: 45000,
+        brand: 'LuxCrystal',
+        type: 'chandelier',
+        image: 'https://example.com/image.jpg',
+        inStock: true,
+        rating: 5.0,
+        reviews: 12
+      }
+    ];
+
+    const jsonStr = JSON.stringify(template, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'template_products.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const exportProducts = () => {
@@ -649,7 +685,11 @@ const Admin = () => {
             <div className="flex gap-2">
             <Button variant="outline" onClick={downloadTemplate}>
               <Icon name="Download" className="mr-2 h-4 w-4" />
-              Шаблон
+              Шаблон Excel
+            </Button>
+            <Button variant="outline" onClick={downloadJsonTemplate}>
+              <Icon name="FileJson" className="mr-2 h-4 w-4" />
+              Шаблон JSON
             </Button>
             <Button variant="outline" onClick={exportProducts}>
               <Icon name="FileDown" className="mr-2 h-4 w-4" />
@@ -677,7 +717,7 @@ const Admin = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx,.xls,.csv"
+              accept=".xlsx,.xls,.csv,.json"
               className="hidden"
               onChange={handleBulkUpload}
             />
