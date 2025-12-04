@@ -70,6 +70,24 @@ const Admin = () => {
     chainLength: 0,
     images: [] as string[],
     assemblyInstructionUrl: '',
+    materials: '',
+    frameMaterial: '',
+    shadeMaterial: '',
+    frameColor: '',
+    shadeColor: '',
+    shadeDirection: '',
+    diffuserType: '',
+    diffuserShape: '',
+    ipRating: '',
+    interior: '',
+    place: '',
+    suspendedCeiling: false,
+    mountType: '',
+    officialWarranty: '',
+    shopWarranty: '',
+    section: '',
+    catalog: '',
+    subcategory: '',
   });
 
   useEffect(() => {
@@ -142,6 +160,25 @@ const Admin = () => {
       depth: product.depth || 0,
       chainLength: product.chainLength || 0,
       images: product.images || [],
+      assemblyInstructionUrl: product.assemblyInstructionUrl || '',
+      materials: product.materials || '',
+      frameMaterial: product.frameMaterial || '',
+      shadeMaterial: product.shadeMaterial || '',
+      frameColor: product.frameColor || '',
+      shadeColor: product.shadeColor || '',
+      shadeDirection: product.shadeDirection || '',
+      diffuserType: product.diffuserType || '',
+      diffuserShape: product.diffuserShape || '',
+      ipRating: product.ipRating || '',
+      interior: product.interior || '',
+      place: product.place || '',
+      suspendedCeiling: product.suspendedCeiling || false,
+      mountType: product.mountType || '',
+      officialWarranty: product.officialWarranty || '',
+      shopWarranty: product.shopWarranty || '',
+      section: product.section || '',
+      catalog: product.catalog || '',
+      subcategory: product.subcategory || '',
     });
     setIsNewProduct(false);
     setIsDialogOpen(true);
@@ -1099,8 +1136,13 @@ const Admin = () => {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <p><span className="font-medium">Бренд:</span> {product.brand}</p>
+                  {product.article && <p><span className="font-medium">Артикул:</span> {product.article}</p>}
                   <p><span className="font-medium">Цена:</span> {product.price.toLocaleString()} ₽</p>
                   <p><span className="font-medium">Тип:</span> {types.find(t => t.value === product.type)?.label}</p>
+                  {product.collection && <p><span className="font-medium">Коллекция:</span> {product.collection}</p>}
+                  {product.style && <p><span className="font-medium">Стиль:</span> {product.style}</p>}
+                  {product.color && <p><span className="font-medium">Цвет:</span> {product.color}</p>}
+                  {product.lampCount && <p><span className="font-medium">Лампы:</span> {product.lampCount} шт × {product.lampPower}W</p>}
                   <p><span className="font-medium">Рейтинг:</span> {product.rating} ⭐</p>
                   <p><span className="font-medium">Наличие:</span> {product.inStock ? '✅ В наличии' : '❌ Нет'}</p>
                 </div>
@@ -1618,6 +1660,194 @@ const Admin = () => {
                         value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                         placeholder="Бронза"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="materials">Материалы</Label>
+                      <Input
+                        id="materials"
+                        value={formData.materials}
+                        onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
+                        placeholder="Металл, стекло"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="frameMaterial">Материал каркаса</Label>
+                      <Input
+                        id="frameMaterial"
+                        value={formData.frameMaterial}
+                        onChange={(e) => setFormData({ ...formData, frameMaterial: e.target.value })}
+                        placeholder="Металл"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shadeMaterial">Материал плафона</Label>
+                      <Input
+                        id="shadeMaterial"
+                        value={formData.shadeMaterial}
+                        onChange={(e) => setFormData({ ...formData, shadeMaterial: e.target.value })}
+                        placeholder="Стекло"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="frameColor">Цвет каркаса</Label>
+                      <Input
+                        id="frameColor"
+                        value={formData.frameColor}
+                        onChange={(e) => setFormData({ ...formData, frameColor: e.target.value })}
+                        placeholder="Черный"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shadeColor">Цвет плафона</Label>
+                      <Input
+                        id="shadeColor"
+                        value={formData.shadeColor}
+                        onChange={(e) => setFormData({ ...formData, shadeColor: e.target.value })}
+                        placeholder="Прозрачный"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Характеристики плафона</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="shadeDirection">Направление плафонов</Label>
+                      <Input
+                        id="shadeDirection"
+                        value={formData.shadeDirection}
+                        onChange={(e) => setFormData({ ...formData, shadeDirection: e.target.value })}
+                        placeholder="Ниже"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="diffuserType">Тип рассеивателя</Label>
+                      <Input
+                        id="diffuserType"
+                        value={formData.diffuserType}
+                        onChange={(e) => setFormData({ ...formData, diffuserType: e.target.value })}
+                        placeholder="Плоский"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="diffuserShape">Форма рассеивателя</Label>
+                      <Input
+                        id="diffuserShape"
+                        value={formData.diffuserShape}
+                        onChange={(e) => setFormData({ ...formData, diffuserShape: e.target.value })}
+                        placeholder="Круглый"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Защита и размещение</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="ipRating">Степень защиты (IP)</Label>
+                      <Input
+                        id="ipRating"
+                        value={formData.ipRating}
+                        onChange={(e) => setFormData({ ...formData, ipRating: e.target.value })}
+                        placeholder="IP20"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="interior">Интерьер</Label>
+                      <Input
+                        id="interior"
+                        value={formData.interior}
+                        onChange={(e) => setFormData({ ...formData, interior: e.target.value })}
+                        placeholder="Гостиная, Спальня"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="place">Место установки</Label>
+                      <Input
+                        id="place"
+                        value={formData.place}
+                        onChange={(e) => setFormData({ ...formData, place: e.target.value })}
+                        placeholder="На потолке"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mountType">Тип крепления</Label>
+                      <Input
+                        id="mountType"
+                        value={formData.mountType}
+                        onChange={(e) => setFormData({ ...formData, mountType: e.target.value })}
+                        placeholder="Подвесной"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pt-8">
+                      <Label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.suspendedCeiling}
+                          onChange={(e) => setFormData({ ...formData, suspendedCeiling: e.target.checked })}
+                          className="w-4 h-4"
+                        />
+                        Натяжной потолок
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Гарантия</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="officialWarranty">Официальная гарантия</Label>
+                      <Input
+                        id="officialWarranty"
+                        value={formData.officialWarranty}
+                        onChange={(e) => setFormData({ ...formData, officialWarranty: e.target.value })}
+                        placeholder="2 года"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shopWarranty">Гарантия магазина</Label>
+                      <Input
+                        id="shopWarranty"
+                        value={formData.shopWarranty}
+                        onChange={(e) => setFormData({ ...formData, shopWarranty: e.target.value })}
+                        placeholder="1 год"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Категоризация</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="section">Раздел</Label>
+                      <Input
+                        id="section"
+                        value={formData.section}
+                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                        placeholder="Люстры"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="catalog">Каталог</Label>
+                      <Input
+                        id="catalog"
+                        value={formData.catalog}
+                        onChange={(e) => setFormData({ ...formData, catalog: e.target.value })}
+                        placeholder="Освещение"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="subcategory">Подкатегория</Label>
+                      <Input
+                        id="subcategory"
+                        value={formData.subcategory}
+                        onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                        placeholder="Подвесные люстры"
                       />
                     </div>
                   </div>

@@ -371,14 +371,46 @@ const ProductDetail = () => {
                   </div>
                 </div>
 
-                {product.color && (
+                {(product.color || product.materials || product.frameMaterial || product.shadeMaterial || product.frameColor || product.shadeColor) && (
                   <div>
                     <h3 className="font-semibold text-lg mb-3">Цвет и материал</h3>
                     <div className="grid gap-2">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="text-muted-foreground">Цвет</span>
-                        <span className="font-medium">{product.color}</span>
-                      </div>
+                      {product.color && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Цвет</span>
+                          <span className="font-medium">{product.color}</span>
+                        </div>
+                      )}
+                      {product.materials && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Материалы</span>
+                          <span className="font-medium">{product.materials}</span>
+                        </div>
+                      )}
+                      {product.frameMaterial && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Материал каркаса</span>
+                          <span className="font-medium">{product.frameMaterial}</span>
+                        </div>
+                      )}
+                      {product.shadeMaterial && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Материал плафона</span>
+                          <span className="font-medium">{product.shadeMaterial}</span>
+                        </div>
+                      )}
+                      {product.frameColor && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Цвет каркаса</span>
+                          <span className="font-medium">{product.frameColor}</span>
+                        </div>
+                      )}
+                      {product.shadeColor && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Цвет плафона</span>
+                          <span className="font-medium">{product.shadeColor}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -409,6 +441,96 @@ const ProductDetail = () => {
                         <div className="flex justify-between py-2 border-b">
                           <span className="text-muted-foreground">Ширина, мм</span>
                           <span className="font-medium">{product.width}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(product.shadeDirection || product.diffuserType || product.diffuserShape) && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Характеристики плафона</h3>
+                    <div className="grid gap-2">
+                      {product.shadeDirection && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Направление плафонов</span>
+                          <span className="font-medium">{product.shadeDirection}</span>
+                        </div>
+                      )}
+                      {product.diffuserType && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Тип рассеивателя</span>
+                          <span className="font-medium">{product.diffuserType}</span>
+                        </div>
+                      )}
+                      {product.diffuserShape && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Форма рассеивателя</span>
+                          <span className="font-medium">{product.diffuserShape}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(product.ipRating || product.interior || product.place || product.mountType || product.suspendedCeiling) && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Защита и размещение</h3>
+                    <div className="grid gap-2">
+                      {product.ipRating && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Степень защиты (IP)</span>
+                          <span className="font-medium">{product.ipRating}</span>
+                        </div>
+                      )}
+                      {product.interior && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Интерьер</span>
+                          <span className="font-medium">{product.interior}</span>
+                        </div>
+                      )}
+                      {product.place && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Место установки</span>
+                          <span className="font-medium">{product.place}</span>
+                        </div>
+                      )}
+                      {product.mountType && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Тип крепления</span>
+                          <span className="font-medium">{product.mountType}</span>
+                        </div>
+                      )}
+                      {product.suspendedCeiling !== undefined && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Натяжной потолок</span>
+                          <span className="font-medium">{product.suspendedCeiling ? 'Да' : 'Нет'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(product.section || product.catalog || product.subcategory) && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Категоризация</h3>
+                    <div className="grid gap-2">
+                      {product.section && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Раздел</span>
+                          <span className="font-medium">{product.section}</span>
+                        </div>
+                      )}
+                      {product.catalog && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Каталог</span>
+                          <span className="font-medium">{product.catalog}</span>
+                        </div>
+                      )}
+                      {product.subcategory && (
+                        <div className="flex justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Подкатегория</span>
+                          <span className="font-medium">{product.subcategory}</span>
                         </div>
                       )}
                     </div>
@@ -521,14 +643,14 @@ const ProductDetail = () => {
                     <Icon name="Shield" className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Гарантия производителя</p>
-                      <p className="text-sm text-muted-foreground">2 года на электронные компоненты</p>
+                      <p className="text-sm text-muted-foreground">{product.officialWarranty || '2 года на электронные компоненты'}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Icon name="Store" className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Гарантия магазина</p>
-                      <p className="text-sm text-muted-foreground">12 месяцев дополнительной гарантии</p>
+                      <p className="text-sm text-muted-foreground">{product.shopWarranty || '12 месяцев дополнительной гарантии'}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
