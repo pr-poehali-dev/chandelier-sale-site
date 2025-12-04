@@ -43,7 +43,7 @@ const Admin = () => {
     rating: 5,
     reviews: 0,
     inStock: true,
-    type: 'chandelier' as string,
+    type: '',
     description: '',
     hasRemote: false,
     isDimmable: false,
@@ -405,7 +405,7 @@ const Admin = () => {
                 description: row['Описание'] || row['description'] || '',
                 price: parsePrice(row['Цена'] || row['price']),
                 brand: row['Бренд'] || row['brand'] || '',
-                type: (row['Тип'] || row['type'] || 'chandelier') as any,
+                type: row['Тип'] || row['type'] || 'люстра',
                 image: row['Изображение'] || row['image'] || '',
                 inStock: parseBool(row['В наличии'] || row['inStock']),
                 rating: Number(row['Рейтинг'] || row['rating'] || 5),
@@ -672,7 +672,8 @@ const Admin = () => {
     }
   };
 
-  const types = [
+  // Removed static types array - now using dynamic types from products
+  const _removedTypes = [
     { value: 'chandelier', label: 'Люстра' },
     { value: 'ceiling_chandelier', label: 'Потолочная люстра' },
     { value: 'pendant_chandelier', label: 'Подвесная люстра' },
@@ -750,6 +751,7 @@ const Admin = () => {
   ];
 
   const brands = Array.from(new Set(products.map(p => p.brand))).sort();
+  const productTypes = Array.from(new Set(products.map(p => p.type).filter(t => t))).sort();
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = searchQuery === '' || 
@@ -786,9 +788,9 @@ const Admin = () => {
     totalValue: products.filter(p => p.brand === brand).reduce((sum, p) => sum + p.price, 0),
   })).sort((a, b) => b.count - a.count).slice(0, 5);
 
-  const typeStats = types.map(type => ({
-    type: type.label,
-    count: products.filter(p => p.type === type.value).length,
+  const typeStats = productTypes.map(type => ({
+    type: type,
+    count: products.filter(p => p.type === type).length,
   })).filter(t => t.count > 0).sort((a, b) => b.count - a.count);
 
   if (loading) {
@@ -1064,8 +1066,8 @@ const Admin = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все типы</SelectItem>
-                    {types.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    {productTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1138,7 +1140,7 @@ const Admin = () => {
                   <p><span className="font-medium">Бренд:</span> {product.brand}</p>
                   {product.article && <p><span className="font-medium">Артикул:</span> {product.article}</p>}
                   <p><span className="font-medium">Цена:</span> {product.price.toLocaleString()} ₽</p>
-                  <p><span className="font-medium">Тип:</span> {types.find(t => t.value === product.type)?.label}</p>
+                  <p><span className="font-medium">Тип:</span> {product.type}</p>
                   {product.collection && <p><span className="font-medium">Коллекция:</span> {product.collection}</p>}
                   {product.style && <p><span className="font-medium">Стиль:</span> {product.style}</p>}
                   {product.color && <p><span className="font-medium">Цвет:</span> {product.color}</p>}
@@ -1422,21 +1424,16 @@ const Admin = () => {
                 Тип товара
                 <span className="text-red-500">*</span>
               </Label>
-              <Select 
-                value={formData.type} 
-                onValueChange={(value: any) => setFormData({ ...formData, type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="type"
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                placeholder="люстра, бра, торшер и т.д."
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Примеры: люстра, бра, торшер, светильник, лампа
+              </p>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
