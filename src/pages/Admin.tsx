@@ -346,16 +346,74 @@ const Admin = () => {
 
           for (const row of jsonData) {
             try {
+              const parsePrice = (priceStr: any): number => {
+                if (typeof priceStr === 'number') return priceStr;
+                const cleaned = String(priceStr).replace(/[^\d.]/g, '');
+                return Number(cleaned) || 0;
+              };
+
+              const parseBool = (val: any): boolean => {
+                if (typeof val === 'boolean') return val;
+                return val === 'Да' || val === 'да' || val === 'true' || val === true;
+              };
+
+              const parseInt = (val: any): number | undefined => {
+                if (!val) return undefined;
+                const num = Number(String(val).replace(/[^\d]/g, ''));
+                return isNaN(num) ? undefined : num;
+              };
+
               const productData = {
                 name: row['Название'] || row['name'] || '',
                 description: row['Описание'] || row['description'] || '',
-                price: Number(row['Цена'] || row['price'] || 0),
+                price: parsePrice(row['Цена'] || row['price']),
                 brand: row['Бренд'] || row['brand'] || '',
                 type: (row['Тип'] || row['type'] || 'chandelier') as any,
                 image: row['Изображение'] || row['image'] || '',
-                inStock: row['В наличии'] !== undefined ? row['В наличии'] : (row['inStock'] !== undefined ? row['inStock'] : true),
+                inStock: parseBool(row['В наличии'] || row['inStock']),
                 rating: Number(row['Рейтинг'] || row['rating'] || 5),
-                reviews: Number(row['Отзывы'] || row['reviews'] || 0),
+                reviews: parseInt(row['Отзывы'] || row['reviews']) || 0,
+                
+                article: row['article'] || row['Артикул'],
+                brandCountry: row['brand_country'] || row['Страна бренда'],
+                manufacturerCountry: row['manufacture_country'] || row['Страна производства'],
+                collection: row['collection'] || row['Коллекция'],
+                style: row['style'] || row['Стиль'],
+                
+                height: parseInt(row['height_mm'] || row['Высота']),
+                diameter: parseInt(row['diameter_mm'] || row['Диаметр']),
+                
+                socketType: row['socket'] || row['Цоколь'],
+                lampType: row['lamp_type'] || row['Тип лампы'],
+                lampCount: parseInt(row['lamps_count'] || row['Количество ламп']),
+                lampPower: parseInt(row['lamp_power_w'] || row['Мощность лампы']),
+                totalPower: parseInt(row['total_power_w'] || row['Общая мощность']),
+                lightingArea: parseInt(row['light_area_m2'] || row['Площадь освещения']),
+                voltage: parseInt(row['voltage_v'] || row['Напряжение']),
+                
+                materials: row['materials'] || row['Материалы'],
+                frameMaterial: row['frame_material'] || row['Материал каркаса'],
+                shadeMaterial: row['shade_material'] || row['Материал плафона'],
+                color: row['color'] || row['Цвет'],
+                frameColor: row['frame_color'] || row['Цвет каркаса'],
+                shadeColor: row['shade_color'] || row['Цвет плафона'],
+                
+                shadeDirection: row['shade_direction'] || row['Направление плафонов'],
+                diffuserType: row['diffuser_type'] || row['Тип рассеивателя'],
+                diffuserShape: row['diffuser_shape'] || row['Форма рассеивателя'],
+                
+                ipRating: row['ip_rating'] || row['Степень защиты'],
+                interior: row['interior'] || row['Интерьер'],
+                place: row['place'] || row['Место установки'],
+                suspendedCeiling: parseBool(row['suspended_ceiling'] || row['Натяжной потолок']),
+                mountType: row['mount_type'] || row['Тип крепления'],
+                
+                officialWarranty: row['official_warranty'] || row['Официальная гарантия'],
+                shopWarranty: row['shop_warranty'] || row['Гарантия магазина'],
+                
+                section: row['section'] || row['Раздел'],
+                catalog: row['catalog'] || row['Каталог'],
+                subcategory: row['subcategory'] || row['Подкатегория'],
               };
 
               if (!productData.name || !productData.price || !productData.brand) {
@@ -432,15 +490,48 @@ const Admin = () => {
   const downloadJsonTemplate = () => {
     const template = [
       {
-        name: 'Пример: Люстра Crystal',
-        description: 'Роскошный светильник из хрусталя',
-        price: 45000,
-        brand: 'LuxCrystal',
-        type: 'chandelier',
-        image: 'https://example.com/image.jpg',
-        inStock: true,
-        rating: 5.0,
-        reviews: 12
+        name: 'Подвесная люстра Eglo Basildon 43463',
+        description: 'Люстра, подходящая для современных интерьеров, с стильным дизайном и функциональностью.',
+        price: '14790 RUB',
+        brand: 'Eglo',
+        type: 'люстра',
+        image: 'https://www.vamsvet.ru/upload/iblock/8fb/vamsvet-podvesnaya-lyustra-eglo-basildon-43463.jpeg',
+        inStock: 'Да',
+        rating: '4.5',
+        reviews: '120',
+        article: '43463',
+        brand_country: 'Австрия',
+        manufacture_country: 'Китай',
+        collection: 'Basildon',
+        style: 'Современный',
+        height_mm: '1000',
+        diameter_mm: '600',
+        socket: 'E27',
+        lamp_type: 'LED',
+        lamps_count: '3',
+        lamp_power_w: '10',
+        total_power_w: '30',
+        light_area_m2: '20',
+        voltage_v: '220',
+        materials: 'Металл, стекло',
+        frame_material: 'Металл',
+        shade_material: 'Стекло',
+        shade_direction: 'Ниже',
+        diffuser_type: 'Плоский',
+        diffuser_shape: 'Круглый',
+        color: 'Черный',
+        frame_color: 'Черный',
+        shade_color: 'Прозрачный',
+        ip_rating: 'IP20',
+        interior: 'Гостиная, Спальня',
+        place: 'На потолке',
+        suspended_ceiling: 'Да',
+        mount_type: 'Подвесной',
+        official_warranty: '2 года',
+        shop_warranty: '1 год',
+        section: 'Люстры',
+        catalog: 'Освещение',
+        subcategory: 'Подвесные люстры'
       }
     ];
 

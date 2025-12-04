@@ -133,6 +133,24 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'width': product_dict.get('width'),
             'depth': product_dict.get('depth'),
             'chainLength': product_dict.get('chain_length'),
+            'materials': product_dict.get('materials'),
+            'frameMaterial': product_dict.get('frame_material'),
+            'shadeMaterial': product_dict.get('shade_material'),
+            'frameColor': product_dict.get('frame_color'),
+            'shadeColor': product_dict.get('shade_color'),
+            'shadeDirection': product_dict.get('shade_direction'),
+            'diffuserType': product_dict.get('diffuser_type'),
+            'diffuserShape': product_dict.get('diffuser_shape'),
+            'ipRating': product_dict.get('ip_rating'),
+            'interior': product_dict.get('interior'),
+            'place': product_dict.get('place'),
+            'suspendedCeiling': product_dict.get('suspended_ceiling'),
+            'mountType': product_dict.get('mount_type'),
+            'officialWarranty': product_dict.get('official_warranty'),
+            'shopWarranty': product_dict.get('shop_warranty'),
+            'section': product_dict.get('section'),
+            'catalog': product_dict.get('catalog'),
+            'subcategory': product_dict.get('subcategory'),
             'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
         })
     
@@ -201,20 +219,45 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     chain_length = body.get('chainLength')
     images = json.dumps(body.get('images', []))
     
+    materials = body.get('materials')
+    frame_material = body.get('frameMaterial')
+    shade_material = body.get('shadeMaterial')
+    frame_color = body.get('frameColor')
+    shade_color = body.get('shadeColor')
+    shade_direction = body.get('shadeDirection')
+    diffuser_type = body.get('diffuserType')
+    diffuser_shape = body.get('diffuserShape')
+    ip_rating = body.get('ipRating')
+    interior = body.get('interior')
+    place = body.get('place')
+    suspended_ceiling = body.get('suspendedCeiling', False)
+    mount_type = body.get('mountType')
+    official_warranty = body.get('officialWarranty')
+    shop_warranty = body.get('shopWarranty')
+    section = body.get('section')
+    catalog = body.get('catalog')
+    subcategory = body.get('subcategory')
+    
     cur.execute(
         """INSERT INTO products (
             name, description, price, brand, type, image_url, in_stock, rating, reviews,
             has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
             collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power,
             total_power, lighting_area, voltage, color, height, diameter, length, width,
-            depth, chain_length, images
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            depth, chain_length, images, materials, frame_material, shade_material,
+            frame_color, shade_color, shade_direction, diffuser_type, diffuser_shape,
+            ip_rating, interior, place, suspended_ceiling, mount_type, official_warranty,
+            shop_warranty, section, catalog, subcategory
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id""",
         (name, description, price, brand, product_type, image, in_stock, rating, reviews,
          has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
          collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power,
          total_power, lighting_area, voltage, color, height, diameter, length, width,
-         depth, chain_length, images)
+         depth, chain_length, images, materials, frame_material, shade_material,
+         frame_color, shade_color, shade_direction, diffuser_type, diffuser_shape,
+         ip_rating, interior, place, suspended_ceiling, mount_type, official_warranty,
+         shop_warranty, section, catalog, subcategory)
     )
     product_id = cur.fetchone()[0]
     conn.commit()
@@ -253,6 +296,24 @@ def handle_post(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'width': width,
         'depth': depth,
         'chainLength': chain_length,
+        'materials': materials,
+        'frameMaterial': frame_material,
+        'shadeMaterial': shade_material,
+        'frameColor': frame_color,
+        'shadeColor': shade_color,
+        'shadeDirection': shade_direction,
+        'diffuserType': diffuser_type,
+        'diffuserShape': diffuser_shape,
+        'ipRating': ip_rating,
+        'interior': interior,
+        'place': place,
+        'suspendedCeiling': suspended_ceiling,
+        'mountType': mount_type,
+        'officialWarranty': official_warranty,
+        'shopWarranty': shop_warranty,
+        'section': section,
+        'catalog': catalog,
+        'subcategory': subcategory,
         'images': body.get('images', [])
     }
     
@@ -302,7 +363,13 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'lampCount': 'lamp_count', 'lampPower': 'lamp_power', 'totalPower': 'total_power',
         'lightingArea': 'lighting_area', 'voltage': 'voltage', 'color': 'color',
         'height': 'height', 'diameter': 'diameter', 'length': 'length', 'width': 'width',
-        'depth': 'depth', 'chainLength': 'chain_length'
+        'depth': 'depth', 'chainLength': 'chain_length',
+        'materials': 'materials', 'frameMaterial': 'frame_material', 'shadeMaterial': 'shade_material',
+        'frameColor': 'frame_color', 'shadeColor': 'shade_color', 'shadeDirection': 'shade_direction',
+        'diffuserType': 'diffuser_type', 'diffuserShape': 'diffuser_shape', 'ipRating': 'ip_rating',
+        'interior': 'interior', 'place': 'place', 'suspendedCeiling': 'suspended_ceiling',
+        'mountType': 'mount_type', 'officialWarranty': 'official_warranty', 'shopWarranty': 'shop_warranty',
+        'section': 'section', 'catalog': 'catalog', 'subcategory': 'subcategory'
     }
     
     updates = []
@@ -386,6 +453,24 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'width': product_dict.get('width'),
         'depth': product_dict.get('depth'),
         'chainLength': product_dict.get('chain_length'),
+        'materials': product_dict.get('materials'),
+        'frameMaterial': product_dict.get('frame_material'),
+        'shadeMaterial': product_dict.get('shade_material'),
+        'frameColor': product_dict.get('frame_color'),
+        'shadeColor': product_dict.get('shade_color'),
+        'shadeDirection': product_dict.get('shade_direction'),
+        'diffuserType': product_dict.get('diffuser_type'),
+        'diffuserShape': product_dict.get('diffuser_shape'),
+        'ipRating': product_dict.get('ip_rating'),
+        'interior': product_dict.get('interior'),
+        'place': product_dict.get('place'),
+        'suspendedCeiling': product_dict.get('suspended_ceiling'),
+        'mountType': product_dict.get('mount_type'),
+        'officialWarranty': product_dict.get('official_warranty'),
+        'shopWarranty': product_dict.get('shop_warranty'),
+        'section': product_dict.get('section'),
+        'catalog': product_dict.get('catalog'),
+        'subcategory': product_dict.get('subcategory'),
         'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
     }
     

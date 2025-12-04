@@ -41,6 +41,11 @@ export interface Product {
   
   // Цвет и материал
   color?: string;
+  materials?: string;
+  frameMaterial?: string;
+  shadeMaterial?: string;
+  frameColor?: string;
+  shadeColor?: string;
   
   // Размеры
   height?: number;
@@ -49,6 +54,27 @@ export interface Product {
   width?: number;
   depth?: number;
   chainLength?: number;
+  
+  // Характеристики плафона
+  shadeDirection?: string;
+  diffuserType?: string;
+  diffuserShape?: string;
+  
+  // Защита и размещение
+  ipRating?: string;
+  interior?: string;
+  place?: string;
+  suspendedCeiling?: boolean;
+  mountType?: string;
+  
+  // Гарантия
+  officialWarranty?: string;
+  shopWarranty?: string;
+  
+  // Категоризация
+  section?: string;
+  catalog?: string;
+  subcategory?: string;
   
   // Дополнительные изображения
   images?: string[];
