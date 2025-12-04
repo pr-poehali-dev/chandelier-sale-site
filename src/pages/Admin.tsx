@@ -1654,16 +1654,7 @@ const Admin = () => {
                   <Label className="text-base font-semibold mb-3 block">Цвет и материал</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="color">Цвет</Label>
-                      <Input
-                        id="color"
-                        value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        placeholder="Бронза"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="materials">Материалы</Label>
+                      <Label htmlFor="materials">Вид материала</Label>
                       <Input
                         id="materials"
                         value={formData.materials}
@@ -1672,7 +1663,7 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="frameMaterial">Материал каркаса</Label>
+                      <Label htmlFor="frameMaterial">Материал арматуры</Label>
                       <Input
                         id="frameMaterial"
                         value={formData.frameMaterial}
@@ -1681,7 +1672,7 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="shadeMaterial">Материал плафона</Label>
+                      <Label htmlFor="shadeMaterial">Материал плафонов</Label>
                       <Input
                         id="shadeMaterial"
                         value={formData.shadeMaterial}
@@ -1689,30 +1680,6 @@ const Admin = () => {
                         placeholder="Стекло"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="frameColor">Цвет каркаса</Label>
-                      <Input
-                        id="frameColor"
-                        value={formData.frameColor}
-                        onChange={(e) => setFormData({ ...formData, frameColor: e.target.value })}
-                        placeholder="Черный"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="shadeColor">Цвет плафона</Label>
-                      <Input
-                        id="shadeColor"
-                        value={formData.shadeColor}
-                        onChange={(e) => setFormData({ ...formData, shadeColor: e.target.value })}
-                        placeholder="Прозрачный"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold mb-3 block">Характеристики плафона</Label>
-                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="shadeDirection">Направление плафонов</Label>
                       <Input
@@ -1723,7 +1690,7 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="diffuserType">Тип рассеивателя</Label>
+                      <Label htmlFor="diffuserType">Вид рассеивателя</Label>
                       <Input
                         id="diffuserType"
                         value={formData.diffuserType}
@@ -1738,6 +1705,33 @@ const Admin = () => {
                         value={formData.diffuserShape}
                         onChange={(e) => setFormData({ ...formData, diffuserShape: e.target.value })}
                         placeholder="Круглый"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="color">Цвет</Label>
+                      <Input
+                        id="color"
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        placeholder="Бронза"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="frameColor">Цвет арматуры</Label>
+                      <Input
+                        id="frameColor"
+                        value={formData.frameColor}
+                        onChange={(e) => setFormData({ ...formData, frameColor: e.target.value })}
+                        placeholder="Черный"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="shadeColor">Цвет плафонов</Label>
+                      <Input
+                        id="shadeColor"
+                        value={formData.shadeColor}
+                        onChange={(e) => setFormData({ ...formData, shadeColor: e.target.value })}
+                        placeholder="Прозрачный"
                       />
                     </div>
                   </div>
