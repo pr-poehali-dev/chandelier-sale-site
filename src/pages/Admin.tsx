@@ -349,9 +349,9 @@ const Admin = () => {
 
     setUploadingBulk(true);
 
-    const totalSuccessCount = 0;
-    const totalErrorCount = 0;
-    const processedFiles = 0;
+    let totalSuccessCount = 0;
+    let totalErrorCount = 0;
+    let processedFiles = 0;
 
     // Обработка каждого файла
     for (const file of fileArray) {
