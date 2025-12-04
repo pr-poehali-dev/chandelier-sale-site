@@ -326,16 +326,22 @@ const Admin = () => {
   };
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     const validExtensions = ['.xlsx', '.xls', '.csv', '.json'];
-    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    
-    if (!validExtensions.includes(fileExtension)) {
+    const fileArray = Array.from(files);
+
+    // Проверка всех файлов
+    const invalidFiles = fileArray.filter(file => {
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      return !validExtensions.includes(fileExtension);
+    });
+
+    if (invalidFiles.length > 0) {
       toast({
         title: 'Ошибка',
-        description: 'Поддерживаются только Excel (.xlsx, .xls), CSV и JSON файлы',
+        description: `Неподдерживаемые файлы: ${invalidFiles.map(f => f.name).join(', ')}`,
         variant: 'destructive',
       });
       return;
@@ -343,145 +349,173 @@ const Admin = () => {
 
     setUploadingBulk(true);
 
-    try {
+    const totalSuccessCount = 0;
+    const totalErrorCount = 0;
+    const processedFiles = 0;
+
+    // Обработка каждого файла
+    for (const file of fileArray) {
+      try {
+        const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        const data = await readFileAsync(file, fileExtension);
+        let jsonData: any[];
+        
+        if (fileExtension === '.json') {
+          const parsedData = JSON.parse(data as string);
+          jsonData = Array.isArray(parsedData) ? parsedData : [parsedData];
+        } else {
+          let workbook: XLSX.WorkBook;
+          
+          if (fileExtension === '.csv') {
+            workbook = XLSX.read(data, { type: 'binary' });
+          } else {
+            workbook = XLSX.read(data, { type: 'array' });
+          }
+          
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+        }
+
+        if (jsonData.length === 0) {
+          processedFiles++;
+          continue;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const row of jsonData) {
+          try {
+            const parsePrice = (priceStr: any): number => {
+              if (typeof priceStr === 'number') return priceStr;
+              const cleaned = String(priceStr).replace(/[^\d.]/g, '');
+              return Number(cleaned) || 0;
+            };
+
+            const parseBool = (val: any): boolean => {
+              if (typeof val === 'boolean') return val;
+              return val === 'Да' || val === 'да' || val === 'true' || val === true;
+            };
+
+            const parseInt = (val: any): number | undefined => {
+              if (!val) return undefined;
+              const num = Number(String(val).replace(/[^\d]/g, ''));
+              return isNaN(num) ? undefined : num;
+            };
+
+            const productData = {
+              name: row['Название'] || row['name'] || '',
+              description: row['Описание'] || row['description'] || '',
+              price: parsePrice(row['Цена'] || row['price']),
+              brand: row['Бренд'] || row['brand'] || '',
+              type: row['Тип'] || row['type'] || 'люстра',
+              image: row['Изображение'] || row['image'] || '',
+              inStock: parseBool(row['В наличии'] || row['inStock']),
+              rating: Number(row['Рейтинг'] || row['rating'] || 5),
+              reviews: parseInt(row['Отзывы'] || row['reviews']) || 0,
+              
+              article: row['article'] || row['Артикул'],
+              brandCountry: row['brand_country'] || row['Страна бренда'],
+              manufacturerCountry: row['manufacture_country'] || row['Страна производства'],
+              collection: row['collection'] || row['Коллекция'],
+              style: row['style'] || row['Стиль'],
+              
+              height: parseInt(row['height_mm'] || row['Высота']),
+              diameter: parseInt(row['diameter_mm'] || row['Диаметр']),
+              
+              socketType: row['socket'] || row['Цоколь'],
+              lampType: row['lamp_type'] || row['Тип лампы'],
+              lampCount: parseInt(row['lamps_count'] || row['Количество ламп']),
+              lampPower: parseInt(row['lamp_power_w'] || row['Мощность лампы']),
+              totalPower: parseInt(row['total_power_w'] || row['Общая мощность']),
+              lightingArea: parseInt(row['light_area_m2'] || row['Площадь освещения']),
+              voltage: parseInt(row['voltage_v'] || row['Напряжение']),
+              
+              materials: row['materials'] || row['Материалы'],
+              frameMaterial: row['frame_material'] || row['Материал каркаса'],
+              shadeMaterial: row['shade_material'] || row['Материал плафона'],
+              color: row['color'] || row['Цвет'],
+              frameColor: row['frame_color'] || row['Цвет каркаса'],
+              shadeColor: row['shade_color'] || row['Цвет плафона'],
+              
+              shadeDirection: row['shade_direction'] || row['Направление плафонов'],
+              diffuserType: row['diffuser_type'] || row['Тип рассеивателя'],
+              diffuserShape: row['diffuser_shape'] || row['Форма рассеивателя'],
+              
+              ipRating: row['ip_rating'] || row['Степень защиты'],
+              interior: row['interior'] || row['Интерьер'],
+              place: row['place'] || row['Место установки'],
+              suspendedCeiling: parseBool(row['suspended_ceiling'] || row['Натяжной потолок']),
+              mountType: row['mount_type'] || row['Тип крепления'],
+              
+              officialWarranty: row['official_warranty'] || row['Официальная гарантия'],
+              shopWarranty: row['shop_warranty'] || row['Гарантия магазина'],
+              
+              section: row['section'] || row['Раздел'],
+              catalog: row['catalog'] || row['Каталог'],
+              subcategory: row['subcategory'] || row['Подкатегория'],
+            };
+
+            if (!productData.name || !productData.price || !productData.brand) {
+              errorCount++;
+              continue;
+            }
+
+            await api.createProduct(productData);
+            successCount++;
+          } catch (err) {
+            errorCount++;
+          }
+        }
+
+        totalSuccessCount += successCount;
+        totalErrorCount += errorCount;
+        processedFiles++;
+
+        // Обновить прогресс после каждого файла
+        if (processedFiles < fileArray.length) {
+          toast({
+            title: `Обработано файлов: ${processedFiles}/${fileArray.length}`,
+            description: `Текущий файл: +${successCount} товаров`,
+            duration: 2000,
+          });
+        }
+      } catch (error) {
+        processedFiles++;
+        console.error(`Ошибка обработки файла ${file.name}:`, error);
+      }
+    }
+
+    // Финальное уведомление
+    toast({
+      title: 'Загрузка завершена',
+      description: `Файлов: ${processedFiles}/${fileArray.length} | Товаров: ${totalSuccessCount} | Ошибок: ${totalErrorCount}`,
+      duration: 5000,
+    });
+
+    setUploadingBulk(false);
+    loadProducts()
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Вспомогательная функция для чтения файла
+  const readFileAsync = (file: File, fileExtension: string): Promise<string | ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
-      reader.onload = async (event) => {
-        try {
-          const data = event.target?.result;
-          let jsonData: any[];
-          
-          if (fileExtension === '.json') {
-            const parsedData = JSON.parse(data as string);
-            jsonData = Array.isArray(parsedData) ? parsedData : [parsedData];
-          } else {
-            let workbook: XLSX.WorkBook;
-            
-            if (fileExtension === '.csv') {
-              workbook = XLSX.read(data, { type: 'binary' });
-            } else {
-              workbook = XLSX.read(data, { type: 'array' });
-            }
-            
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-          }
-
-          if (jsonData.length === 0) {
-            toast({
-              title: 'Ошибка',
-              description: 'Файл пуст',
-              variant: 'destructive',
-            });
-            setUploadingBulk(false);
-            return;
-          }
-
-          let successCount = 0;
-          let errorCount = 0;
-
-          for (const row of jsonData) {
-            try {
-              const parsePrice = (priceStr: any): number => {
-                if (typeof priceStr === 'number') return priceStr;
-                const cleaned = String(priceStr).replace(/[^\d.]/g, '');
-                return Number(cleaned) || 0;
-              };
-
-              const parseBool = (val: any): boolean => {
-                if (typeof val === 'boolean') return val;
-                return val === 'Да' || val === 'да' || val === 'true' || val === true;
-              };
-
-              const parseInt = (val: any): number | undefined => {
-                if (!val) return undefined;
-                const num = Number(String(val).replace(/[^\d]/g, ''));
-                return isNaN(num) ? undefined : num;
-              };
-
-              const productData = {
-                name: row['Название'] || row['name'] || '',
-                description: row['Описание'] || row['description'] || '',
-                price: parsePrice(row['Цена'] || row['price']),
-                brand: row['Бренд'] || row['brand'] || '',
-                type: row['Тип'] || row['type'] || 'люстра',
-                image: row['Изображение'] || row['image'] || '',
-                inStock: parseBool(row['В наличии'] || row['inStock']),
-                rating: Number(row['Рейтинг'] || row['rating'] || 5),
-                reviews: parseInt(row['Отзывы'] || row['reviews']) || 0,
-                
-                article: row['article'] || row['Артикул'],
-                brandCountry: row['brand_country'] || row['Страна бренда'],
-                manufacturerCountry: row['manufacture_country'] || row['Страна производства'],
-                collection: row['collection'] || row['Коллекция'],
-                style: row['style'] || row['Стиль'],
-                
-                height: parseInt(row['height_mm'] || row['Высота']),
-                diameter: parseInt(row['diameter_mm'] || row['Диаметр']),
-                
-                socketType: row['socket'] || row['Цоколь'],
-                lampType: row['lamp_type'] || row['Тип лампы'],
-                lampCount: parseInt(row['lamps_count'] || row['Количество ламп']),
-                lampPower: parseInt(row['lamp_power_w'] || row['Мощность лампы']),
-                totalPower: parseInt(row['total_power_w'] || row['Общая мощность']),
-                lightingArea: parseInt(row['light_area_m2'] || row['Площадь освещения']),
-                voltage: parseInt(row['voltage_v'] || row['Напряжение']),
-                
-                materials: row['materials'] || row['Материалы'],
-                frameMaterial: row['frame_material'] || row['Материал каркаса'],
-                shadeMaterial: row['shade_material'] || row['Материал плафона'],
-                color: row['color'] || row['Цвет'],
-                frameColor: row['frame_color'] || row['Цвет каркаса'],
-                shadeColor: row['shade_color'] || row['Цвет плафона'],
-                
-                shadeDirection: row['shade_direction'] || row['Направление плафонов'],
-                diffuserType: row['diffuser_type'] || row['Тип рассеивателя'],
-                diffuserShape: row['diffuser_shape'] || row['Форма рассеивателя'],
-                
-                ipRating: row['ip_rating'] || row['Степень защиты'],
-                interior: row['interior'] || row['Интерьер'],
-                place: row['place'] || row['Место установки'],
-                suspendedCeiling: parseBool(row['suspended_ceiling'] || row['Натяжной потолок']),
-                mountType: row['mount_type'] || row['Тип крепления'],
-                
-                officialWarranty: row['official_warranty'] || row['Официальная гарантия'],
-                shopWarranty: row['shop_warranty'] || row['Гарантия магазина'],
-                
-                section: row['section'] || row['Раздел'],
-                catalog: row['catalog'] || row['Каталог'],
-                subcategory: row['subcategory'] || row['Подкатегория'],
-              };
-
-              if (!productData.name || !productData.price || !productData.brand) {
-                errorCount++;
-                continue;
-              }
-
-              await api.createProduct(productData);
-              successCount++;
-            } catch (err) {
-              errorCount++;
-            }
-          }
-
-          toast({
-            title: 'Загрузка завершена',
-            description: `Успешно: ${successCount}, Ошибок: ${errorCount}`,
-          });
-
-          loadProducts();
-        } catch (error) {
-          toast({
-            title: 'Ошибка',
-            description: 'Не удалось обработать файл',
-            variant: 'destructive',
-          });
-        } finally {
-          setUploadingBulk(false);
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result);
+        } else {
+          reject(new Error('Не удалось прочитать файл'));
         }
       };
-
+      
+      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+      
       if (fileExtension === '.json') {
         reader.readAsText(file);
       } else if (fileExtension === '.csv') {
@@ -489,18 +523,7 @@ const Admin = () => {
       } else {
         reader.readAsArrayBuffer(file);
       }
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось прочитать файл',
-        variant: 'destructive',
-      });
-      setUploadingBulk(false);
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    });
   };
 
   const downloadTemplate = () => {
@@ -850,6 +873,7 @@ const Admin = () => {
               accept=".xlsx,.xls,.csv,.json"
               className="hidden"
               onChange={handleBulkUpload}
+              multiple
             />
             {selectedProducts.length > 0 && (
               <Button 
