@@ -27,6 +27,7 @@ const Admin = () => {
   const [importingProducts, setImportingProducts] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importUrls, setImportUrls] = useState('');
+  const [updatingStock, setUpdatingStock] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBrand, setFilterBrand] = useState('all');
@@ -279,6 +280,35 @@ const Admin = () => {
       await loadProducts();
     } finally {
       setDeletingProducts(prev => prev.filter(pid => pid !== id));
+    }
+  };
+
+  const handleMarkAllInStock = async () => {
+    if (!confirm('Отметить ВСЕ товары как "в наличии"?')) return;
+    
+    setUpdatingStock(true);
+    try {
+      const allProductIds = products.map(p => p.id);
+      
+      for (const id of allProductIds) {
+        await api.updateProduct(id, { inStock: true });
+      }
+      
+      toast({
+        title: 'Успешно',
+        description: `Обновлено товаров: ${allProductIds.length}`,
+      });
+      
+      await loadProducts();
+    } catch (error) {
+      console.error('Update stock error:', error);
+      toast({
+        title: 'Ошибка обновления',
+        description: error instanceof Error ? error.message : 'Неизвестная ошибка',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingStock(false);
     }
   };
 
@@ -875,6 +905,23 @@ const Admin = () => {
               onChange={handleBulkUpload}
               multiple
             />
+            <Button 
+              variant="outline"
+              onClick={handleMarkAllInStock}
+              disabled={updatingStock}
+            >
+              {updatingStock ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Обновление...
+                </>
+              ) : (
+                <>
+                  <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
+                  Все в наличии
+                </>
+              )}
+            </Button>
             {selectedProducts.length > 0 && (
               <Button 
                 variant="destructive" 
