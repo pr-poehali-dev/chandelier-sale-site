@@ -96,7 +96,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header
-          cartItemsCount={cartCount}
+          cartItemsCount={totalItems}
           onCartClick={() => navigate('/cart')}
           onAuthClick={() => {}}
         />
