@@ -357,7 +357,7 @@ const Profile = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  )))
+                  ))
                   )}
                 </TabsContent>
 
