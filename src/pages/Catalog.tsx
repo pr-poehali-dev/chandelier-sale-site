@@ -12,10 +12,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/contexts/CartContext';
 import { api, Product, User } from '@/lib/api';
 
 const Catalog = () => {
   const { toast } = useToast();
+  const { addToCart, totalItems } = useCart();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -48,7 +50,6 @@ const Catalog = () => {
     chainLength: [0, 3000],
   });
   const [favorites, setFavorites] = useState<number[]>([]);
-  const [cartCount, setCartCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [brandSearch, setBrandSearch] = useState('');
 
@@ -153,7 +154,6 @@ const Catalog = () => {
       setFavorites(JSON.parse(savedFavorites));
     }
 
-    updateCartCount();
     loadProducts();
   }, []);
 
@@ -164,13 +164,7 @@ const Catalog = () => {
     }
   }, [products, brands, searchParams]);
 
-  const updateCartCount = () => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      const cart = JSON.parse(savedCart);
-      setCartCount(cart.length);
-    }
-  };
+
 
   const loadProducts = async () => {
     setLoading(true);
@@ -288,26 +282,7 @@ const Catalog = () => {
     });
   };
 
-  const addToCart = (product: Product) => {
-    const savedCart = localStorage.getItem('cart');
-    const cart = savedCart ? JSON.parse(savedCart) : [];
-    
-    const existingItem = cart.find((item: any) => item.id === product.id);
-    
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    
-    toast({
-      title: 'Добавлено в корзину',
-      description: product.name,
-    });
-  };
+
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -353,7 +328,7 @@ const Catalog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
-        cartItemsCount={cartCount}
+        cartItemsCount={totalItems}
         onCartClick={() => window.location.href = '/cart'}
         onAuthClick={() => setShowAuth(true)}
       />

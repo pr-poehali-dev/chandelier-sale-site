@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "Get all orders",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create order",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "customer_name": "Иван Петров",
+        "customer_email": "ivan@example.com",
+        "customer_phone": "+79001234567",
+        "customer_address": "Москва, ул. Ленина, д. 1",
+        "payment_method": "card",
+        "items": [
+          {
+            "product_id": 1,
+            "product_name": "Тестовый товар",
+            "product_image": "https://example.com/image.jpg",
+            "quantity": 2,
+            "price": 1000
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "status": "pending"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

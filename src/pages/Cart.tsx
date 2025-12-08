@@ -11,62 +11,27 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { User, Product } from '@/lib/api';
-
-interface CartItem extends Product {
-  quantity: number;
-}
+import { useCart } from '@/contexts/CartContext';
+import { api, User } from '@/lib/api';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { items: cartItems, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart();
   const [user, setUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [isCheckout, setIsCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phone, setPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
     const savedUser = localStorage.getItem('user');
-    
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-    
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
   }, []);
-
-  const updateCart = (items: CartItem[]) => {
-    setCartItems(items);
-    localStorage.setItem('cart', JSON.stringify(items));
-  };
-
-  const updateQuantity = (id: number, delta: number) => {
-    const updated = cartItems.map(item => {
-      if (item.id === id) {
-        const newQuantity = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    });
-    updateCart(updated);
-  };
-
-  const removeItem = (id: number) => {
-    const updated = cartItems.filter(item => item.id !== id);
-    updateCart(updated);
-    toast({
-      title: 'Товар удалён',
-      description: 'Товар удалён из корзины',
-    });
-  };
-
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
     if (!user) {
@@ -76,7 +41,7 @@ const Cart = () => {
     setIsCheckout(true);
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!deliveryAddress || !phone) {
       toast({
         title: 'Ошибка',
@@ -86,14 +51,52 @@ const Cart = () => {
       return;
     }
 
-    toast({
-      title: 'Заказ оформлен!',
-      description: `Ваш заказ на сумму ${totalPrice.toLocaleString('ru-RU')} ₽ принят в обработку`,
-    });
+    if (!user) {
+      toast({
+        title: 'Ошибка',
+        description: 'Необходимо авторизоваться',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    localStorage.removeItem('cart');
-    setCartItems([]);
-    setTimeout(() => navigate('/'), 2000);
+    setIsSubmitting(true);
+
+    try {
+      const orderData = {
+        customer_name: `${user.first_name} ${user.last_name || ''}`.trim(),
+        customer_email: user.email,
+        customer_phone: phone,
+        customer_address: deliveryAddress,
+        payment_method: paymentMethod,
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          product_name: item.name,
+          product_image: item.image,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+
+      const result = await api.createOrder(orderData);
+
+      toast({
+        title: 'Заказ оформлен!',
+        description: `Ваш заказ №${result.order_id} на сумму ${result.total_amount.toLocaleString('ru-RU')} ₽ принят в обработку`,
+      });
+
+      clearCart();
+      setTimeout(() => navigate('/'), 2000);
+    } catch (error) {
+      console.error('Order error:', error);
+      toast({
+        title: 'Ошибка оформления заказа',
+        description: error instanceof Error ? error.message : 'Неизвестная ошибка',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cartItems.length === 0) {
@@ -157,7 +160,7 @@ const Cart = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeFromCart(item.id)}
                           >
                             <Icon name="Trash2" className="h-4 w-4" />
                           </Button>
@@ -166,7 +169,7 @@ const Cart = () => {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, -1)}
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             >
                               <Icon name="Minus" className="h-3 w-3" />
                             </Button>
@@ -175,7 +178,7 @@ const Cart = () => {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, 1)}
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             >
                               <Icon name="Plus" className="h-3 w-3" />
                             </Button>
@@ -225,15 +228,8 @@ const Cart = () => {
                         <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
                           <RadioGroupItem value="cash" id="cash" />
                           <Label htmlFor="cash" className="flex items-center gap-2 cursor-pointer flex-1">
-                            <Icon name="Banknote" className="h-5 w-5" />
-                            Наличными при получении
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
-                          <RadioGroupItem value="installment" id="installment" />
-                          <Label htmlFor="installment" className="flex items-center gap-2 cursor-pointer flex-1">
-                            <Icon name="Calendar" className="h-5 w-5" />
-                            Рассрочка 0-0-12
+                            <Icon name="Wallet" className="h-5 w-5" />
+                            Наличные при получении
                           </Label>
                         </div>
                       </RadioGroup>
@@ -244,70 +240,60 @@ const Cart = () => {
             </div>
 
             <div>
-              <Card className="p-6 sticky top-20">
+              <Card className="p-6 sticky top-4">
                 <h2 className="text-xl font-bold mb-4">Итого</h2>
                 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span>Товары ({cartItems.length})</span>
+                    <span className="text-muted-foreground">Товары ({cartItems.reduce((sum, item) => sum + item.quantity, 0)})</span>
                     <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Доставка</span>
+                    <span className="text-muted-foreground">Доставка</span>
                     <span className="text-green-600">Бесплатно</span>
                   </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="flex justify-between text-lg font-bold mb-6">
-                  <span>Всего:</span>
-                  <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Итого</span>
+                    <span className="text-primary">{totalPrice.toLocaleString('ru-RU')} ₽</span>
+                  </div>
                 </div>
 
                 {!isCheckout ? (
-                  <Button className="w-full" size="lg" onClick={handleCheckout}>
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleCheckout}
+                  >
                     Оформить заказ
                   </Button>
                 ) : (
-                  <>
-                    <Button className="w-full mb-2" size="lg" onClick={handlePlaceOrder}>
-                      Подтвердить заказ
-                    </Button>
+                  <div className="space-y-2">
                     <Button 
                       className="w-full" 
-                      variant="outline" 
+                      size="lg"
+                      onClick={handlePlaceOrder}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                          Оформление...
+                        </>
+                      ) : (
+                        'Подтвердить заказ'
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="w-full"
                       onClick={() => setIsCheckout(false)}
+                      disabled={isSubmitting}
                     >
                       Назад к корзине
                     </Button>
-                  </>
+                  </div>
                 )}
-
-                {!isCheckout && (
-                  <Button
-                    variant="ghost"
-                    className="w-full mt-2"
-                    onClick={() => navigate('/catalog')}
-                  >
-                    Продолжить покупки
-                  </Button>
-                )}
-
-                <div className="mt-6 space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Icon name="Shield" className="h-4 w-4" />
-                    <span>Безопасная оплата</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="Truck" className="h-4 w-4" />
-                    <span>Доставка 1-3 дня</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="RefreshCw" className="h-4 w-4" />
-                    <span>Возврат 14 дней</span>
-                  </div>
-                </div>
               </Card>
             </div>
           </div>

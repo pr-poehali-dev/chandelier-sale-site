@@ -7,24 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { useCart } from '@/contexts/CartContext';
 import { User } from '@/lib/api';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { totalItems } = useCart();
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [cartCount, setCartCount] = useState(0);
-
-  useEffect(() => {
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      setCartCount(cart.length);
-    };
-
-    updateCartCount();
-    window.addEventListener('storage', updateCartCount);
-    return () => window.removeEventListener('storage', updateCartCount);
-  }, []);
   const categories = [
     {
       name: 'Люстры',
@@ -70,7 +60,7 @@ const Home = () => {
     <div className="min-h-screen flex flex-col">
       <Header 
         onAuthClick={() => setShowAuth(true)}
-        cartItemsCount={cartCount}
+        cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
       />
 

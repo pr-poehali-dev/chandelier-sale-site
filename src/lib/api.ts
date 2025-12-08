@@ -5,6 +5,7 @@ const API_URLS = {
   searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
   importProducts: 'https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1',
   crawlProducts: 'https://functions.poehali.dev/5845aa6f-cc5c-416c-86f8-13f4d13f0f2e',
+  orders: 'https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a',
 };
 
 export interface Product {
@@ -89,6 +90,28 @@ export interface User {
   first_name: string;
   last_name?: string;
   token: string;
+}
+
+export interface OrderItem {
+  product_id: number;
+  product_name: string;
+  product_image?: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Order {
+  id: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  total_amount: number;
+  status: string;
+  payment_method: string;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
 }
 
 export const api = {
@@ -267,6 +290,40 @@ export const api = {
       throw new Error(error.error || 'Failed to crawl products');
     }
     
+    return response.json();
+  },
+
+  async createOrder(data: {
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string;
+    customer_address: string;
+    payment_method: string;
+    items: OrderItem[];
+  }): Promise<{ order_id: number; status: string; total_amount: number }> {
+    const response = await fetch(API_URLS.orders, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create order');
+    }
+    
+    return response.json();
+  },
+
+  async getOrders(): Promise<{ orders: Order[] }> {
+    const response = await fetch(API_URLS.orders);
+    if (!response.ok) throw new Error('Failed to fetch orders');
+    return response.json();
+  },
+
+  async getOrder(id: number): Promise<Order> {
+    const response = await fetch(`${API_URLS.orders}?id=${id}`);
+    if (!response.ok) throw new Error('Failed to fetch order');
     return response.json();
   },
 };

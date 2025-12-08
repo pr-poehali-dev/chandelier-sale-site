@@ -7,15 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/contexts/CartContext';
 import { api, Product } from '@/lib/api';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addToCart: addToCartContext, totalItems } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [cartCount, setCartCount] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
@@ -24,7 +25,6 @@ const ProductDetail = () => {
 
   useEffect(() => {
     loadProduct();
-    updateCartCount();
   }, [id]);
 
   const loadProduct = async () => {
@@ -54,29 +54,10 @@ const ProductDetail = () => {
     }
   };
 
-  const updateCartCount = () => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      const cart = JSON.parse(savedCart);
-      setCartCount(cart.length);
-    }
-  };
-
   const addToCart = () => {
     if (!product) return;
     
-    const savedCart = localStorage.getItem('cart');
-    const cart = savedCart ? JSON.parse(savedCart) : [];
-    
-    const existingItem = cart.find((item: any) => item.id === product.id);
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    setCartCount(cart.length);
+    addToCartContext(product);
     
     toast({
       title: 'Товар добавлен в корзину',
@@ -138,7 +119,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
-        cartItemsCount={cartCount}
+        cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
         onAuthClick={() => {}}
       />
