@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { api, Product } from '@/lib/api';
+import { api, Product, Order } from '@/lib/api';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -35,6 +37,10 @@ const Admin = () => {
   const [filterStock, setFilterStock] = useState('all');
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [deletingProducts, setDeletingProducts] = useState<number[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -105,6 +111,7 @@ const Admin = () => {
     }
 
     loadProducts();
+    loadOrders();
   }, [navigate]);
 
   const loadProducts = async () => {
@@ -122,6 +129,53 @@ const Admin = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const data = await api.getOrders();
+      setOrders(data.orders);
+    } catch (error) {
+      console.error('Orders load error:', error);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: number, status: string) => {
+    try {
+      await fetch(`https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      
+      toast({
+        title: 'Статус обновлён',
+      });
+      
+      await loadOrders();
+    } catch (error) {
+      toast({
+        title: 'Ошибка обновления',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const viewOrderDetails = async (orderId: number) => {
+    try {
+      const order = await api.getOrder(orderId);
+      setSelectedOrder(order);
+      setShowOrderDialog(true);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить детали заказа',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -1180,6 +1234,13 @@ const Admin = () => {
           </div>
         </div>
 
+        <Tabs defaultValue="products" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="products">Товары ({products.length})</TabsTrigger>
+            <TabsTrigger value="orders">Заказы ({orders.length})</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="products">
         <div className="mb-4">
           <Button variant="outline" size="sm" onClick={toggleSelectAll}>
             <Icon name={selectedProducts.length === filteredProducts.length ? "CheckSquare" : "Square"} className="mr-2 h-4 w-4" />
@@ -1251,6 +1312,144 @@ const Admin = () => {
             </Card>
           ))}
         </div>
+          </TabsContent>
+          
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Список заказов</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {ordersLoading ? (
+                  <div className="text-center py-8">
+                    <Icon name="Loader2" className="h-8 w-8 animate-spin mx-auto" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Заказов пока нет
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map(order => (
+                      <Card key={order.id} className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">Заказ №{order.id}</span>
+                              <Badge variant={
+                                order.status === 'completed' ? 'default' :
+                                order.status === 'pending' ? 'secondary' :
+                                order.status === 'processing' ? 'outline' : 'destructive'
+                              }>
+                                {order.status === 'pending' ? 'Ожидает' :
+                                 order.status === 'processing' ? 'В обработке' :
+                                 order.status === 'completed' ? 'Выполнен' : 'Отменён'}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <div><Icon name="User" className="inline h-3 w-3 mr-1" />{order.customer_name}</div>
+                              <div><Icon name="Mail" className="inline h-3 w-3 mr-1" />{order.customer_email}</div>
+                              <div><Icon name="Phone" className="inline h-3 w-3 mr-1" />{order.customer_phone}</div>
+                              <div><Icon name="MapPin" className="inline h-3 w-3 mr-1" />{order.customer_address}</div>
+                              <div><Icon name="Calendar" className="inline h-3 w-3 mr-1" />{new Date(order.created_at).toLocaleString('ru-RU')}</div>
+                            </div>
+                            <div className="text-lg font-bold text-primary">
+                              {order.total_amount.toLocaleString('ru-RU')} ₽
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Button size="sm" variant="outline" onClick={() => viewOrderDetails(order.id)}>
+                              <Icon name="Eye" className="h-4 w-4 mr-1" />
+                              Детали
+                            </Button>
+                            <Select value={order.status} onValueChange={(status) => updateOrderStatus(order.id, status)}>
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Ожидает</SelectItem>
+                                <SelectItem value="processing">В обработке</SelectItem>
+                                <SelectItem value="completed">Выполнен</SelectItem>
+                                <SelectItem value="cancelled">Отменён</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Детали заказа №{selectedOrder?.id}</DialogTitle>
+            </DialogHeader>
+            {selectedOrder && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label>Клиент</Label>
+                    <p className="font-medium">{selectedOrder.customer_name}</p>
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <p className="font-medium">{selectedOrder.customer_email}</p>
+                  </div>
+                  <div>
+                    <Label>Телефон</Label>
+                    <p className="font-medium">{selectedOrder.customer_phone}</p>
+                  </div>
+                  <div>
+                    <Label>Статус</Label>
+                    <Badge>{selectedOrder.status}</Badge>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Адрес доставки</Label>
+                    <p className="font-medium">{selectedOrder.customer_address}</p>
+                  </div>
+                  <div>
+                    <Label>Дата заказа</Label>
+                    <p className="font-medium">{new Date(selectedOrder.created_at).toLocaleString('ru-RU')}</p>
+                  </div>
+                  <div>
+                    <Label>Способ оплаты</Label>
+                    <p className="font-medium">{selectedOrder.payment_method === 'card' ? 'Карта' : 'Наличные'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-base font-semibold mb-2 block">Товары</Label>
+                  <div className="space-y-2">
+                    {selectedOrder.items?.map(item => (
+                      <div key={item.id} className="flex gap-4 p-3 border rounded-lg">
+                        {item.product_image && (
+                          <img src={item.product_image} alt={item.product_name} className="w-16 h-16 object-cover rounded" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium">{item.product_name}</p>
+                          <p className="text-sm text-muted-foreground">Количество: {item.quantity}</p>
+                          <p className="text-sm font-semibold text-primary">{item.price.toLocaleString('ru-RU')} ₽</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t">
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Итого:</span>
+                    <span className="text-primary">{selectedOrder.total_amount.toLocaleString('ru-RU')} ₽</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
