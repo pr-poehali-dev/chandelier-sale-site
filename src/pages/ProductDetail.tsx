@@ -196,7 +196,19 @@ const ProductDetail = () => {
                 )}
               </div>
               
-              <h1 className="text-3xl font-bold mb-6 text-zinc-100">{product.name}</h1>
+              <h1 className="text-3xl font-bold mb-4 text-zinc-100">{product.name}</h1>
+              
+              {product.description && (
+                <p className="text-zinc-400 text-sm leading-relaxed mb-6">{product.description}</p>
+              )}
+              
+              {product.type && (
+                <div className="mb-6">
+                  <Badge variant="outline" className="text-zinc-400 border-zinc-700">
+                    {product.type}
+                  </Badge>
+                </div>
+              )}
               
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex items-center gap-1">
@@ -282,6 +294,10 @@ const ProductDetail = () => {
                       <span className="font-medium text-zinc-100">{product.article || `#${product.id}`}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-zinc-800">
+                      <span className="text-zinc-400">Тип товара</span>
+                      <span className="font-medium text-zinc-100">{product.type}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-zinc-800">
                       <span className="text-zinc-400">Бренд</span>
                       <span className="font-medium text-zinc-100">{product.brand}</span>
                     </div>
@@ -307,6 +323,20 @@ const ProductDetail = () => {
                       <div className="flex justify-between py-2 border-b border-zinc-800">
                         <span className="text-zinc-400">Стиль</span>
                         <span className="font-medium text-zinc-100">{product.style}</span>
+                      </div>
+                    )}
+                    {product.interior && (
+                      <div className="flex justify-between py-2 border-b border-zinc-800">
+                        <span className="text-zinc-400">Интерьер</span>
+                        <span className="font-medium text-zinc-100">{product.interior}</span>
+                      </div>
+                    )}
+                    {product.inStock !== undefined && (
+                      <div className="flex justify-between py-2 border-b border-zinc-800">
+                        <span className="text-zinc-400">Наличие</span>
+                        <span className={`font-medium ${product.inStock ? 'text-green-500' : 'text-red-500'}`}>
+                          {product.inStock ? 'В наличии' : 'Нет в наличии'}
+                        </span>
                       </div>
                     )}
                   </div>
