@@ -102,6 +102,31 @@ const ProductGrid = ({
               <h3 className="font-semibold text-lg leading-tight min-h-[3.5rem]">{product.name}</h3>
               
               <div className="space-y-2">
+                {product.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">{product.description}</p>
+                )}
+                
+                {(product.manufacturerCountry || product.brandCountry) && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Icon name="MapPin" className="h-3 w-3" />
+                    <span>{product.manufacturerCountry || product.brandCountry}</span>
+                  </div>
+                )}
+                
+                {(product.height || product.diameter || product.length || product.width) && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Icon name="Ruler" className="h-3 w-3" />
+                    <span>
+                      {[
+                        product.height && `В: ${product.height}мм`,
+                        product.diameter && `Ø: ${product.diameter}мм`,
+                        product.length && `Д: ${product.length}мм`,
+                        product.width && `Ш: ${product.width}мм`,
+                      ].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
+                )}
+                
                 {(product.lampType || product.totalPower || product.lampCount) && (
                   <div className="flex flex-wrap gap-1">
                     {product.lampType && (
