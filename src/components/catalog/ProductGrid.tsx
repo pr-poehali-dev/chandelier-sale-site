@@ -100,31 +100,68 @@ const ProductGrid = ({
                 </div>
               </div>
               <h3 className="font-semibold text-lg leading-tight min-h-[3.5rem]">{product.name}</h3>
-              {product.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-              )}
-              {(product.hasRemote || product.isDimmable || product.hasColorChange) && (
-                <div className="flex flex-wrap gap-1">
-                  {product.hasRemote && (
-                    <Badge variant="outline" className="text-xs flex items-center gap-1">
-                      <Icon name="Radio" className="h-3 w-3" />
-                      Пульт
-                    </Badge>
-                  )}
-                  {product.isDimmable && (
-                    <Badge variant="outline" className="text-xs flex items-center gap-1">
-                      <Icon name="Sun" className="h-3 w-3" />
-                      Диммер
-                    </Badge>
-                  )}
-                  {product.hasColorChange && (
-                    <Badge variant="outline" className="text-xs flex items-center gap-1">
-                      <Icon name="Palette" className="h-3 w-3" />
-                      RGB
-                    </Badge>
-                  )}
-                </div>
-              )}
+              
+              <div className="space-y-2">
+                {(product.lampType || product.totalPower || product.lampCount) && (
+                  <div className="flex flex-wrap gap-1">
+                    {product.lampType && (
+                      <Badge variant="outline" className="text-xs">
+                        {product.lampType}
+                      </Badge>
+                    )}
+                    {product.totalPower && (
+                      <Badge variant="outline" className="text-xs">
+                        {product.totalPower}W
+                      </Badge>
+                    )}
+                    {product.lampCount && (
+                      <Badge variant="outline" className="text-xs">
+                        {product.lampCount} {product.lampCount === 1 ? 'лампа' : product.lampCount < 5 ? 'лампы' : 'ламп'}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                {(product.color || product.materials) && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {product.color && (
+                      <div className="flex items-center gap-1">
+                        <Icon name="Palette" className="h-3 w-3" />
+                        <span>{product.color}</span>
+                      </div>
+                    )}
+                    {product.materials && (
+                      <div className="flex items-center gap-1">
+                        <Icon name="Box" className="h-3 w-3" />
+                        <span>{product.materials}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {(product.hasRemote || product.isDimmable || product.hasColorChange) && (
+                  <div className="flex flex-wrap gap-1">
+                    {product.hasRemote && (
+                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                        <Icon name="Radio" className="h-3 w-3" />
+                        Пульт
+                      </Badge>
+                    )}
+                    {product.isDimmable && (
+                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                        <Icon name="Sun" className="h-3 w-3" />
+                        Диммер
+                      </Badge>
+                    )}
+                    {product.hasColorChange && (
+                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                        <Icon name="Palette" className="h-3 w-3" />
+                        RGB
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-between pt-2">
                 <div>
                   <p className="text-2xl font-bold text-primary">
