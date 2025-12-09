@@ -315,6 +315,12 @@ const ProductDetail = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-3 text-zinc-100">Лампы</h3>
                   <div className="grid gap-2">
+                    {product.lampType && (
+                      <div className="flex justify-between py-2 border-b border-zinc-800">
+                        <span className="text-zinc-400">Тип лампы</span>
+                        <span className="font-medium text-zinc-100">{product.lampType}</span>
+                      </div>
+                    )}
                     {product.socketType && (
                       <div className="flex justify-between py-2 border-b border-zinc-800">
                         <span className="text-zinc-400">Тип цоколя</span>
@@ -404,7 +410,7 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                {(product.height || product.diameter || product.length || product.width) && (
+                {(product.height || product.diameter || product.length || product.width || product.depth || product.chainLength) && (
                   <div>
                     <h3 className="font-semibold text-lg mb-3 text-zinc-100">Размеры</h3>
                     <div className="grid gap-2">
@@ -430,6 +436,18 @@ const ProductDetail = () => {
                         <div className="flex justify-between py-2 border-b border-zinc-800">
                           <span className="text-zinc-400">Ширина, мм</span>
                           <span className="font-medium text-zinc-100">{product.width}</span>
+                        </div>
+                      )}
+                      {product.depth && (
+                        <div className="flex justify-between py-2 border-b border-zinc-800">
+                          <span className="text-zinc-400">Глубина, мм</span>
+                          <span className="font-medium text-zinc-100">{product.depth}</span>
+                        </div>
+                      )}
+                      {product.chainLength && (
+                        <div className="flex justify-between py-2 border-b border-zinc-800">
+                          <span className="text-zinc-400">Длина цепи, мм</span>
+                          <span className="font-medium text-zinc-100">{product.chainLength}</span>
                         </div>
                       )}
                     </div>
