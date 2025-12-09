@@ -579,7 +579,7 @@ const Admin = () => {
     });
 
     setUploadingBulk(false);
-    await loadProducts();
+    loadProducts();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
