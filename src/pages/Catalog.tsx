@@ -183,23 +183,31 @@ const Catalog = () => {
   };
 
   const filteredProducts = products.filter((product) => {
+    const productType = product.type?.toLowerCase() || '';
+    
     const searchMatch = searchQuery === '' || 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
+    
     const categoryMatch = selectedCategory === '' || 
-      product.type === selectedCategory || 
-      (selectedCategory === 'chandelier' && product.type.includes('chandelier')) ||
-      (selectedCategory === 'lights' && product.type.startsWith('light_')) ||
-      (selectedCategory === 'lamps' && product.type.startsWith('lamp_')) ||
-      (selectedCategory === 'spots' && product.type.startsWith('spot_')) ||
-      (selectedCategory === 'outdoor' && product.type.startsWith('outdoor_')) ||
-      (selectedCategory === 'track' && product.type.startsWith('track_')) ||
-      (selectedCategory === 'electric' && product.type.startsWith('electric_')) ||
-      (selectedCategory === 'sconce' && product.type === 'sconce') ||
-      (selectedCategory === 'floor_lamp' && product.type === 'floor_lamp');
+      product.type === selectedCategory ||
+      (selectedCategory === 'chandelier' && productType.includes('люстр')) ||
+      (selectedCategory === 'lights' && (
+        productType.includes('светильник') || 
+        productType.includes('подвесной') ||
+        productType.includes('встраиваемый')
+      )) ||
+      (selectedCategory === 'lamps' && productType.includes('лампа')) ||
+      (selectedCategory === 'sconce' && productType.includes('бра')) ||
+      (selectedCategory === 'floor_lamp' && productType.includes('торшер')) ||
+      (selectedCategory === 'spots' && (productType.includes('спот') || productType.includes('точечн'))) ||
+      (selectedCategory === 'outdoor' && (productType.includes('уличн') || productType.includes('фонар'))) ||
+      (selectedCategory === 'track' && (productType.includes('трековый') || productType.includes('шинопровод'))) ||
+      (selectedCategory === 'electric' && (productType.includes('коннектор') || productType.includes('выключател') || productType.includes('розетк')));
+    
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
     const remoteMatch = !hasRemote || product.hasRemote;
     const dimmableMatch = !isDimmable || product.isDimmable;
