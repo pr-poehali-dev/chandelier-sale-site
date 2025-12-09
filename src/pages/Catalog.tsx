@@ -1,19 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import AuthDialog from '@/components/AuthDialog';
-import CategoryNavigation from '@/components/catalog/CategoryNavigation';
-import CatalogFilters from '@/components/catalog/CatalogFilters';
-import ProductGrid from '@/components/catalog/ProductGrid';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Input } from '@/components/ui/input';
-import Icon from '@/components/ui/icon';
-import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/contexts/CartContext';
-import { api, Product, User } from '@/lib/api';
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import AuthDialog from "@/components/AuthDialog";
+import CategoryNavigation from "@/components/catalog/CategoryNavigation";
+import CatalogFilters from "@/components/catalog/CatalogFilters";
+import ProductGrid from "@/components/catalog/ProductGrid";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import Icon from "@/components/ui/icon";
+import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/contexts/CartContext";
+import { api, Product, User } from "@/lib/api";
 
 const Catalog = () => {
   const { toast } = useToast();
@@ -23,12 +28,12 @@ const Catalog = () => {
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [imageSearchLoading, setImageSearchLoading] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [hoverCategory, setHoverCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [hoverCategory, setHoverCategory] = useState<string>("");
   const [priceRange, setPriceRange] = useState<number[]>([0, 150000]);
   const [hasRemote, setHasRemote] = useState(false);
   const [isDimmable, setIsDimmable] = useState(false);
@@ -38,9 +43,9 @@ const Catalog = () => {
   const [isNew, setIsNew] = useState(false);
   const [isPickup, setIsPickup] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [styleSearch, setStyleSearch] = useState('');
+  const [styleSearch, setStyleSearch] = useState("");
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [colorSearch, setColorSearch] = useState('');
+  const [colorSearch, setColorSearch] = useState("");
   const [sizeRange, setSizeRange] = useState({
     height: [0, 3000],
     length: [0, 3000],
@@ -51,105 +56,425 @@ const Catalog = () => {
   });
   const [favorites, setFavorites] = useState<number[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [brandSearch, setBrandSearch] = useState('');
+  const [brandSearch, setBrandSearch] = useState("");
 
-  const brands = Array.from(new Set(products.map(p => p.brand))).sort();
-  
+  const brands = Array.from(new Set(products.map((p) => p.brand))).sort();
+
   const types = [
-    { value: 'chandelier', label: 'Люстры', icon: 'Lightbulb', color: 'text-yellow-500' },
-    { value: 'ceiling_chandelier', label: 'Потолочные люстры', icon: 'Circle', color: 'text-amber-500' },
-    { value: 'pendant_chandelier', label: 'Подвесные люстры', icon: 'Droplet', color: 'text-cyan-500' },
-    { value: 'cascade', label: 'Каскадные', icon: 'Layers', color: 'text-indigo-500' },
-    { value: 'rod', label: 'На штанге', icon: 'Minus', color: 'text-slate-500' },
-    { value: 'large', label: 'Большие люстры', icon: 'Maximize2', color: 'text-rose-500' },
-    { value: 'fan_chandelier', label: 'Люстры-вентиляторы', icon: 'Fan', color: 'text-teal-500' },
-    { value: 'elite_chandelier', label: 'Элитные люстры', icon: 'Crown', color: 'text-yellow-600' },
-    
-    { value: 'light_pendant', label: 'Подвесные светильники', icon: 'Droplet', color: 'text-blue-400' },
-    { value: 'light_ceiling', label: 'Потолочные светильники', icon: 'Circle', color: 'text-slate-400' },
-    { value: 'light_wall', label: 'Настенные светильники', icon: 'Square', color: 'text-purple-400' },
-    { value: 'light_wall_ceiling', label: 'Настенно-потолочные', icon: 'LayoutGrid', color: 'text-indigo-400' },
-    { value: 'light_surface', label: 'Накладные светильники', icon: 'Box', color: 'text-emerald-400' },
-    { value: 'light_recessed', label: 'Встраиваемые светильники', icon: 'CircleDot', color: 'text-teal-400' },
-    { value: 'light_spot', label: 'Точечные светильники', icon: 'Dot', color: 'text-cyan-400' },
-    { value: 'light_night', label: 'Ночники', icon: 'Moon', color: 'text-violet-400' },
-    { value: 'light_furniture', label: 'Мебельные', icon: 'Sofa', color: 'text-amber-400' },
-    { value: 'light_plant', label: 'Для растений', icon: 'Leaf', color: 'text-green-500' },
-    { value: 'light_bactericidal', label: 'Бактерицидные', icon: 'ShieldPlus', color: 'text-red-400' },
-    { value: 'light_kit', label: 'Комплекты светильников', icon: 'Package', color: 'text-orange-400' },
-    { value: 'light_elite', label: 'Элитные светильники', icon: 'Crown', color: 'text-yellow-500' },
-    
-    { value: 'lamp_decorative', label: 'Декоративные лампы', icon: 'Sparkles', color: 'text-pink-500' },
-    { value: 'lamp_office', label: 'Офисные лампы', icon: 'Briefcase', color: 'text-gray-500' },
-    { value: 'lamp_kids', label: 'Детские лампы', icon: 'Baby', color: 'text-pink-400' },
-    { value: 'lamp_clip', label: 'На прищепке', icon: 'Paperclip', color: 'text-blue-500' },
-    { value: 'lamp_clamp', label: 'На струбцине', icon: 'Grip', color: 'text-slate-500' },
-    
-    { value: 'sconce', label: 'Бра', icon: 'WallLamp', color: 'text-purple-500' },
-    
-    { value: 'spot_one', label: 'Спот с 1 плафоном', icon: 'Circle', color: 'text-orange-500' },
-    { value: 'spot_two', label: 'Спот с 2 плафонами', icon: 'CircleDot', color: 'text-orange-600' },
-    { value: 'spot_three_plus', label: 'Спот с 3+ плафонами', icon: 'CircleEllipsis', color: 'text-orange-700' },
-    { value: 'spot_recessed', label: 'Встраиваемые споты', icon: 'Disc', color: 'text-amber-600' },
-    { value: 'spot_surface', label: 'Накладные споты', icon: 'Box', color: 'text-yellow-600' },
-    
-    { value: 'outdoor_street', label: 'Уличные светильники', icon: 'Lamp', color: 'text-slate-600' },
-    { value: 'outdoor_landscape', label: 'Ландшафтные', icon: 'Trees', color: 'text-green-600' },
-    { value: 'outdoor_architectural', label: 'Архитектурные', icon: 'Building', color: 'text-stone-600' },
-    { value: 'outdoor_park', label: 'Парковые', icon: 'TreePine', color: 'text-emerald-600' },
-    { value: 'outdoor_wall', label: 'Уличные настенные', icon: 'Square', color: 'text-zinc-600' },
-    { value: 'outdoor_console', label: 'Консольные', icon: 'Minus', color: 'text-neutral-600' },
-    { value: 'outdoor_ground', label: 'Грунтовые', icon: 'Mountain', color: 'text-brown-600' },
-    { value: 'outdoor_underwater', label: 'Подводные', icon: 'Waves', color: 'text-blue-600' },
-    { value: 'outdoor_solar', label: 'На солнечных батареях', icon: 'Sun', color: 'text-yellow-500' },
-    { value: 'outdoor_floodlight', label: 'Прожекторы', icon: 'Lightbulb', color: 'text-orange-500' },
-    { value: 'outdoor_flashlight', label: 'Фонарики', icon: 'Flashlight', color: 'text-gray-500' },
-    
-    { value: 'track_complete', label: 'Трековые системы в сборе', icon: 'Workflow', color: 'text-indigo-500' },
-    { value: 'track_light', label: 'Трековые светильники', icon: 'Minus', color: 'text-indigo-600' },
-    { value: 'track_string', label: 'Струнные светильники', icon: 'Cable', color: 'text-violet-500' },
-    { value: 'track_rail', label: 'Шинопроводы', icon: 'Ruler', color: 'text-purple-600' },
-    { value: 'track_accessories', label: 'Комплектующие трековых', icon: 'Wrench', color: 'text-slate-500' },
-    
-    { value: 'electric_switch', label: 'Выключатели', icon: 'ToggleLeft', color: 'text-gray-600' },
-    { value: 'electric_socket', label: 'Розетки', icon: 'Plug', color: 'text-red-600' },
-    { value: 'electric_frame', label: 'Рамки', icon: 'Square', color: 'text-neutral-500' },
-    { value: 'electric_thermostat', label: 'Терморегуляторы', icon: 'Thermometer', color: 'text-red-500' },
-    { value: 'electric_kit', label: 'Комплекты электрики', icon: 'Package', color: 'text-orange-600' },
-    { value: 'electric_stabilizer', label: 'Стабилизаторы', icon: 'Activity', color: 'text-green-600' },
-    { value: 'electric_transformer', label: 'Трансформаторы', icon: 'Zap', color: 'text-yellow-600' },
-    { value: 'electric_motion', label: 'Датчики движения', icon: 'Radar', color: 'text-blue-600' },
-    { value: 'electric_extension', label: 'Удлинители и фильтры', icon: 'Cable', color: 'text-purple-600' },
-    { value: 'electric_cord', label: 'Шнуры', icon: 'Cable', color: 'text-gray-500' },
-    { value: 'electric_accessories', label: 'Комплектующие для ЭУИ', icon: 'Wrench', color: 'text-stone-600' },
-    { value: 'electric_doorbell', label: 'Звонки', icon: 'Bell', color: 'text-amber-500' },
-    { value: 'electric_dimmer', label: 'Диммеры', icon: 'SlidersHorizontal', color: 'text-indigo-500' },
-    { value: 'electric_fan', label: 'Вентиляторы', icon: 'Fan', color: 'text-cyan-500' },
-    
-    { value: 'floor_lamp', label: 'Торшеры', icon: 'Lamp', color: 'text-indigo-600' },
-    { value: 'table_lamp', label: 'Настольные лампы', icon: 'Lamp', color: 'text-emerald-600' },
+    {
+      value: "chandelier",
+      label: "Люстры",
+      icon: "Lightbulb",
+      color: "text-yellow-500",
+    },
+    {
+      value: "ceiling_chandelier",
+      label: "Потолочные люстры",
+      icon: "Circle",
+      color: "text-amber-500",
+    },
+    {
+      value: "pendant_chandelier",
+      label: "Подвесные люстры",
+      icon: "Droplet",
+      color: "text-cyan-500",
+    },
+    {
+      value: "cascade",
+      label: "Каскадные",
+      icon: "Layers",
+      color: "text-indigo-500",
+    },
+    {
+      value: "rod",
+      label: "На штанге",
+      icon: "Minus",
+      color: "text-slate-500",
+    },
+    {
+      value: "large",
+      label: "Большие люстры",
+      icon: "Maximize2",
+      color: "text-rose-500",
+    },
+    {
+      value: "fan_chandelier",
+      label: "Люстры-вентиляторы",
+      icon: "Fan",
+      color: "text-teal-500",
+    },
+    {
+      value: "elite_chandelier",
+      label: "Элитные люстры",
+      icon: "Crown",
+      color: "text-yellow-600",
+    },
+
+    {
+      value: "light_pendant",
+      label: "Подвесные светильники",
+      icon: "Droplet",
+      color: "text-blue-400",
+    },
+    {
+      value: "light_ceiling",
+      label: "Потолочные светильники",
+      icon: "Circle",
+      color: "text-slate-400",
+    },
+    {
+      value: "light_wall",
+      label: "Настенные светильники",
+      icon: "Square",
+      color: "text-purple-400",
+    },
+    {
+      value: "light_wall_ceiling",
+      label: "Настенно-потолочные",
+      icon: "LayoutGrid",
+      color: "text-indigo-400",
+    },
+    {
+      value: "light_surface",
+      label: "Накладные светильники",
+      icon: "Box",
+      color: "text-emerald-400",
+    },
+    {
+      value: "light_recessed",
+      label: "Встраиваемые светильники",
+      icon: "CircleDot",
+      color: "text-teal-400",
+    },
+    {
+      value: "light_spot",
+      label: "Точечные светильники",
+      icon: "Dot",
+      color: "text-cyan-400",
+    },
+    {
+      value: "light_night",
+      label: "Ночники",
+      icon: "Moon",
+      color: "text-violet-400",
+    },
+    {
+      value: "light_furniture",
+      label: "Мебельные",
+      icon: "Sofa",
+      color: "text-amber-400",
+    },
+    {
+      value: "light_plant",
+      label: "Для растений",
+      icon: "Leaf",
+      color: "text-green-500",
+    },
+    {
+      value: "light_bactericidal",
+      label: "Бактерицидные",
+      icon: "ShieldPlus",
+      color: "text-red-400",
+    },
+    {
+      value: "light_kit",
+      label: "Комплекты светильников",
+      icon: "Package",
+      color: "text-orange-400",
+    },
+    {
+      value: "light_elite",
+      label: "Элитные светильники",
+      icon: "Crown",
+      color: "text-yellow-500",
+    },
+
+    {
+      value: "lamp_decorative",
+      label: "Декоративные лампы",
+      icon: "Sparkles",
+      color: "text-pink-500",
+    },
+    {
+      value: "lamp_office",
+      label: "Офисные лампы",
+      icon: "Briefcase",
+      color: "text-gray-500",
+    },
+    {
+      value: "lamp_kids",
+      label: "Детские лампы",
+      icon: "Baby",
+      color: "text-pink-400",
+    },
+    {
+      value: "lamp_clip",
+      label: "На прищепке",
+      icon: "Paperclip",
+      color: "text-blue-500",
+    },
+    {
+      value: "lamp_clamp",
+      label: "На струбцине",
+      icon: "Grip",
+      color: "text-slate-500",
+    },
+
+    {
+      value: "sconce",
+      label: "Бра",
+      icon: "WallLamp",
+      color: "text-purple-500",
+    },
+
+    {
+      value: "spot_one",
+      label: "Спот с 1 плафоном",
+      icon: "Circle",
+      color: "text-orange-500",
+    },
+    {
+      value: "spot_two",
+      label: "Спот с 2 плафонами",
+      icon: "CircleDot",
+      color: "text-orange-600",
+    },
+    {
+      value: "spot_three_plus",
+      label: "Спот с 3+ плафонами",
+      icon: "CircleEllipsis",
+      color: "text-orange-700",
+    },
+    {
+      value: "spot_recessed",
+      label: "Встраиваемые споты",
+      icon: "Disc",
+      color: "text-amber-600",
+    },
+    {
+      value: "spot_surface",
+      label: "Накладные споты",
+      icon: "Box",
+      color: "text-yellow-600",
+    },
+
+    {
+      value: "outdoor_street",
+      label: "Уличные светильники",
+      icon: "Lamp",
+      color: "text-slate-600",
+    },
+    {
+      value: "outdoor_landscape",
+      label: "Ландшафтные",
+      icon: "Trees",
+      color: "text-green-600",
+    },
+    {
+      value: "outdoor_architectural",
+      label: "Архитектурные",
+      icon: "Building",
+      color: "text-stone-600",
+    },
+    {
+      value: "outdoor_park",
+      label: "Парковые",
+      icon: "TreePine",
+      color: "text-emerald-600",
+    },
+    {
+      value: "outdoor_wall",
+      label: "Уличные настенные",
+      icon: "Square",
+      color: "text-zinc-600",
+    },
+    {
+      value: "outdoor_console",
+      label: "Консольные",
+      icon: "Minus",
+      color: "text-neutral-600",
+    },
+    {
+      value: "outdoor_ground",
+      label: "Грунтовые",
+      icon: "Mountain",
+      color: "text-brown-600",
+    },
+    {
+      value: "outdoor_underwater",
+      label: "Подводные",
+      icon: "Waves",
+      color: "text-blue-600",
+    },
+    {
+      value: "outdoor_solar",
+      label: "На солнечных батареях",
+      icon: "Sun",
+      color: "text-yellow-500",
+    },
+    {
+      value: "outdoor_floodlight",
+      label: "Прожекторы",
+      icon: "Lightbulb",
+      color: "text-orange-500",
+    },
+    {
+      value: "outdoor_flashlight",
+      label: "Фонарики",
+      icon: "Flashlight",
+      color: "text-gray-500",
+    },
+
+    {
+      value: "track_complete",
+      label: "Трековые системы в сборе",
+      icon: "Workflow",
+      color: "text-indigo-500",
+    },
+    {
+      value: "track_light",
+      label: "Трековые светильники",
+      icon: "Minus",
+      color: "text-indigo-600",
+    },
+    {
+      value: "track_string",
+      label: "Струнные светильники",
+      icon: "Cable",
+      color: "text-violet-500",
+    },
+    {
+      value: "track_rail",
+      label: "Шинопроводы",
+      icon: "Ruler",
+      color: "text-purple-600",
+    },
+    {
+      value: "track_accessories",
+      label: "Комплектующие трековых",
+      icon: "Wrench",
+      color: "text-slate-500",
+    },
+
+    {
+      value: "electric_switch",
+      label: "Выключатели",
+      icon: "ToggleLeft",
+      color: "text-gray-600",
+    },
+    {
+      value: "electric_socket",
+      label: "Розетки",
+      icon: "Plug",
+      color: "text-red-600",
+    },
+    {
+      value: "electric_frame",
+      label: "Рамки",
+      icon: "Square",
+      color: "text-neutral-500",
+    },
+    {
+      value: "electric_thermostat",
+      label: "Терморегуляторы",
+      icon: "Thermometer",
+      color: "text-red-500",
+    },
+    {
+      value: "electric_kit",
+      label: "Комплекты электрики",
+      icon: "Package",
+      color: "text-orange-600",
+    },
+    {
+      value: "electric_stabilizer",
+      label: "Стабилизаторы",
+      icon: "Activity",
+      color: "text-green-600",
+    },
+    {
+      value: "electric_transformer",
+      label: "Трансформаторы",
+      icon: "Zap",
+      color: "text-yellow-600",
+    },
+    {
+      value: "electric_motion",
+      label: "Датчики движения",
+      icon: "Radar",
+      color: "text-blue-600",
+    },
+    {
+      value: "electric_extension",
+      label: "Удлинители и фильтры",
+      icon: "Cable",
+      color: "text-purple-600",
+    },
+    {
+      value: "electric_cord",
+      label: "Шнуры",
+      icon: "Cable",
+      color: "text-gray-500",
+    },
+    {
+      value: "electric_accessories",
+      label: "Комплектующие для ЭУИ",
+      icon: "Wrench",
+      color: "text-stone-600",
+    },
+    {
+      value: "electric_doorbell",
+      label: "Звонки",
+      icon: "Bell",
+      color: "text-amber-500",
+    },
+    {
+      value: "electric_dimmer",
+      label: "Диммеры",
+      icon: "SlidersHorizontal",
+      color: "text-indigo-500",
+    },
+    {
+      value: "electric_fan",
+      label: "Вентиляторы",
+      icon: "Fan",
+      color: "text-cyan-500",
+    },
+
+    {
+      value: "floor_lamp",
+      label: "Торшеры",
+      icon: "Lamp",
+      color: "text-indigo-600",
+    },
+    {
+      value: "table_lamp",
+      label: "Настольные лампы",
+      icon: "Lamp",
+      color: "text-emerald-600",
+    },
   ];
 
   const categories = [
-    { value: '', label: 'Всё', highlight: false },
-    { value: 'chandelier', label: 'Люстры', highlight: false },
-    { value: 'lights', label: 'Светильники', highlight: false },
-    { value: 'lamps', label: 'Лампы', highlight: false },
-    { value: 'sconce', label: 'Бра', highlight: false },
-    { value: 'floor_lamp', label: 'Торшеры', highlight: false },
-    { value: 'spots', label: 'Споты', highlight: false },
-    { value: 'outdoor', label: 'Уличное', highlight: false },
-    { value: 'track', label: 'Трековые', highlight: false },
-    { value: 'electric', label: 'Электрика', highlight: true },
+    { value: "", label: "Всё", highlight: false },
+    { value: "chandelier", label: "Люстры", highlight: false },
+    { value: "lights", label: "Светильники", highlight: false },
+    { value: "lamps", label: "Лампы", highlight: false },
+    { value: "sconce", label: "Бра", highlight: false },
+    { value: "floor_lamp", label: "Торшеры", highlight: false },
+    { value: "spots", label: "Споты", highlight: false },
+    { value: "outdoor", label: "Уличное", highlight: false },
+    { value: "track", label: "Трековые", highlight: false },
+    { value: "electric", label: "Электрика", highlight: true },
   ];
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
 
-    const savedFavorites = localStorage.getItem('favorites');
+    const savedFavorites = localStorage.getItem("favorites");
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
@@ -158,24 +483,22 @@ const Catalog = () => {
   }, []);
 
   useEffect(() => {
-    const brandParam = searchParams.get('brand');
+    const brandParam = searchParams.get("brand");
     if (brandParam && brands.length > 0 && brands.includes(brandParam)) {
       setSelectedBrands([brandParam]);
     }
   }, [products, brands, searchParams]);
 
-
-
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api.getProducts({ limit: 200 });
+      const data = await api.getProducts({ limit: 1000 });
       setProducts(data.products);
     } catch (error) {
       toast({
-        title: 'Ошибка загрузки',
-        description: 'Не удалось загрузить товары',
-        variant: 'destructive',
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить товары",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -183,68 +506,93 @@ const Catalog = () => {
   };
 
   const filteredProducts = products.filter((product) => {
-    const productType = product.type?.toLowerCase() || '';
-    
-    const searchMatch = searchQuery === '' || 
+    const productType = product.type?.toLowerCase() || "";
+
+    const searchMatch =
+      searchQuery === "" ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
-    
+      (product.description &&
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const brandMatch =
+      selectedBrands.length === 0 || selectedBrands.includes(product.brand);
+    const typeMatch =
+      selectedTypes.length === 0 || selectedTypes.includes(product.type);
+
     let categoryMatch = false;
-    if (selectedCategory === '') {
+    if (selectedCategory === "") {
       categoryMatch = true;
-    } else if (selectedCategory === 'chandelier') {
-      categoryMatch = productType.includes('люстр');
-    } else if (selectedCategory === 'lights') {
-      categoryMatch = productType.includes('светильник') || 
-                     productType.includes('подвесной') ||
-                     productType.includes('встраиваемый');
-    } else if (selectedCategory === 'lamps') {
-      categoryMatch = productType.includes('лампа');
-    } else if (selectedCategory === 'sconce') {
-      categoryMatch = productType.includes('бра');
-    } else if (selectedCategory === 'floor_lamp') {
-      categoryMatch = productType.includes('торшер');
-    } else if (selectedCategory === 'spots') {
-      categoryMatch = productType.includes('спот') || productType.includes('точечн');
-    } else if (selectedCategory === 'outdoor') {
-      categoryMatch = productType.includes('уличн') || productType.includes('фонар');
-    } else if (selectedCategory === 'track') {
-      categoryMatch = productType.includes('трековый') || productType.includes('шинопровод');
-    } else if (selectedCategory === 'electric') {
-      categoryMatch = productType.includes('коннектор') || 
-                     productType.includes('выключател') || 
-                     productType.includes('розетк');
+    } else if (selectedCategory === "chandelier") {
+      categoryMatch = productType.includes("люстр");
+    } else if (selectedCategory === "lights") {
+      categoryMatch =
+        productType.includes("светильник") ||
+        productType.includes("подвесной") ||
+        productType.includes("встраиваемый");
+    } else if (selectedCategory === "lamps") {
+      categoryMatch = productType.includes("лампа");
+    } else if (selectedCategory === "sconce") {
+      categoryMatch = productType.includes("бра");
+    } else if (selectedCategory === "floor_lamp") {
+      categoryMatch = productType.includes("торшер");
+    } else if (selectedCategory === "spots") {
+      categoryMatch =
+        productType.includes("спот") || productType.includes("точечн");
+    } else if (selectedCategory === "outdoor") {
+      categoryMatch =
+        productType.includes("уличн") || productType.includes("фонар");
+    } else if (selectedCategory === "track") {
+      categoryMatch =
+        productType.includes("трековый") || productType.includes("шинопровод");
+    } else if (selectedCategory === "electric") {
+      categoryMatch =
+        productType.includes("коннектор") ||
+        productType.includes("выключател") ||
+        productType.includes("розетк");
     }
-    
-    const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
+
+    const priceMatch =
+      product.price >= priceRange[0] && product.price <= priceRange[1];
     const remoteMatch = !hasRemote || product.hasRemote;
     const dimmableMatch = !isDimmable || product.isDimmable;
     const colorChangeMatch = !hasColorChange || product.hasColorChange;
-    const styleMatch = selectedStyles.length === 0 || (product.style && selectedStyles.includes(product.style));
-    const colorMatch = selectedColors.length === 0 || (product.color && selectedColors.includes(product.color));
-    
-    return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch && remoteMatch && dimmableMatch && colorChangeMatch && styleMatch && colorMatch;
+    const styleMatch =
+      selectedStyles.length === 0 ||
+      (product.style && selectedStyles.includes(product.style));
+    const colorMatch =
+      selectedColors.length === 0 ||
+      (product.color && selectedColors.includes(product.color));
+
+    return (
+      searchMatch &&
+      brandMatch &&
+      typeMatch &&
+      categoryMatch &&
+      priceMatch &&
+      remoteMatch &&
+      dimmableMatch &&
+      colorChangeMatch &&
+      styleMatch &&
+      colorMatch
+    );
   });
-  
-  console.log('Catalog Debug:', {
+
+  console.log("Catalog Debug:", {
     totalProducts: products.length,
     filteredProducts: filteredProducts.length,
     selectedCategory,
-    sampleTypes: products.slice(0, 5).map(p => p.type)
+    sampleTypes: products.slice(0, 5).map((p) => p.type),
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
-        title: 'Ошибка',
-        description: 'Пожалуйста, загрузите изображение',
-        variant: 'destructive',
+        title: "Ошибка",
+        description: "Пожалуйста, загрузите изображение",
+        variant: "destructive",
       });
       return;
     }
@@ -255,24 +603,26 @@ const Catalog = () => {
       const reader = new FileReader();
       reader.onload = async (event) => {
         const base64 = event.target?.result as string;
-        const base64Data = base64.split(',')[1];
+        const base64Data = base64.split(",")[1];
 
         try {
           const result = await api.searchByImage(base64Data);
           setProducts(result.products);
-          setSearchQuery('');
+          setSearchQuery("");
           setSelectedBrands([]);
           setSelectedTypes([]);
-          
+
           toast({
-            title: 'Поиск завершён',
-            description: result.description || `Найдено ${result.products.length} товаров`,
+            title: "Поиск завершён",
+            description:
+              result.description || `Найдено ${result.products.length} товаров`,
           });
         } catch (error) {
           toast({
-            title: 'Ошибка поиска',
-            description: error instanceof Error ? error.message : 'Попробуйте другое фото',
-            variant: 'destructive',
+            title: "Ошибка поиска",
+            description:
+              error instanceof Error ? error.message : "Попробуйте другое фото",
+            variant: "destructive",
           });
         } finally {
           setImageSearchLoading(false);
@@ -282,15 +632,15 @@ const Catalog = () => {
       reader.readAsDataURL(file);
     } catch (error) {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось обработать изображение',
-        variant: 'destructive',
+        title: "Ошибка",
+        description: "Не удалось обработать изображение",
+        variant: "destructive",
       });
       setImageSearchLoading(false);
     }
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -298,24 +648,24 @@ const Catalog = () => {
     const newFavorites = favorites.includes(id)
       ? favorites.filter((fav) => fav !== id)
       : [...favorites, id];
-    
+
     setFavorites(newFavorites);
-    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+    localStorage.setItem("favorites", JSON.stringify(newFavorites));
 
     toast({
-      title: favorites.includes(id) ? 'Удалено из избранного' : 'Добавлено в избранное',
-      description: favorites.includes(id) ? '' : 'Товар добавлен в избранное',
+      title: favorites.includes(id)
+        ? "Удалено из избранного"
+        : "Добавлено в избранное",
+      description: favorites.includes(id) ? "" : "Товар добавлен в избранное",
     });
   };
 
-
-
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
     setUser(null);
     toast({
-      title: 'Выход выполнен',
-      description: 'Вы успешно вышли из аккаунта',
+      title: "Выход выполнен",
+      description: "Вы успешно вышли из аккаунта",
     });
   };
 
@@ -331,9 +681,9 @@ const Catalog = () => {
     setIsPickup(false);
     setSelectedStyles([]);
     setSelectedColors([]);
-    setBrandSearch('');
-    setStyleSearch('');
-    setColorSearch('');
+    setBrandSearch("");
+    setStyleSearch("");
+    setColorSearch("");
     setSizeRange({
       height: [0, 3000],
       length: [0, 3000],
@@ -345,8 +695,8 @@ const Catalog = () => {
   };
 
   const handleResetAll = () => {
-    setSearchQuery('');
-    setSelectedCategory('');
+    setSearchQuery("");
+    setSelectedCategory("");
     handleResetFilters();
     loadProducts();
   };
@@ -355,7 +705,7 @@ const Catalog = () => {
     <div className="min-h-screen flex flex-col">
       <Header
         cartItemsCount={totalItems}
-        onCartClick={() => window.location.href = '/cart'}
+        onCartClick={() => (window.location.href = "/cart")}
         onAuthClick={() => setShowAuth(true)}
       />
 
@@ -386,7 +736,10 @@ const Catalog = () => {
         <div className="mb-6 space-y-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Icon
+                name="Search"
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+              />
               <Input
                 type="text"
                 placeholder="Поиск по названию, бренду..."
@@ -420,7 +773,7 @@ const Catalog = () => {
               )}
             </Button>
           </div>
-          
+
           {searchQuery && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-sm">
@@ -429,7 +782,7 @@ const Catalog = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
               >
                 <Icon name="X" className="h-3 w-3" />
               </Button>
@@ -473,8 +826,8 @@ const Catalog = () => {
             />
           </aside>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="lg:hidden mb-4 w-full"
             onClick={() => setShowMobileFilters(true)}
           >
@@ -535,12 +888,21 @@ const Catalog = () => {
                   <span className="text-sm text-muted-foreground">
                     Найдено товаров: {filteredProducts.length}
                   </span>
-                  {(searchQuery || selectedBrands.length > 0 || selectedTypes.length > 0 || selectedCategory || priceRange[0] > 0 || priceRange[1] < 150000 || hasRemote || isDimmable || hasColorChange || isSale || isNew || isPickup || selectedStyles.length > 0 || selectedColors.length > 0) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleResetAll}
-                    >
+                  {(searchQuery ||
+                    selectedBrands.length > 0 ||
+                    selectedTypes.length > 0 ||
+                    selectedCategory ||
+                    priceRange[0] > 0 ||
+                    priceRange[1] < 150000 ||
+                    hasRemote ||
+                    isDimmable ||
+                    hasColorChange ||
+                    isSale ||
+                    isNew ||
+                    isPickup ||
+                    selectedStyles.length > 0 ||
+                    selectedColors.length > 0) && (
+                    <Button variant="ghost" size="sm" onClick={handleResetAll}>
                       <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
                       Сбросить всё
                     </Button>
