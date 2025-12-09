@@ -130,14 +130,13 @@ export const api = {
       });
     }
     
-    params.append('_t', Date.now().toString());
-    
-    const url = `${API_URLS.products}?${params.toString()}`;
+    const url = `${API_URLS.products}${params.toString() ? '?' + params.toString() : ''}`;
     const response = await fetch(url, {
       cache: 'no-store',
       headers: {
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
     if (!response.ok) throw new Error('Failed to fetch products');
