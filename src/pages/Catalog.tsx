@@ -192,21 +192,32 @@ const Catalog = () => {
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(product.type);
     
-    const categoryMatch = selectedCategory === '' || 
-      product.type === selectedCategory ||
-      (selectedCategory === 'chandelier' && productType.includes('люстр')) ||
-      (selectedCategory === 'lights' && (
-        productType.includes('светильник') || 
-        productType.includes('подвесной') ||
-        productType.includes('встраиваемый')
-      )) ||
-      (selectedCategory === 'lamps' && productType.includes('лампа')) ||
-      (selectedCategory === 'sconce' && productType.includes('бра')) ||
-      (selectedCategory === 'floor_lamp' && productType.includes('торшер')) ||
-      (selectedCategory === 'spots' && (productType.includes('спот') || productType.includes('точечн'))) ||
-      (selectedCategory === 'outdoor' && (productType.includes('уличн') || productType.includes('фонар'))) ||
-      (selectedCategory === 'track' && (productType.includes('трековый') || productType.includes('шинопровод'))) ||
-      (selectedCategory === 'electric' && (productType.includes('коннектор') || productType.includes('выключател') || productType.includes('розетк')));
+    let categoryMatch = false;
+    if (selectedCategory === '') {
+      categoryMatch = true;
+    } else if (selectedCategory === 'chandelier') {
+      categoryMatch = productType.includes('люстр');
+    } else if (selectedCategory === 'lights') {
+      categoryMatch = productType.includes('светильник') || 
+                     productType.includes('подвесной') ||
+                     productType.includes('встраиваемый');
+    } else if (selectedCategory === 'lamps') {
+      categoryMatch = productType.includes('лампа');
+    } else if (selectedCategory === 'sconce') {
+      categoryMatch = productType.includes('бра');
+    } else if (selectedCategory === 'floor_lamp') {
+      categoryMatch = productType.includes('торшер');
+    } else if (selectedCategory === 'spots') {
+      categoryMatch = productType.includes('спот') || productType.includes('точечн');
+    } else if (selectedCategory === 'outdoor') {
+      categoryMatch = productType.includes('уличн') || productType.includes('фонар');
+    } else if (selectedCategory === 'track') {
+      categoryMatch = productType.includes('трековый') || productType.includes('шинопровод');
+    } else if (selectedCategory === 'electric') {
+      categoryMatch = productType.includes('коннектор') || 
+                     productType.includes('выключател') || 
+                     productType.includes('розетк');
+    }
     
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
     const remoteMatch = !hasRemote || product.hasRemote;
@@ -216,6 +227,13 @@ const Catalog = () => {
     const colorMatch = selectedColors.length === 0 || (product.color && selectedColors.includes(product.color));
     
     return searchMatch && brandMatch && typeMatch && categoryMatch && priceMatch && remoteMatch && dimmableMatch && colorChangeMatch && styleMatch && colorMatch;
+  });
+  
+  console.log('Catalog Debug:', {
+    totalProducts: products.length,
+    filteredProducts: filteredProducts.length,
+    selectedCategory,
+    sampleTypes: products.slice(0, 5).map(p => p.type)
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
