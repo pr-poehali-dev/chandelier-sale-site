@@ -8,13 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useCart } from '@/contexts/CartContext';
-import { User } from '@/lib/api';
+import { api, Product, User } from '@/lib/api';
+import ProductGrid from '@/components/catalog/ProductGrid';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { totalItems } = useCart();
+  const { totalItems, addToCart } = useCart();
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
   const categories = [
     {
       name: 'Люстры',
@@ -55,6 +59,45 @@ const Home = () => {
       description: 'Оплата наличными, картой или в рассрочку',
     },
   ];
+
+  const types = [
+    { value: 'chandelier', label: 'Люстра', icon: 'Lightbulb', color: 'text-yellow-500' },
+    { value: 'lamp', label: 'Лампа', icon: 'Lamp', color: 'text-orange-500' },
+    { value: 'sconce', label: 'Бра', icon: 'Zap', color: 'text-blue-500' },
+    { value: 'floor_lamp', label: 'Торшер', icon: 'LampFloor', color: 'text-purple-500' },
+  ];
+
+  useEffect(() => {
+    loadFeaturedProducts();
+    loadFavorites();
+  }, []);
+
+  const loadFeaturedProducts = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getProducts({ limit: 6 });
+      setFeaturedProducts(data.products);
+    } catch (error) {
+      console.error('Failed to load products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFavorites = () => {
+    const stored = localStorage.getItem('favorites');
+    if (stored) {
+      setFavorites(JSON.parse(stored));
+    }
+  };
+
+  const handleToggleFavorite = (id: number) => {
+    const newFavorites = favorites.includes(id)
+      ? favorites.filter(fav => fav !== id)
+      : [...favorites, id];
+    setFavorites(newFavorites);
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -196,10 +239,32 @@ const Home = () => {
 
       <section className="py-16 container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          Выгодно
+          Популярные товары
         </h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Товары с лучшим соотношением цены и качества
+        </p>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Загрузка...</p>
+          </div>
+        ) : (
+          <ProductGrid
+            products={featuredProducts}
+            types={types}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            onAddToCart={addToCart}
+          />
+        )}
+      </section>
+
+      <section className="py-16 bg-muted/30 container mx-auto px-4">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+          Выгодно
+        </h2>
+        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          Специальные предложения
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="overflow-hidden hover:shadow-lg transition-shadow">
