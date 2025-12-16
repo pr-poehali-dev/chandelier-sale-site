@@ -34,6 +34,23 @@ const ChatWidget = () => {
   }, [messages]);
 
   useEffect(() => {
+    if (isOpen) {
+      // Блокируем прокрутку body когда чат открыт
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      // Возвращаем прокрутку когда чат закрыт
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen && sessionId) {
       loadMessages();
       const interval = setInterval(loadMessages, 3000);
