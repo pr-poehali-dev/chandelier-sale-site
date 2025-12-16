@@ -131,7 +131,7 @@ const ChatWidget = () => {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-50"
           size="icon"
         >
           <Icon name="MessageCircle" className="h-6 w-6" />
@@ -139,7 +139,7 @@ const ChatWidget = () => {
       )}
 
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-4 right-4 w-[calc(100vw-2rem)] sm:w-96 h-[500px] max-h-[calc(100vh-2rem)] shadow-xl z-50 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
             <CardTitle className="text-lg">Онлайн-консультант</CardTitle>
             <Button
