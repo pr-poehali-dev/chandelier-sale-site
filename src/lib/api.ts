@@ -109,6 +109,7 @@ export interface Order {
   total_amount: number;
   status: string;
   payment_method: string;
+  tracking_number?: string;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
@@ -324,6 +325,21 @@ export const api = {
   async getOrder(id: number): Promise<Order> {
     const response = await fetch(`${API_URLS.orders}?id=${id}`);
     if (!response.ok) throw new Error('Failed to fetch order');
+    return response.json();
+  },
+
+  async updateOrder(id: number, data: { status?: string; tracking_number?: string }): Promise<{ message: string }> {
+    const response = await fetch(`${API_URLS.orders}?id=${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update order');
+    }
+    
     return response.json();
   },
 };

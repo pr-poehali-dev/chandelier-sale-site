@@ -43,8 +43,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                'quantity', oi.quantity,
                                'price', oi.price
                            )) as items
-                    FROM orders o
-                    LEFT JOIN order_items oi ON o.id = oi.order_id
+                    FROM t_p94134469_chandelier_sale_site.orders o
+                    LEFT JOIN t_p94134469_chandelier_sale_site.order_items oi ON o.id = oi.order_id
                     WHERE o.id = %s
                     GROUP BY o.id
                 ''', (order_id,))
@@ -71,7 +71,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             else:
                 cur.execute('''
-                    SELECT * FROM orders 
+                    SELECT * FROM t_p94134469_chandelier_sale_site.orders 
                     ORDER BY created_at DESC
                 ''')
                 orders = cur.fetchall()
@@ -110,7 +110,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             total_amount = sum(item['price'] * item['quantity'] for item in items)
             
             cur.execute('''
-                INSERT INTO orders (customer_name, customer_email, customer_phone, customer_address, total_amount, payment_method, status)
+                INSERT INTO t_p94134469_chandelier_sale_site.orders (customer_name, customer_email, customer_phone, customer_address, total_amount, payment_method, status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             ''', (customer_name, customer_email, customer_phone, customer_address, total_amount, payment_method, 'pending'))
@@ -119,7 +119,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             for item in items:
                 cur.execute('''
-                    INSERT INTO order_items (order_id, product_id, product_name, product_image, quantity, price)
+                    INSERT INTO t_p94134469_chandelier_sale_site.order_items (order_id, product_id, product_name, product_image, quantity, price)
                     VALUES (%s, %s, %s, %s, %s, %s)
                 ''', (order_id, item['product_id'], item['product_name'], item.get('product_image'), item['quantity'], item['price']))
             
@@ -150,13 +150,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             body = json.loads(event.get('body', '{}'))
             status = body.get('status')
+            tracking_number = body.get('tracking_number')
+            
+            update_fields = []
+            update_values = []
             
             if status:
-                cur.execute('''
-                    UPDATE orders 
-                    SET status = %s, updated_at = CURRENT_TIMESTAMP
+                update_fields.append('status = %s')
+                update_values.append(status)
+            
+            if tracking_number is not None:
+                update_fields.append('tracking_number = %s')
+                update_values.append(tracking_number if tracking_number else None)
+            
+            if update_fields:
+                update_fields.append('updated_at = CURRENT_TIMESTAMP')
+                update_values.append(order_id)
+                
+                query = f'''
+                    UPDATE t_p94134469_chandelier_sale_site.orders 
+                    SET {', '.join(update_fields)}
                     WHERE id = %s
-                ''', (status, order_id))
+                '''
+                cur.execute(query, update_values)
                 conn.commit()
             
             return {

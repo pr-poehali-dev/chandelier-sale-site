@@ -204,6 +204,27 @@ const Admin = () => {
     }
   };
 
+  const updateOrderTracking = async (orderId: number, trackingNumber: string) => {
+    try {
+      await api.updateOrder(orderId, { tracking_number: trackingNumber });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, tracking_number: trackingNumber } : o,
+        ),
+      );
+      toast({
+        title: "Трек-номер обновлён",
+        description: trackingNumber ? `Трек-номер: ${trackingNumber}` : "Трек-номер удалён",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить трек-номер",
+        variant: "destructive",
+      });
+    }
+  };
+
   const viewOrderDetails = async (orderId: number) => {
     try {
       const order = await api.getOrder(orderId);
@@ -1604,7 +1625,34 @@ const Admin = () => {
                               {order.total_amount.toLocaleString("ru-RU")} ₽
                             </div>
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 min-w-[200px]">
+                            <div className="space-y-1">
+                              <Label htmlFor={`tracking-${order.id}`} className="text-xs">
+                                Трек-номер
+                              </Label>
+                              <div className="flex gap-1">
+                                <Input
+                                  id={`tracking-${order.id}`}
+                                  placeholder="Введите трек-номер"
+                                  defaultValue={order.tracking_number || ""}
+                                  className="h-8 text-sm"
+                                  onBlur={(e) => {
+                                    const value = e.target.value.trim();
+                                    if (value !== (order.tracking_number || "")) {
+                                      updateOrderTracking(order.id, value);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      const value = (e.target as HTMLInputElement).value.trim();
+                                      if (value !== (order.tracking_number || "")) {
+                                        updateOrderTracking(order.id, value);
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1619,7 +1667,7 @@ const Admin = () => {
                                 updateOrderStatus(order.id, status)
                               }
                             >
-                              <SelectTrigger className="w-[140px]">
+                              <SelectTrigger className="w-full h-8">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>

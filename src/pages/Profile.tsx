@@ -345,6 +345,18 @@ const Profile = () => {
                           ))}
                         </div>
 
+                        {order.tracking_number && (
+                          <div className="mt-4 p-3 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Icon name="Package" className="h-4 w-4 text-primary" />
+                              <span className="text-sm font-medium">Трек-номер для отслеживания:</span>
+                            </div>
+                            <p className="text-sm font-mono bg-background px-3 py-2 rounded border">
+                              {order.tracking_number}
+                            </p>
+                          </div>
+                        )}
+
                         <div className="flex gap-2 mt-4">
                           <Button variant="outline" className="flex-1">
                             <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
