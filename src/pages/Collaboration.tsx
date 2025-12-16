@@ -85,12 +85,25 @@ const Collaboration = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка отправки заявки');
+      }
+
       toast({
         title: 'Заявка отправлена!',
         description: `Спасибо за интерес к сотрудничеству в категории "${categoryLabel}". Мы свяжемся с вами в ближайшее время.`
       });
-      setLoading(false);
 
       switch(formData.category) {
         case 'designer':
@@ -109,7 +122,15 @@ const Collaboration = () => {
           setSupplierForm({ name: '', organization: '', phone: '', email: '', category: 'supplier' });
           break;
       }
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось отправить заявку',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderForm = (

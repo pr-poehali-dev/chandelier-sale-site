@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "Create partner application",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Иван Иванов",
+        "organization": "ООО Тест",
+        "phone": "+79991234567",
+        "email": "test@example.com",
+        "category": "designer"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "Get all partner applications",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create application without required fields",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Иван"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

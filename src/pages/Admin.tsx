@@ -53,6 +53,9 @@ const Admin = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [partnerApplications, setPartnerApplications] = useState<any[]>([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("all");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -124,6 +127,7 @@ const Admin = () => {
 
     loadProducts();
     loadOrders();
+    loadPartnerApplications();
   }, [navigate]);
 
   const loadProducts = async () => {
@@ -154,6 +158,24 @@ const Admin = () => {
       console.error("Orders load error:", error);
     } finally {
       setOrdersLoading(false);
+    }
+  };
+
+  const loadPartnerApplications = async () => {
+    setPartnersLoading(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a');
+      const data = await response.json();
+      setPartnerApplications(data.applications || []);
+    } catch (error) {
+      console.error("Partner applications load error:", error);
+      toast({
+        title: "Ошибка загрузки заявок",
+        description: "Не удалось загрузить заявки партнёров",
+        variant: "destructive",
+      });
+    } finally {
+      setPartnersLoading(false);
     }
   };
 
@@ -1355,6 +1377,7 @@ const Admin = () => {
               Товары ({products.length})
             </TabsTrigger>
             <TabsTrigger value="orders">Заказы ({orders.length})</TabsTrigger>
+            <TabsTrigger value="partners">Партнёры ({partnerApplications.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -1610,6 +1633,94 @@ const Admin = () => {
                                 </SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="partners">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Заявки партнёров</CardTitle>
+                  <div className="w-48">
+                    <Select value={filterCategory} onValueChange={setFilterCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все категории" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все категории</SelectItem>
+                        <SelectItem value="designer">Дизайнеры</SelectItem>
+                        <SelectItem value="builder">Строители</SelectItem>
+                        <SelectItem value="ceiling">Потолочники</SelectItem>
+                        <SelectItem value="wholesale">Оптовики</SelectItem>
+                        <SelectItem value="supplier">Поставщики</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {partnersLoading ? (
+                  <div className="text-center py-8">
+                    <Icon name="Loader2" className="h-8 w-8 animate-spin mx-auto" />
+                  </div>
+                ) : partnerApplications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Заявок от партнёров пока нет
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {partnerApplications
+                      .filter(app => filterCategory === 'all' || app.category === filterCategory)
+                      .map((app) => (
+                      <Card key={app.id} className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lg">{app.name}</span>
+                              <Badge variant="outline">
+                                {app.category === 'designer' ? 'Дизайнер' :
+                                 app.category === 'builder' ? 'Строитель' :
+                                 app.category === 'ceiling' ? 'Потолочник' :
+                                 app.category === 'wholesale' ? 'Оптовик' :
+                                 'Поставщик'}
+                              </Badge>
+                              <Badge variant={app.status === 'new' ? 'secondary' : 'default'}>
+                                {app.status === 'new' ? 'Новая' : app.status}
+                              </Badge>
+                            </div>
+                            
+                            {app.organization && (
+                              <div className="text-sm">
+                                <Icon name="Building2" className="inline h-3 w-3 mr-1 text-muted-foreground" />
+                                <span className="font-medium">{app.organization}</span>
+                              </div>
+                            )}
+                            
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <div>
+                                <Icon name="Phone" className="inline h-3 w-3 mr-1" />
+                                <a href={`tel:${app.phone}`} className="hover:text-primary">
+                                  {app.phone}
+                                </a>
+                              </div>
+                              <div>
+                                <Icon name="Mail" className="inline h-3 w-3 mr-1" />
+                                <a href={`mailto:${app.email}`} className="hover:text-primary">
+                                  {app.email}
+                                </a>
+                              </div>
+                              <div>
+                                <Icon name="Calendar" className="inline h-3 w-3 mr-1" />
+                                {new Date(app.created_at).toLocaleString('ru-RU')}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </Card>

@@ -1,4 +1,5 @@
 {
+  "partner-applications": "https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a",
   "orders": "https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a",
   "crawl-products": "https://functions.poehali.dev/5845aa6f-cc5c-416c-86f8-13f4d13f0f2e",
   "import-products": "https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1",
