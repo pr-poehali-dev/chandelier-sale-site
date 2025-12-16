@@ -113,6 +113,10 @@ const Admin = () => {
     subcategory: "",
   });
 
+  const updateFormData = (updates: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+  };
+
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (!user) {
@@ -234,6 +238,32 @@ const Admin = () => {
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить детали заказа",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteOrder = async (orderId: number) => {
+    if (!confirm("Удалить этот заказ?")) return;
+
+    try {
+      await fetch(`https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${orderId}`, {
+        method: "DELETE",
+      });
+
+      toast({
+        title: "Заказ удалён",
+      });
+
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
+        setShowOrderDialog(false);
+      }
+
+      await loadOrders();
+    } catch (error) {
+      toast({
+        title: "Ошибка удаления",
         variant: "destructive",
       });
     }
@@ -1877,6 +1907,22 @@ const Admin = () => {
                     </span>
                   </div>
                 </div>
+
+                <DialogFooter className="mt-6 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowOrderDialog(false)}
+                  >
+                    Закрыть
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => deleteOrder(selectedOrder.id)}
+                  >
+                    <Icon name="Trash2" className="h-4 w-4 mr-2" />
+                    Удалить заказ
+                  </Button>
+                </DialogFooter>
               </div>
             )}
           </DialogContent>
@@ -1922,7 +1968,7 @@ const Admin = () => {
                   type="number"
                   value={formData.price}
                   onChange={(e) =>
-                    setFormData({ ...formData, price: Number(e.target.value) })
+                    updateFormData({ price: Number(e.target.value) })
                   }
                   required
                 />
@@ -1936,7 +1982,7 @@ const Admin = () => {
                   id="brand"
                   value={formData.brand}
                   onChange={(e) =>
-                    setFormData({ ...formData, brand: e.target.value })
+                    updateFormData({ brand: e.target.value })
                   }
                   placeholder="Бренд"
                   required
@@ -1952,7 +1998,7 @@ const Admin = () => {
                     id="image"
                     value={formData.image}
                     onChange={(e) =>
-                      setFormData({ ...formData, image: e.target.value })
+                      updateFormData({ image: e.target.value })
                     }
                     placeholder="https://... или загрузите файл"
                     className="flex-1"
@@ -2006,7 +2052,7 @@ const Admin = () => {
                         if (!response.ok) throw new Error("Upload failed");
 
                         const data = await response.json();
-                        setFormData({ ...formData, image: data.url });
+                        setFormData((prev) => ({ ...prev, image: data.url }));
 
                         toast({
                           title: "Успешно",
@@ -2047,10 +2093,10 @@ const Admin = () => {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && e.currentTarget.value) {
                         e.preventDefault();
-                        setFormData({
-                          ...formData,
-                          images: [...formData.images, e.currentTarget.value],
-                        });
+                        setFormData((prev) => ({
+                          ...prev,
+                          images: [...prev.images, e.currentTarget.value],
+                        }));
                         e.currentTarget.value = "";
                       }
                     }}

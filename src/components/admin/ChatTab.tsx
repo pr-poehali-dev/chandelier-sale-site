@@ -42,6 +42,7 @@ const ChatTab = () => {
 
   useEffect(() => {
     if (selectedSession) {
+      markAsRead(selectedSession.id);
       loadMessages();
       const interval = setInterval(loadMessages, 3000);
       return () => clearInterval(interval);
@@ -107,6 +108,22 @@ const ChatTab = () => {
     }
   };
 
+  const markAsRead = async (sessionId: number) => {
+    try {
+      await fetch(CHAT_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mark_read',
+          session_id: sessionId,
+        }),
+      });
+      await loadSessions();
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
   const closeSession = async (sessionId: number) => {
     try {
       await fetch(CHAT_API, {
@@ -130,6 +147,31 @@ const ChatTab = () => {
     } catch (error) {
       toast({
         title: 'Ошибка',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteSession = async (sessionId: number) => {
+    if (!confirm('Удалить этот чат и все сообщения?')) return;
+
+    try {
+      await fetch(`${CHAT_API}?session_id=${sessionId}`, {
+        method: 'DELETE',
+      });
+
+      toast({
+        title: 'Чат удалён',
+      });
+
+      if (selectedSession?.id === sessionId) {
+        setSelectedSession(null);
+      }
+
+      await loadSessions();
+    } catch (error) {
+      toast({
+        title: 'Ошибка удаления',
         variant: 'destructive',
       });
     }
@@ -206,14 +248,24 @@ const ChatTab = () => {
                   <p className="text-sm text-muted-foreground">{selectedSession.user_email}</p>
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => closeSession(selectedSession.id)}
-              >
-                <Icon name="X" className="h-4 w-4 mr-2" />
-                Закрыть чат
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => closeSession(selectedSession.id)}
+                >
+                  <Icon name="X" className="h-4 w-4 mr-2" />
+                  Закрыть
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteSession(selectedSession.id)}
+                >
+                  <Icon name="Trash2" className="h-4 w-4 mr-2" />
+                  Удалить
+                </Button>
+              </div>
             </div>
 
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">

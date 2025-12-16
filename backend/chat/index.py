@@ -15,7 +15,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Session-Id',
                 'Access-Control-Max-Age': '86400'
             },
@@ -35,6 +35,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return handle_post(event, headers)
         elif method == 'PUT':
             return handle_put(event, headers)
+        elif method == 'DELETE':
+            return handle_delete(event, headers)
         else:
             return {
                 'statusCode': 405,
@@ -287,20 +289,44 @@ def handle_put(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]
     body_data = json.loads(event.get('body', '{}'))
     action = body_data.get('action')
     
-    if action == 'close_session':
-        session_id = body_data.get('session_id')
-        if not session_id:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        if action == 'mark_read':
+            session_id = body_data.get('session_id')
+            if not session_id:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'session_id required'}),
+                    'isBase64Encoded': False
+                }
+            
+            cur.execute('''
+                UPDATE chat_sessions
+                SET unread = false, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (session_id,))
+            conn.commit()
+            
             return {
-                'statusCode': 400,
+                'statusCode': 200,
                 'headers': headers,
-                'body': json.dumps({'error': 'session_id required'}),
+                'body': json.dumps({'success': True}),
                 'isBase64Encoded': False
             }
         
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        try:
+        elif action == 'close_session':
+            session_id = body_data.get('session_id')
+            if not session_id:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'session_id required'}),
+                    'isBase64Encoded': False
+                }
+            
             cur.execute('''
                 UPDATE chat_sessions 
                 SET status = 'closed', updated_at = CURRENT_TIMESTAMP 
@@ -314,14 +340,46 @@ def handle_put(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]
                 'body': json.dumps({'success': True}),
                 'isBase64Encoded': False
             }
-        finally:
-            cur.close()
-            conn.close()
+        
+        else:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Invalid action'}),
+                'isBase64Encoded': False
+            }
     
-    else:
+    finally:
+        cur.close()
+        conn.close()
+
+def handle_delete(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    params = event.get('queryStringParameters', {}) or {}
+    session_id = params.get('session_id')
+    
+    if not session_id:
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'Invalid action'}),
+            'body': json.dumps({'error': 'session_id required'}),
             'isBase64Encoded': False
         }
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute('DELETE FROM chat_messages WHERE session_id = %s', (session_id,))
+        cur.execute('DELETE FROM chat_sessions WHERE id = %s', (session_id,))
+        conn.commit()
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'success': True}),
+            'isBase64Encoded': False
+        }
+    
+    finally:
+        cur.close()
+        conn.close()
