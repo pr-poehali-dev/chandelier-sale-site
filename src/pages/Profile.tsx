@@ -115,21 +115,21 @@ const Profile = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Личный кабинет</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl sm:text-4xl font-bold mb-2">Личный кабинет</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 Управляйте заказами и настройками профиля
               </p>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
               <Icon name="LogOut" className="mr-2 h-4 w-4" />
               Выйти
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-[300px_1fr] gap-6">
-            <aside>
+          <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+            <aside className="hidden lg:block">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center mb-6">
@@ -183,18 +183,18 @@ const Profile = () => {
 
             <div>
               <Tabs defaultValue="orders" className="w-full">
-                <TabsList className="mb-6">
-                  <TabsTrigger value="orders">Мои заказы</TabsTrigger>
-                  <TabsTrigger value="favorites">
+                <TabsList className="mb-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-1">
+                  <TabsTrigger value="orders" className="text-xs sm:text-sm">Заказы</TabsTrigger>
+                  <TabsTrigger value="favorites" className="text-xs sm:text-sm">
                     Избранное
                     {favorites.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
+                      <Badge variant="secondary" className="ml-1 text-xs">
                         {favorites.length}
                       </Badge>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="info">Личные данные</TabsTrigger>
-                  <TabsTrigger value="settings">Настройки</TabsTrigger>
+                  <TabsTrigger value="info" className="text-xs sm:text-sm">Данные</TabsTrigger>
+                  <TabsTrigger value="settings" className="text-xs sm:text-sm">Настройки</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="favorites">
@@ -297,18 +297,18 @@ const Profile = () => {
                     orders.map((order) => (
                     <Card key={order.id}>
                       <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
-                            <CardTitle className="text-lg">
+                            <CardTitle className="text-base sm:text-lg">
                               Заказ №{order.id}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                               {new Date(order.created_at).toLocaleString('ru-RU')}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1">
                             {getStatusBadge(order.status)}
-                            <p className="text-lg font-bold text-primary mt-2">
+                            <p className="text-base sm:text-lg font-bold text-primary">
                               {order.total_amount.toLocaleString()} ₽
                             </p>
                           </div>
@@ -319,25 +319,25 @@ const Profile = () => {
                           {order.items && order.items.map((item, idx) => (
                             <div
                               key={idx}
-                              className="flex gap-4 p-3 border rounded-lg"
+                              className="flex gap-2 sm:gap-4 p-2 sm:p-3 border rounded-lg"
                             >
                               {item.product_image && (
                                 <img
                                   src={item.product_image}
                                   alt={item.product_name}
-                                  className="w-16 h-16 object-cover rounded"
+                                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0"
                                 />
                               )}
-                              <div className="flex-1">
-                                <h4 className="font-medium text-sm mb-1">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-xs sm:text-sm mb-1 line-clamp-2">
                                   {item.product_name}
                                 </h4>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {item.quantity} × {item.price.toLocaleString()} ₽
                                 </p>
                               </div>
-                              <div className="text-right">
-                                <p className="font-semibold">
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-semibold text-sm sm:text-base">
                                   {(item.quantity * item.price).toLocaleString()} ₽
                                 </p>
                               </div>
@@ -347,20 +347,21 @@ const Profile = () => {
 
                         {order.tracking_number && (
                           <div className="mt-4 p-3 bg-muted rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <Icon name="Package" className="h-4 w-4 text-primary" />
-                              <span className="text-sm font-medium">Трек-номер для отслеживания:</span>
+                              <span className="text-xs sm:text-sm font-medium">Трек-номер:</span>
                             </div>
-                            <p className="text-sm font-mono bg-background px-3 py-2 rounded border">
+                            <p className="text-xs sm:text-sm font-mono bg-background px-2 sm:px-3 py-2 rounded border break-all">
                               {order.tracking_number}
                             </p>
                           </div>
                         )}
 
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex flex-col sm:flex-row gap-2 mt-4">
                           <Button variant="outline" className="flex-1">
                             <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
-                            Повторить заказ
+                            <span className="hidden sm:inline">Повторить заказ</span>
+                            <span className="sm:hidden">Повторить</span>
                           </Button>
                           <Button variant="outline" className="flex-1">
                             <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
