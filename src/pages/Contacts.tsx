@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 
 const Contacts = () => {
+  const openChat = () => {
+    const chatButton = document.querySelector('button[class*="fixed bottom-6 right-6"]') as HTMLButtonElement;
+    if (chatButton) {
+      chatButton.click();
+    }
+  };
   const contactInfo = [
     {
       icon: 'Phone',
@@ -142,7 +148,7 @@ const Contacts = () => {
                   <p className="text-sm mb-4 opacity-90">
                     Нужна помощь с выбором? Наш консультант онлайн и готов ответить на ваши вопросы
                   </p>
-                  <Button variant="secondary" className="w-full">
+                  <Button variant="secondary" className="w-full" onClick={openChat}>
                     Начать чат
                   </Button>
                 </CardContent>
