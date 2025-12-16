@@ -96,12 +96,21 @@ const Cart = () => {
       }
 
       toast({
-        title: 'Заказ оформлен!',
-        description: `Ваш заказ №${result.order_id} на сумму ${result.total_amount.toLocaleString('ru-RU')} ₽ принят в обработку. Мы позвоним вам в течение часа.`,
+        title: '✅ Заказ успешно оформлен!',
+        description: `Заказ №${result.order_id} на сумму ${result.total_amount.toLocaleString('ru-RU')} ₽ принят в обработку.`,
+        duration: 8000,
       });
 
+      setTimeout(() => {
+        toast({
+          title: '📞 Ожидайте звонка',
+          description: 'Наш менеджер свяжется с вами в течение часа для подтверждения заказа',
+          duration: 10000,
+        });
+      }, 2000);
+
       clearCart();
-      setTimeout(() => navigate('/'), 2000);
+      setTimeout(() => navigate('/'), 3000);
     } catch (error) {
       console.error('Order error:', error);
       toast({
