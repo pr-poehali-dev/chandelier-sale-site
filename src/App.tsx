@@ -15,6 +15,7 @@ import Blog from "./pages/Blog";
 import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Collaboration from "./pages/Collaboration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/collaboration" element={<Collaboration />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
