@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "Create chat session",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "create_session",
+        "user_id": "test_user_123",
+        "user_name": "Test User",
+        "user_email": "test@example.com"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "session_id": 1
+      }
+    },
+    {
+      "name": "Get active sessions",
+      "method": "GET",
+      "path": "/?action=get_sessions&status=active",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "sessions": [
+          {
+            "id": 1,
+            "user_id": "test_user_123",
+            "status": "active"
+          }
+        ]
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

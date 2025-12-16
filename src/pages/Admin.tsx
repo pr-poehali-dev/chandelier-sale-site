@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import Icon from "@/components/ui/icon";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product, Order } from "@/lib/api";
+import ChatTab from "@/components/admin/ChatTab";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -1378,6 +1379,7 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="orders">Заказы ({orders.length})</TabsTrigger>
             <TabsTrigger value="partners">Партнёры ({partnerApplications.length})</TabsTrigger>
+            <TabsTrigger value="chat">Чат</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -1729,6 +1731,10 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="chat">
+            <ChatTab />
           </TabsContent>
         </Tabs>
 
