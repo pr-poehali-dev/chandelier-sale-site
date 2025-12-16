@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Send SMS with valid phone",
+      "method": "POST",
+      "body": {
+        "phone": "+79191546941",
+        "customer_name": "Иван Петров"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing phone number",
+      "method": "POST",
+      "body": {
+        "customer_name": "Иван"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

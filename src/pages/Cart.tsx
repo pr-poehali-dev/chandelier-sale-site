@@ -80,9 +80,24 @@ const Cart = () => {
 
       const result = await api.createOrder(orderData);
 
+      // Отправляем СМС уведомление
+      try {
+        await fetch('https://functions.poehali.dev/e5d08b0b-95a7-45e3-9e30-8fadba06e40f', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: phone,
+            customer_name: `${user.first_name} ${user.last_name || ''}`.trim(),
+          }),
+        });
+      } catch (smsError) {
+        console.error('SMS notification failed:', smsError);
+        // Продолжаем даже если СМС не отправилось
+      }
+
       toast({
         title: 'Заказ оформлен!',
-        description: `Ваш заказ №${result.order_id} на сумму ${result.total_amount.toLocaleString('ru-RU')} ₽ принят в обработку`,
+        description: `Ваш заказ №${result.order_id} на сумму ${result.total_amount.toLocaleString('ru-RU')} ₽ принят в обработку. Мы позвоним вам в течение часа.`,
       });
 
       clearCart();
