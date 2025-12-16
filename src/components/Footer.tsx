@@ -46,7 +46,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-2">
                 <Icon name="Mail" className="h-4 w-4" />
-                <span>info@luxlight.ru</span>
+                <span>luxlight@internet.ru</span>
               </li>
               <li className="flex items-center space-x-2">
                 <Icon name="MapPin" className="h-4 w-4" />

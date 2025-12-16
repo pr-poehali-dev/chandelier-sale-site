@@ -14,7 +14,7 @@ const Contacts = () => {
     {
       icon: 'Mail',
       title: 'Email',
-      items: ['info@luxlight.ru', 'support@luxlight.ru'],
+      items: ['luxlight@internet.ru'],
     },
     {
       icon: 'MapPin',
