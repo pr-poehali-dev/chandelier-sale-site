@@ -40,6 +40,8 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/collaboration" element={<Collaboration />} />
+            <Route path="/partnership" element={<Collaboration />} />
+            <Route path="/partnership/:category" element={<PartnerRegistration />} />
             <Route path="/partner-registration" element={<PartnerRegistration />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

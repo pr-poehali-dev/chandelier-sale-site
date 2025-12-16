@@ -15,7 +15,7 @@ interface PartnerCategory {
 
 const partnerCategories: PartnerCategory[] = [
   {
-    id: 'designer',
+    id: 'designers',
     title: 'Дизайнерам',
     description: 'Специальные условия для дизайнеров интерьера',
     icon: 'Palette',
@@ -27,7 +27,7 @@ const partnerCategories: PartnerCategory[] = [
     ]
   },
   {
-    id: 'builder',
+    id: 'builders',
     title: 'Строителям',
     description: 'Выгодные условия для строительных компаний',
     icon: 'HardHat',
@@ -39,7 +39,7 @@ const partnerCategories: PartnerCategory[] = [
     ]
   },
   {
-    id: 'ceiling',
+    id: 'ceilings',
     title: 'Потолочникам',
     description: 'Партнерство с мастерами натяжных потолков',
     icon: 'Layers',
@@ -63,7 +63,7 @@ const partnerCategories: PartnerCategory[] = [
     ]
   },
   {
-    id: 'supplier',
+    id: 'suppliers',
     title: 'Поставщикам',
     description: 'Расширьте ассортимент нашими товарами',
     icon: 'Truck',
@@ -80,7 +80,7 @@ const Collaboration = () => {
   const navigate = useNavigate();
 
   const handleCategorySelect = (categoryId: string) => {
-    navigate(`/partner-registration?category=${categoryId}`);
+    navigate(`/partnership/${categoryId}`);
   };
 
   return (

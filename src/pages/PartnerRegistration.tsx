@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,7 +17,7 @@ interface CategoryInfo {
 }
 
 const categoryData: Record<string, CategoryInfo> = {
-  designer: {
+  designers: {
     title: 'Регистрация дизайнера',
     description: 'Присоединяйтесь к нашей партнёрской программе для дизайнеров интерьера',
     icon: 'Palette',
@@ -28,7 +28,7 @@ const categoryData: Record<string, CategoryInfo> = {
       'Доступ к эксклюзивным коллекциям'
     ]
   },
-  builder: {
+  builders: {
     title: 'Регистрация строителя',
     description: 'Получите выгодные условия для строительных работ',
     icon: 'HardHat',
@@ -39,7 +39,7 @@ const categoryData: Record<string, CategoryInfo> = {
       'Бонусы за объёмы'
     ]
   },
-  ceiling: {
+  ceilings: {
     title: 'Регистрация потолочника',
     description: 'Станьте нашим партнёром в сфере натяжных потолков',
     icon: 'Layers',
@@ -61,7 +61,7 @@ const categoryData: Record<string, CategoryInfo> = {
       'Маркетинговая поддержка'
     ]
   },
-  supplier: {
+  suppliers: {
     title: 'Регистрация поставщика',
     description: 'Расширьте ассортимент нашими товарами',
     icon: 'Truck',
@@ -77,10 +77,11 @@ const categoryData: Record<string, CategoryInfo> = {
 const PartnerRegistration = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const params = useParams();
   const { toast } = useToast();
   
-  const category = searchParams.get('category') || 'designer';
-  const categoryInfo = categoryData[category] || categoryData.designer;
+  const category = params.category || searchParams.get('category') || 'designers';
+  const categoryInfo = categoryData[category] || categoryData.designers;
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -163,7 +164,7 @@ const PartnerRegistration = () => {
             <Button
               variant="ghost"
               className="mb-6"
-              onClick={() => navigate('/collaboration')}
+              onClick={() => navigate('/partnership')}
             >
               <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
               Назад к выбору категории
