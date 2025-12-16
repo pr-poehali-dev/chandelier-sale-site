@@ -4,18 +4,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AuthDialog from "@/components/AuthDialog";
 import CategoryNavigation from "@/components/catalog/CategoryNavigation";
-import CatalogFilters from "@/components/catalog/CatalogFilters";
-import ProductGrid from "@/components/catalog/ProductGrid";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import Icon from "@/components/ui/icon";
+import CatalogHeader from "@/components/catalog/CatalogHeader";
+import CatalogSearch from "@/components/catalog/CatalogSearch";
+import CatalogSidebar from "@/components/catalog/CatalogSidebar";
+import CatalogContent from "@/components/catalog/CatalogContent";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { api, Product, User } from "@/lib/api";
@@ -307,165 +299,156 @@ const Catalog = () => {
       color: "text-blue-600",
     },
     {
-      value: "outdoor_solar",
-      label: "На солнечных батареях",
-      icon: "Sun",
-      color: "text-yellow-500",
+      value: "outdoor_recessed_ground",
+      label: "Встраиваемые грунтовые",
+      icon: "CircleDot",
+      color: "text-teal-600",
     },
     {
-      value: "outdoor_floodlight",
-      label: "Прожекторы",
-      icon: "Lightbulb",
-      color: "text-orange-500",
-    },
-    {
-      value: "outdoor_flashlight",
-      label: "Фонарики",
-      icon: "Flashlight",
-      color: "text-gray-500",
-    },
-
-    {
-      value: "track_complete",
-      label: "Трековые системы в сборе",
-      icon: "Workflow",
-      color: "text-indigo-500",
-    },
-    {
-      value: "track_light",
-      label: "Трековые светильники",
-      icon: "Minus",
-      color: "text-indigo-600",
-    },
-    {
-      value: "track_string",
-      label: "Струнные светильники",
-      icon: "Cable",
-      color: "text-violet-500",
-    },
-    {
-      value: "track_rail",
-      label: "Шинопроводы",
-      icon: "Ruler",
-      color: "text-purple-600",
-    },
-    {
-      value: "track_accessories",
-      label: "Комплектующие трековых",
-      icon: "Wrench",
-      color: "text-slate-500",
-    },
-
-    {
-      value: "electric_switch",
-      label: "Выключатели",
-      icon: "ToggleLeft",
+      value: "outdoor_ceiling",
+      label: "Уличные потолочные",
+      icon: "Circle",
       color: "text-gray-600",
     },
     {
-      value: "electric_socket",
-      label: "Розетки",
-      icon: "Plug",
-      color: "text-red-600",
-    },
-    {
-      value: "electric_frame",
-      label: "Рамки",
-      icon: "Square",
-      color: "text-neutral-500",
-    },
-    {
-      value: "electric_thermostat",
-      label: "Терморегуляторы",
-      icon: "Thermometer",
-      color: "text-red-500",
-    },
-    {
-      value: "electric_kit",
-      label: "Комплекты электрики",
-      icon: "Package",
-      color: "text-orange-600",
-    },
-    {
-      value: "electric_stabilizer",
-      label: "Стабилизаторы",
-      icon: "Activity",
-      color: "text-green-600",
-    },
-    {
-      value: "electric_transformer",
-      label: "Трансформаторы",
-      icon: "Zap",
-      color: "text-yellow-600",
-    },
-    {
-      value: "electric_motion",
-      label: "Датчики движения",
-      icon: "Radar",
-      color: "text-blue-600",
-    },
-    {
-      value: "electric_extension",
-      label: "Удлинители и фильтры",
-      icon: "Cable",
-      color: "text-purple-600",
-    },
-    {
-      value: "electric_cord",
-      label: "Шнуры",
-      icon: "Cable",
-      color: "text-gray-500",
-    },
-    {
-      value: "electric_accessories",
-      label: "Комплектующие для ЭУИ",
-      icon: "Wrench",
-      color: "text-stone-600",
-    },
-    {
-      value: "electric_doorbell",
-      label: "Звонки",
-      icon: "Bell",
-      color: "text-amber-500",
-    },
-    {
-      value: "electric_dimmer",
-      label: "Диммеры",
-      icon: "SlidersHorizontal",
-      color: "text-indigo-500",
-    },
-    {
-      value: "electric_fan",
-      label: "Вентиляторы",
-      icon: "Fan",
-      color: "text-cyan-500",
+      value: "outdoor_bollard",
+      label: "Столбики",
+      icon: "Cylinder",
+      color: "text-stone-500",
     },
 
     {
-      value: "floor_lamp",
-      label: "Торшеры",
-      icon: "Lamp",
-      color: "text-indigo-600",
+      value: "led_strip",
+      label: "Светодиодные ленты",
+      icon: "Minus",
+      color: "text-blue-500",
     },
     {
-      value: "table_lamp",
+      value: "led_profile",
+      label: "Профили для LED лент",
+      icon: "RectangleHorizontal",
+      color: "text-slate-500",
+    },
+    {
+      value: "led_neon",
+      label: "LED-неон",
+      icon: "Zap",
+      color: "text-pink-500",
+    },
+
+    {
+      value: "lamp_table",
       label: "Настольные лампы",
       icon: "Lamp",
-      color: "text-emerald-600",
+      color: "text-orange-500",
+    },
+    {
+      value: "lamp_floor",
+      label: "Напольные торшеры",
+      icon: "LampFloor",
+      color: "text-amber-500",
     },
   ];
 
   const categories = [
-    { value: "", label: "Всё", highlight: false },
-    { value: "chandelier", label: "Люстры", highlight: false },
-    { value: "lights", label: "Светильники", highlight: false },
-    { value: "lamps", label: "Лампы", highlight: false },
-    { value: "sconce", label: "Бра", highlight: false },
-    { value: "floor_lamp", label: "Торшеры", highlight: false },
-    { value: "spots", label: "Споты", highlight: false },
-    { value: "outdoor", label: "Уличное", highlight: false },
-    { value: "track", label: "Трековые", highlight: false },
-    { value: "electric", label: "Электрика", highlight: true },
+    {
+      value: "chandeliers",
+      label: "Люстры",
+      icon: "Lightbulb",
+      color: "text-yellow-500",
+      subcategories: [
+        "chandelier",
+        "ceiling_chandelier",
+        "pendant_chandelier",
+        "cascade",
+        "rod",
+        "large",
+        "fan_chandelier",
+        "elite_chandelier",
+      ],
+    },
+    {
+      value: "lights",
+      label: "Светильники",
+      icon: "Lamp",
+      color: "text-blue-500",
+      subcategories: [
+        "light_pendant",
+        "light_ceiling",
+        "light_wall",
+        "light_wall_ceiling",
+        "light_surface",
+        "light_recessed",
+        "light_spot",
+        "light_night",
+        "light_furniture",
+        "light_plant",
+        "light_bactericidal",
+        "light_kit",
+        "light_elite",
+      ],
+    },
+    {
+      value: "lamps",
+      label: "Лампы",
+      icon: "LampDesk",
+      color: "text-orange-500",
+      subcategories: [
+        "lamp_table",
+        "lamp_floor",
+        "lamp_decorative",
+        "lamp_office",
+        "lamp_kids",
+        "lamp_clip",
+        "lamp_clamp",
+      ],
+    },
+    {
+      value: "sconces",
+      label: "Бра",
+      icon: "Square",
+      color: "text-purple-500",
+      subcategories: ["sconce"],
+    },
+    {
+      value: "spots",
+      label: "Споты",
+      icon: "Circle",
+      color: "text-orange-600",
+      subcategories: [
+        "spot_one",
+        "spot_two",
+        "spot_three_plus",
+        "spot_recessed",
+        "spot_surface",
+      ],
+    },
+    {
+      value: "outdoor",
+      label: "Уличное освещение",
+      icon: "Trees",
+      color: "text-green-600",
+      subcategories: [
+        "outdoor_street",
+        "outdoor_landscape",
+        "outdoor_architectural",
+        "outdoor_park",
+        "outdoor_wall",
+        "outdoor_console",
+        "outdoor_ground",
+        "outdoor_underwater",
+        "outdoor_recessed_ground",
+        "outdoor_ceiling",
+        "outdoor_bollard",
+      ],
+    },
+    {
+      value: "led",
+      label: "LED подсветка",
+      icon: "Zap",
+      color: "text-pink-500",
+      subcategories: ["led_strip", "led_profile", "led_neon"],
+    },
   ];
 
   useEffect(() => {
@@ -483,17 +466,22 @@ const Catalog = () => {
   }, []);
 
   useEffect(() => {
-    const brandParam = searchParams.get("brand");
-    if (brandParam && brands.length > 0 && brands.includes(brandParam)) {
-      setSelectedBrands([brandParam]);
+    const category = searchParams.get("category");
+    if (category) {
+      setSelectedCategory(category);
     }
-  }, [products, brands, searchParams]);
+
+    const query = searchParams.get("q");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   const loadProducts = async () => {
-    setLoading(true);
     try {
-      const data = await api.getProducts({ limit: 1000 });
-      setProducts(data.products);
+      setLoading(true);
+      const data = await api.getProducts();
+      setProducts(data);
     } catch (error) {
       toast({
         title: "Ошибка загрузки",
@@ -506,96 +494,78 @@ const Catalog = () => {
   };
 
   const filteredProducts = products.filter((product) => {
-    const productType = product.type?.toLowerCase() || "";
-
-    const searchMatch =
-      searchQuery === "" ||
+    const matchesSearch =
+      !searchQuery ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.description &&
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    const brandMatch =
+      product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.style?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesBrand =
       selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-    const typeMatch =
+
+    const matchesType =
       selectedTypes.length === 0 || selectedTypes.includes(product.type);
 
-    let categoryMatch = false;
-    if (selectedCategory === "") {
-      categoryMatch = true;
-    } else if (selectedCategory === "chandelier") {
-      categoryMatch = productType.includes("люстр");
-    } else if (selectedCategory === "lights") {
-      categoryMatch =
-        productType.includes("светильник") ||
-        productType.includes("подвесной") ||
-        productType.includes("встраиваемый");
-    } else if (selectedCategory === "lamps") {
-      categoryMatch = productType.includes("лампа");
-    } else if (selectedCategory === "sconce") {
-      categoryMatch = productType.includes("бра");
-    } else if (selectedCategory === "floor_lamp") {
-      categoryMatch = productType.includes("торшер");
-    } else if (selectedCategory === "spots") {
-      categoryMatch =
-        productType.includes("спот") || productType.includes("точечн");
-    } else if (selectedCategory === "outdoor") {
-      categoryMatch =
-        productType.includes("уличн") || productType.includes("фонар");
-    } else if (selectedCategory === "track") {
-      categoryMatch =
-        productType.includes("трековый") || productType.includes("шинопровод");
-    } else if (selectedCategory === "electric") {
-      categoryMatch =
-        productType.includes("коннектор") ||
-        productType.includes("выключател") ||
-        productType.includes("розетк");
-    }
-
-    const priceMatch =
+    const matchesPrice =
       product.price >= priceRange[0] && product.price <= priceRange[1];
-    const remoteMatch = !hasRemote || product.hasRemote;
-    const dimmableMatch = !isDimmable || product.isDimmable;
-    const colorChangeMatch = !hasColorChange || product.hasColorChange;
-    const styleMatch =
+
+    const matchesRemote = !hasRemote || product.has_remote;
+    const matchesDimmable = !isDimmable || product.is_dimmable;
+    const matchesColorChange = !hasColorChange || product.has_color_change;
+    const matchesSale = !isSale || product.is_sale;
+    const matchesNew = !isNew || product.is_new;
+    const matchesPickup = !isPickup || product.pickup_available;
+
+    const matchesStyle =
       selectedStyles.length === 0 ||
       (product.style && selectedStyles.includes(product.style));
-    const colorMatch =
+
+    const matchesColor =
       selectedColors.length === 0 ||
       (product.color && selectedColors.includes(product.color));
 
-    return (
-      searchMatch &&
-      brandMatch &&
-      typeMatch &&
-      categoryMatch &&
-      priceMatch &&
-      remoteMatch &&
-      dimmableMatch &&
-      colorChangeMatch &&
-      styleMatch &&
-      colorMatch
-    );
-  });
+    const matchesSize =
+      (!product.height ||
+        (product.height >= sizeRange.height[0] &&
+          product.height <= sizeRange.height[1])) &&
+      (!product.length ||
+        (product.length >= sizeRange.length[0] &&
+          product.length <= sizeRange.length[1])) &&
+      (!product.depth ||
+        (product.depth >= sizeRange.depth[0] &&
+          product.depth <= sizeRange.depth[1])) &&
+      (!product.width ||
+        (product.width >= sizeRange.width[0] &&
+          product.width <= sizeRange.width[1])) &&
+      (!product.diameter ||
+        (product.diameter >= sizeRange.diameter[0] &&
+          product.diameter <= sizeRange.diameter[1])) &&
+      (!product.chain_length ||
+        (product.chain_length >= sizeRange.chainLength[0] &&
+          product.chain_length <= sizeRange.chainLength[1]));
 
-  console.log("Catalog Debug:", {
-    totalProducts: products.length,
-    filteredProducts: filteredProducts.length,
-    selectedCategory,
-    sampleTypes: products.slice(0, 5).map((p) => p.type),
+    return (
+      matchesSearch &&
+      matchesBrand &&
+      matchesType &&
+      matchesPrice &&
+      matchesRemote &&
+      matchesDimmable &&
+      matchesColorChange &&
+      matchesSale &&
+      matchesNew &&
+      matchesPickup &&
+      matchesStyle &&
+      matchesColor &&
+      matchesSize
+    );
   });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Ошибка",
-        description: "Пожалуйста, загрузите изображение",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setImageSearchLoading(true);
 
@@ -710,17 +680,7 @@ const Catalog = () => {
       />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-bold">Каталог освещения</h1>
-          {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm">Привет, {user.first_name}!</span>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Выйти
-              </Button>
-            </div>
-          )}
-        </div>
+        <CatalogHeader user={user} onLogout={handleLogout} />
 
         <CategoryNavigation
           categories={categories}
@@ -733,198 +693,69 @@ const Catalog = () => {
           setSelectedTypes={setSelectedTypes}
         />
 
-        <div className="mb-6 space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Icon
-                name="Search"
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
-              />
-              <Input
-                type="text"
-                placeholder="Поиск по названию, бренду..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4"
-              />
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={imageSearchLoading}
-              className="whitespace-nowrap"
-            >
-              {imageSearchLoading ? (
-                <>
-                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                  Поиск...
-                </>
-              ) : (
-                <>
-                  <Icon name="Image" className="mr-2 h-4 w-4" />
-                  Поиск по фото
-                </>
-              )}
-            </Button>
-          </div>
-
-          {searchQuery && (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-sm">
-                Поиск: {searchQuery}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchQuery("")}
-              >
-                <Icon name="X" className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <CatalogSearch
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          imageSearchLoading={imageSearchLoading}
+          onImageUploadClick={() => fileInputRef.current?.click()}
+          fileInputRef={fileInputRef}
+          onImageUpload={handleImageUpload}
+        />
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="hidden lg:block w-64 shrink-0">
-            <CatalogFilters
-              products={products}
-              selectedBrands={selectedBrands}
-              setSelectedBrands={setSelectedBrands}
-              priceRange={priceRange}
-              setPriceRange={setPriceRange}
-              hasRemote={hasRemote}
-              setHasRemote={setHasRemote}
-              isDimmable={isDimmable}
-              setIsDimmable={setIsDimmable}
-              hasColorChange={hasColorChange}
-              setHasColorChange={setHasColorChange}
-              isSale={isSale}
-              setIsSale={setIsSale}
-              isNew={isNew}
-              setIsNew={setIsNew}
-              isPickup={isPickup}
-              setIsPickup={setIsPickup}
-              selectedStyles={selectedStyles}
-              setSelectedStyles={setSelectedStyles}
-              styleSearch={styleSearch}
-              setStyleSearch={setStyleSearch}
-              selectedColors={selectedColors}
-              setSelectedColors={setSelectedColors}
-              colorSearch={colorSearch}
-              setColorSearch={setColorSearch}
-              sizeRange={sizeRange}
-              setSizeRange={setSizeRange}
-              brandSearch={brandSearch}
-              setBrandSearch={setBrandSearch}
-              onResetFilters={handleResetFilters}
-            />
-          </aside>
+          <CatalogSidebar
+            products={products}
+            selectedBrands={selectedBrands}
+            setSelectedBrands={setSelectedBrands}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            hasRemote={hasRemote}
+            setHasRemote={setHasRemote}
+            isDimmable={isDimmable}
+            setIsDimmable={setIsDimmable}
+            hasColorChange={hasColorChange}
+            setHasColorChange={setHasColorChange}
+            isSale={isSale}
+            setIsSale={setIsSale}
+            isNew={isNew}
+            setIsNew={setIsNew}
+            isPickup={isPickup}
+            setIsPickup={setIsPickup}
+            selectedStyles={selectedStyles}
+            setSelectedStyles={setSelectedStyles}
+            styleSearch={styleSearch}
+            setStyleSearch={setStyleSearch}
+            selectedColors={selectedColors}
+            setSelectedColors={setSelectedColors}
+            colorSearch={colorSearch}
+            setColorSearch={setColorSearch}
+            sizeRange={sizeRange}
+            setSizeRange={setSizeRange}
+            brandSearch={brandSearch}
+            setBrandSearch={setBrandSearch}
+            onResetFilters={handleResetFilters}
+            showMobileFilters={showMobileFilters}
+            setShowMobileFilters={setShowMobileFilters}
+          />
 
-          <Button
-            variant="outline"
-            className="lg:hidden mb-4 w-full"
-            onClick={() => setShowMobileFilters(true)}
-          >
-            <Icon name="SlidersHorizontal" className="mr-2 h-4 w-4" />
-            Фильтры
-          </Button>
-
-          <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
-            <SheetContent side="left" className="w-80 overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Фильтры</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
-                <CatalogFilters
-                  products={products}
-                  selectedBrands={selectedBrands}
-                  setSelectedBrands={setSelectedBrands}
-                  priceRange={priceRange}
-                  setPriceRange={setPriceRange}
-                  hasRemote={hasRemote}
-                  setHasRemote={setHasRemote}
-                  isDimmable={isDimmable}
-                  setIsDimmable={setIsDimmable}
-                  hasColorChange={hasColorChange}
-                  setHasColorChange={setHasColorChange}
-                  isSale={isSale}
-                  setIsSale={setIsSale}
-                  isNew={isNew}
-                  setIsNew={setIsNew}
-                  isPickup={isPickup}
-                  setIsPickup={setIsPickup}
-                  selectedStyles={selectedStyles}
-                  setSelectedStyles={setSelectedStyles}
-                  styleSearch={styleSearch}
-                  setStyleSearch={setStyleSearch}
-                  selectedColors={selectedColors}
-                  setSelectedColors={setSelectedColors}
-                  colorSearch={colorSearch}
-                  setColorSearch={setColorSearch}
-                  sizeRange={sizeRange}
-                  setSizeRange={setSizeRange}
-                  brandSearch={brandSearch}
-                  setBrandSearch={setBrandSearch}
-                  onResetFilters={handleResetFilters}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          <div className="flex-1">
-            {loading ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Загрузка товаров...</p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Найдено товаров: {filteredProducts.length}
-                  </span>
-                  {(searchQuery ||
-                    selectedBrands.length > 0 ||
-                    selectedTypes.length > 0 ||
-                    selectedCategory ||
-                    priceRange[0] > 0 ||
-                    priceRange[1] < 150000 ||
-                    hasRemote ||
-                    isDimmable ||
-                    hasColorChange ||
-                    isSale ||
-                    isNew ||
-                    isPickup ||
-                    selectedStyles.length > 0 ||
-                    selectedColors.length > 0) && (
-                    <Button variant="ghost" size="sm" onClick={handleResetAll}>
-                      <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
-                      Сбросить всё
-                    </Button>
-                  )}
-                </div>
-
-                <ProductGrid
-                  products={filteredProducts}
-                  types={types}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                  onAddToCart={addToCart}
-                />
-              </>
-            )}
-          </div>
+          <CatalogContent
+            filteredProducts={filteredProducts}
+            loading={loading}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onAddToCart={addToCart}
+            onResetAll={handleResetAll}
+          />
         </div>
       </main>
 
-      <Footer />
+      <AuthDialog
+        open={showAuth}
+        onOpenChange={setShowAuth}
+        onAuthSuccess={(user) => setUser(user)}
+      />
 
-      <AuthDialog open={showAuth} onClose={() => setShowAuth(false)} />
+      <Footer />
     </div>
   );
 };
