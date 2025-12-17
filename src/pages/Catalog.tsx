@@ -207,6 +207,7 @@ const Catalog = () => {
             filteredProducts={filteredProducts}
             loading={loading}
             favorites={favorites}
+            types={types}
             onToggleFavorite={toggleFavorite}
             onAddToCart={addToCart}
             onResetAll={handleResetAll}
