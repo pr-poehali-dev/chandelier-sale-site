@@ -481,8 +481,9 @@ const Catalog = () => {
     try {
       setLoading(true);
       const data = await api.getProducts();
-      setProducts(data);
+      setProducts(data.products);
     } catch (error) {
+      console.error("Failed to load products:", error);
       toast({
         title: "Ошибка загрузки",
         description: "Не удалось загрузить товары",
