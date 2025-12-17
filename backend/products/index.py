@@ -61,31 +61,40 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     min_price = params.get('min_price')
     max_price = params.get('max_price')
     has_remote = params.get('has_remote')
-    limit = int(params.get('limit', '50'))
+    limit = int(params.get('limit', '400000'))
     offset = int(params.get('offset', '0'))
     
     query = "SELECT * FROM products WHERE 1=1"
+    count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
     query_params = []
     
     if brand:
         query += " AND brand = %s"
+        count_query += " AND brand = %s"
         query_params.append(brand)
     
     if product_type:
         query += " AND type = %s"
+        count_query += " AND type = %s"
         query_params.append(product_type)
     
     if min_price:
         query += " AND price >= %s"
+        count_query += " AND price >= %s"
         query_params.append(float(min_price))
     
     if max_price:
         query += " AND price <= %s"
+        count_query += " AND price <= %s"
         query_params.append(float(max_price))
     
     if has_remote:
         query += " AND has_remote = %s"
+        count_query += " AND has_remote = %s"
         query_params.append(has_remote.lower() == 'true')
+    
+    cur.execute(count_query, query_params)
+    total_count = cur.fetchone()[0]
     
     query += " ORDER BY id LIMIT %s OFFSET %s"
     query_params.extend([limit, offset])
@@ -163,7 +172,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps({'products': products, 'count': len(products)}),
+        'body': json.dumps({'products': products, 'count': total_count}),
         'isBase64Encoded': False
     }
 
