@@ -348,6 +348,94 @@ const Catalog = () => {
       icon: "LampFloor",
       color: "text-amber-500",
     },
+    {
+      value: "floor_lamp",
+      label: "Торшеры",
+      icon: "LampFloor",
+      color: "text-indigo-500",
+    },
+
+    {
+      value: "track_light",
+      label: "Трековые светильники",
+      icon: "RailSymbol",
+      color: "text-blue-600",
+    },
+    {
+      value: "track_rail",
+      label: "Шинопроводы",
+      icon: "Minus",
+      color: "text-slate-600",
+    },
+
+    {
+      value: "electric_switch",
+      label: "Выключатели",
+      icon: "ToggleLeft",
+      color: "text-gray-500",
+    },
+    {
+      value: "electric_frame",
+      label: "Рамки",
+      icon: "Square",
+      color: "text-zinc-500",
+    },
+    {
+      value: "electric_power",
+      label: "Блоки питания",
+      icon: "Battery",
+      color: "text-green-500",
+    },
+    {
+      value: "electric_other",
+      label: "Прочие электротовары",
+      icon: "Zap",
+      color: "text-yellow-500",
+    },
+
+    {
+      value: "decorative_garland",
+      label: "Гирлянды",
+      icon: "Sparkles",
+      color: "text-red-500",
+    },
+    {
+      value: "decorative_tree",
+      label: "Светодиодные деревья",
+      icon: "TreePine",
+      color: "text-green-500",
+    },
+    {
+      value: "decorative_candle",
+      label: "Подсвечники",
+      icon: "Flame",
+      color: "text-orange-400",
+    },
+
+    {
+      value: "light_mirror",
+      label: "Подсветка для зеркал",
+      icon: "Mirror",
+      color: "text-blue-300",
+    },
+    {
+      value: "light_picture",
+      label: "Подсветка для картин",
+      icon: "Frame",
+      color: "text-amber-400",
+    },
+    {
+      value: "light_projector",
+      label: "Светильники-проекторы",
+      icon: "Projector",
+      color: "text-purple-400",
+    },
+    {
+      value: "outdoor_lantern",
+      label: "Уличные фонари",
+      icon: "Lamp",
+      color: "text-slate-500",
+    },
   ];
 
   const categories = [
@@ -422,10 +510,10 @@ const Catalog = () => {
       if (!selectedCategory || selectedCategory === '' || selectedCategory === 'sale') return true;
       
       if (selectedCategory === 'chandelier') {
-        return product.type.includes('chandelier') || product.type === 'cascade' || product.type === 'rod' || product.type === 'large';
+        return product.type.includes('chandelier') || product.type === 'cascade' || product.type === 'rod' || product.type === 'large' || product.type === 'fan_chandelier';
       }
       if (selectedCategory === 'lights') {
-        return product.type.startsWith('light_');
+        return product.type.startsWith('light_') || product.type.startsWith('decorative_');
       }
       if (selectedCategory === 'sconce') {
         return product.type === 'sconce';

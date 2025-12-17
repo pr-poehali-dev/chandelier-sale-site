@@ -79,15 +79,14 @@ const CategoryNavigation = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-[400px] overflow-y-auto scrollbar-thin pr-2">
             {types
               .filter((type) => {
-                if (hoverCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large';
-                if (hoverCategory === 'lights') return type.value.startsWith('light_');
-                if (hoverCategory === 'lamps') return type.value.startsWith('lamp_');
+                if (hoverCategory === 'chandelier') return type.value.includes('chandelier') || type.value === 'chandelier' || type.value === 'cascade' || type.value === 'rod' || type.value === 'large' || type.value === 'fan_chandelier';
+                if (hoverCategory === 'lights') return type.value.startsWith('light_') || type.value.startsWith('decorative_');
+                if (hoverCategory === 'lamps') return type.value.startsWith('lamp_') || type.value === 'floor_lamp';
                 if (hoverCategory === 'sconce') return type.value === 'sconce';
                 if (hoverCategory === 'spots') return type.value.startsWith('spot_');
                 if (hoverCategory === 'outdoor') return type.value.startsWith('outdoor_');
                 if (hoverCategory === 'track') return type.value.startsWith('track_');
                 if (hoverCategory === 'electric') return type.value.startsWith('electric_');
-                if (hoverCategory === 'floor_lamp') return type.value === 'floor_lamp';
                 return false;
               })
               .map((type) => {
