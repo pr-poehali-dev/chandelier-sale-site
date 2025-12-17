@@ -351,104 +351,15 @@ const Catalog = () => {
   ];
 
   const categories = [
-    {
-      value: "chandeliers",
-      label: "Люстры",
-      icon: "Lightbulb",
-      color: "text-yellow-500",
-      subcategories: [
-        "chandelier",
-        "ceiling_chandelier",
-        "pendant_chandelier",
-        "cascade",
-        "rod",
-        "large",
-        "fan_chandelier",
-        "elite_chandelier",
-      ],
-    },
-    {
-      value: "lights",
-      label: "Светильники",
-      icon: "Lamp",
-      color: "text-blue-500",
-      subcategories: [
-        "light_pendant",
-        "light_ceiling",
-        "light_wall",
-        "light_wall_ceiling",
-        "light_surface",
-        "light_recessed",
-        "light_spot",
-        "light_night",
-        "light_furniture",
-        "light_plant",
-        "light_bactericidal",
-        "light_kit",
-        "light_elite",
-      ],
-    },
-    {
-      value: "lamps",
-      label: "Лампы",
-      icon: "LampDesk",
-      color: "text-orange-500",
-      subcategories: [
-        "lamp_table",
-        "lamp_floor",
-        "lamp_decorative",
-        "lamp_office",
-        "lamp_kids",
-        "lamp_clip",
-        "lamp_clamp",
-      ],
-    },
-    {
-      value: "sconces",
-      label: "Бра",
-      icon: "Square",
-      color: "text-purple-500",
-      subcategories: ["sconce"],
-    },
-    {
-      value: "spots",
-      label: "Споты",
-      icon: "Circle",
-      color: "text-orange-600",
-      subcategories: [
-        "spot_one",
-        "spot_two",
-        "spot_three_plus",
-        "spot_recessed",
-        "spot_surface",
-      ],
-    },
-    {
-      value: "outdoor",
-      label: "Уличное освещение",
-      icon: "Trees",
-      color: "text-green-600",
-      subcategories: [
-        "outdoor_street",
-        "outdoor_landscape",
-        "outdoor_architectural",
-        "outdoor_park",
-        "outdoor_wall",
-        "outdoor_console",
-        "outdoor_ground",
-        "outdoor_underwater",
-        "outdoor_recessed_ground",
-        "outdoor_ceiling",
-        "outdoor_bollard",
-      ],
-    },
-    {
-      value: "led",
-      label: "LED подсветка",
-      icon: "Zap",
-      color: "text-pink-500",
-      subcategories: ["led_strip", "led_profile", "led_neon"],
-    },
+    { value: "", label: "Все товары" },
+    { value: "sale", label: "🔥 Акции", highlight: true },
+    { value: "chandelier", label: "Люстры" },
+    { value: "lights", label: "Светильники" },
+    { value: "sconce", label: "Бра" },
+    { value: "lamps", label: "Настольные лампы" },
+    { value: "spots", label: "Споты" },
+    { value: "track", label: "Трековые светильники" },
+    { value: "electric", label: "Электротовары" },
   ];
 
   useEffect(() => {
@@ -506,6 +417,35 @@ const Catalog = () => {
     const matchesBrand =
       selectedBrands.length === 0 || selectedBrands.includes(product.brand);
 
+    // Category filter logic
+    const matchesCategory = (() => {
+      if (!selectedCategory || selectedCategory === '' || selectedCategory === 'sale') return true;
+      
+      if (selectedCategory === 'chandelier') {
+        return product.type.includes('chandelier') || product.type === 'cascade' || product.type === 'rod' || product.type === 'large';
+      }
+      if (selectedCategory === 'lights') {
+        return product.type.startsWith('light_');
+      }
+      if (selectedCategory === 'sconce') {
+        return product.type === 'sconce';
+      }
+      if (selectedCategory === 'lamps') {
+        return product.type.startsWith('lamp_') || product.type === 'floor_lamp';
+      }
+      if (selectedCategory === 'spots') {
+        return product.type.startsWith('spot_');
+      }
+      if (selectedCategory === 'track') {
+        return product.type.startsWith('track_');
+      }
+      if (selectedCategory === 'electric') {
+        return product.type.startsWith('electric_');
+      }
+      
+      return true;
+    })();
+
     const matchesType =
       selectedTypes.length === 0 || selectedTypes.includes(product.type);
 
@@ -550,6 +490,7 @@ const Catalog = () => {
     return (
       matchesSearch &&
       matchesBrand &&
+      matchesCategory &&
       matchesType &&
       matchesPrice &&
       matchesRemote &&
