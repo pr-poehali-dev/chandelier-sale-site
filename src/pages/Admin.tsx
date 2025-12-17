@@ -2049,11 +2049,7 @@ const Admin = () => {
                           },
                         );
 
-                        if (!response.ok) {
-                          const errorText = await response.text();
-                          console.error("Upload error:", response.status, errorText);
-                          throw new Error(`Upload failed: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error("Upload failed");
 
                         const data = await response.json();
                         setFormData((prev) => ({ ...prev, image: data.url }));
@@ -2063,10 +2059,9 @@ const Admin = () => {
                           description: "Изображение загружено",
                         });
                       } catch (error) {
-                        console.error("Image upload error:", error);
                         toast({
                           title: "Ошибка",
-                          description: error instanceof Error ? error.message : "Не удалось загрузить изображение",
+                          description: "Не удалось загрузить изображение",
                           variant: "destructive",
                         });
                       } finally {
@@ -2141,11 +2136,7 @@ const Admin = () => {
                             },
                           );
 
-                          if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error("Additional image upload error:", response.status, errorText);
-                            throw new Error(`Upload failed: ${response.status}`);
-                          }
+                          if (!response.ok) throw new Error("Upload failed");
 
                           const data = await response.json();
                           setFormData((prev) => ({
@@ -2153,7 +2144,7 @@ const Admin = () => {
                             images: [...prev.images, data.url],
                           }));
                         } catch (error) {
-                          console.error("Additional image upload error:", error);
+                          console.error("Upload error:", error);
                         }
                       }
 
