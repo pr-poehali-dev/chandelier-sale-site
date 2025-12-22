@@ -135,7 +135,6 @@ const Catalog = () => {
           hasMore = false;
         }
       }
-
       setProducts(allProducts);
       setTotalProducts(allProducts.length);
     } catch (error) {
