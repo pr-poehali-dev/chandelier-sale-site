@@ -111,7 +111,7 @@ const Catalog = () => {
       setLoading(true);
       let allProducts: Product[] = [];
       let offset = 0;
-      const limit = 50;
+      const limit = 30;
       let hasMore = true;
       const maxProducts = 5000;
 
