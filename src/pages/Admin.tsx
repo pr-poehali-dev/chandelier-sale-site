@@ -140,7 +140,7 @@ const Admin = () => {
     try {
       let allProducts: Product[] = [];
       let offset = 0;
-      const limit = 50;
+      const limit = 100;
       let hasMore = true;
 
       while (hasMore) {
