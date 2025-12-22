@@ -60,13 +60,6 @@ const Home = () => {
     },
   ];
 
-  const types = [
-    { value: 'chandelier', label: 'Люстра', icon: 'Lightbulb', color: 'text-yellow-500' },
-    { value: 'lamp', label: 'Лампа', icon: 'Lamp', color: 'text-orange-500' },
-    { value: 'sconce', label: 'Бра', icon: 'Zap', color: 'text-blue-500' },
-    { value: 'floor_lamp', label: 'Торшер', icon: 'LampFloor', color: 'text-purple-500' },
-  ];
-
   useEffect(() => {
     loadFeaturedProducts();
     loadFavorites();
@@ -251,7 +244,6 @@ const Home = () => {
         ) : (
           <ProductGrid
             products={featuredProducts}
-            types={types}
             favorites={favorites}
             onToggleFavorite={handleToggleFavorite}
             onAddToCart={addToCart}
