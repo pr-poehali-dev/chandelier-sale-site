@@ -84,7 +84,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     min_price = params.get('min_price')
     max_price = params.get('max_price')
     has_remote = params.get('has_remote')
-    limit = int(params.get('limit', '400000'))
+    limit = int(params.get('limit', '100'))
     offset = int(params.get('offset', '0'))
     
     query = "SELECT * FROM products WHERE 1=1"
@@ -175,6 +175,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'section': product_dict.get('section'),
             'catalog': product_dict.get('catalog'),
             'subcategory': product_dict.get('subcategory'),
+            'category': product_dict.get('category'),
             'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
         })
     

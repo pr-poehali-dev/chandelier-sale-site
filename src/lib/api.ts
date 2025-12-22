@@ -76,6 +76,7 @@ export interface Product {
   section?: string;
   catalog?: string;
   subcategory?: string;
+  category?: string;
   
   // Дополнительные изображения
   images?: string[];
