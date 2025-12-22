@@ -138,8 +138,28 @@ const Admin = () => {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api.getProducts({ limit: 1000 });
-      setProducts(data.products);
+      let allProducts: Product[] = [];
+      let offset = 0;
+      const limit = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const data = await api.getProducts({ limit, offset });
+        
+        if (data.products.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        allProducts = [...allProducts, ...data.products];
+        offset += limit;
+        
+        if (data.products.length < limit) {
+          hasMore = false;
+        }
+      }
+
+      setProducts(allProducts);
     } catch (error) {
       console.error("Load products error:", error);
       const errorMessage =
