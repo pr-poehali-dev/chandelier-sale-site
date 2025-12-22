@@ -128,10 +128,14 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     products = []
     for row in rows:
         product_dict = dict(zip(col_names, row))
-        products.append({
+        
+        # For single product requests, include full description
+        include_full_data = product_id is not None
+        
+        # Base fields always included
+        product = {
             'id': product_dict['id'],
             'name': product_dict['name'],
-            'description': product_dict.get('description'),
             'price': float(product_dict['price']) if product_dict.get('price') is not None else 0.0,
             'brand': product_dict['brand'],
             'type': product_dict['type'],
@@ -139,53 +143,62 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'inStock': product_dict.get('in_stock', True),
             'rating': float(product_dict['rating']) if product_dict.get('rating') is not None else 5.0,
             'reviews': int(product_dict['reviews']) if product_dict.get('reviews') is not None else 0,
-            'hasRemote': bool(product_dict.get('has_remote', False)),
-            'isDimmable': bool(product_dict.get('is_dimmable', False)),
-            'hasColorChange': bool(product_dict.get('has_color_change', False)),
-            'article': product_dict.get('article'),
-            'brandCountry': product_dict.get('brand_country'),
-            'manufacturerCountry': product_dict.get('manufacturer_country'),
-            'collection': product_dict.get('collection'),
-            'style': product_dict.get('style'),
-            'lampType': product_dict.get('lamp_type'),
-            'socketType': product_dict.get('socket_type'),
-            'bulbType': product_dict.get('bulb_type'),
-            'lampCount': product_dict.get('lamp_count'),
-            'lampPower': product_dict.get('lamp_power'),
-            'totalPower': product_dict.get('total_power'),
-            'lightingArea': product_dict.get('lighting_area'),
-            'voltage': product_dict.get('voltage'),
-            'color': product_dict.get('color'),
-            'height': product_dict.get('height'),
-            'diameter': product_dict.get('diameter'),
-            'length': product_dict.get('length'),
-            'width': product_dict.get('width'),
-            'depth': product_dict.get('depth'),
-            'chainLength': product_dict.get('chain_length'),
-            'materials': product_dict.get('materials'),
-            'frameMaterial': product_dict.get('frame_material'),
-            'shadeMaterial': product_dict.get('shade_material'),
-            'frameColor': product_dict.get('frame_color'),
-            'shadeColor': product_dict.get('shade_color'),
-            'shadeDirection': product_dict.get('shade_direction'),
-            'diffuserType': product_dict.get('diffuser_type'),
-            'diffuserShape': product_dict.get('diffuser_shape'),
-            'ipRating': product_dict.get('ip_rating'),
-            'interior': product_dict.get('interior'),
-            'place': product_dict.get('place'),
-            'suspendedCeiling': product_dict.get('suspended_ceiling'),
-            'mountType': product_dict.get('mount_type'),
-            'officialWarranty': product_dict.get('official_warranty'),
-            'shopWarranty': product_dict.get('shop_warranty'),
-            'section': product_dict.get('section'),
-            'catalog': product_dict.get('catalog'),
-            'subcategory': product_dict.get('subcategory'),
-            'category': product_dict.get('category'),
-            'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
-        })
+        }
+        
+        # Include extended fields only for single product requests
+        if include_full_data:
+            product.update({
+                'description': product_dict.get('description'),
+                'hasRemote': bool(product_dict.get('has_remote', False)),
+                'isDimmable': bool(product_dict.get('is_dimmable', False)),
+                'hasColorChange': bool(product_dict.get('has_color_change', False)),
+                'article': product_dict.get('article'),
+                'brandCountry': product_dict.get('brand_country'),
+                'manufacturerCountry': product_dict.get('manufacturer_country'),
+                'collection': product_dict.get('collection'),
+                'style': product_dict.get('style'),
+                'lampType': product_dict.get('lamp_type'),
+                'socketType': product_dict.get('socket_type'),
+                'bulbType': product_dict.get('bulb_type'),
+                'lampCount': product_dict.get('lamp_count'),
+                'lampPower': product_dict.get('lamp_power'),
+                'totalPower': product_dict.get('total_power'),
+                'lightingArea': product_dict.get('lighting_area'),
+                'voltage': product_dict.get('voltage'),
+                'color': product_dict.get('color'),
+                'height': product_dict.get('height'),
+                'diameter': product_dict.get('diameter'),
+                'length': product_dict.get('length'),
+                'width': product_dict.get('width'),
+                'depth': product_dict.get('depth'),
+                'chainLength': product_dict.get('chain_length'),
+                'materials': product_dict.get('materials'),
+                'frameMaterial': product_dict.get('frame_material'),
+                'shadeMaterial': product_dict.get('shade_material'),
+                'frameColor': product_dict.get('frame_color'),
+                'shadeColor': product_dict.get('shade_color'),
+                'shadeDirection': product_dict.get('shade_direction'),
+                'diffuserType': product_dict.get('diffuser_type'),
+                'diffuserShape': product_dict.get('diffuser_shape'),
+                'ipRating': product_dict.get('ip_rating'),
+                'interior': product_dict.get('interior'),
+                'place': product_dict.get('place'),
+                'suspendedCeiling': product_dict.get('suspended_ceiling'),
+                'mountType': product_dict.get('mount_type'),
+                'officialWarranty': product_dict.get('official_warranty'),
+                'shopWarranty': product_dict.get('shop_warranty'),
+                'section': product_dict.get('section'),
+                'catalog': product_dict.get('catalog'),
+                'subcategory': product_dict.get('subcategory'),
+                'category': product_dict.get('category'),
+                'images': product_dict.get('images') if isinstance(product_dict.get('images'), list) else (json.loads(product_dict.get('images', '[]') or '[]') if product_dict.get('images') else [])
+            })
+        products.append(product)
     
     cur.close()
     conn.close()
+    
+    print(f"Returning {len(products)} products out of {total_count} total")
     
     return {
         'statusCode': 200,
