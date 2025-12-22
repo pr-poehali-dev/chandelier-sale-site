@@ -507,11 +507,22 @@ const Catalog = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const data = await api.getProducts({ limit, offset });
-        allProducts = [...allProducts, ...data.products];
-        offset += limit;
-        
-        if (data.products.length < limit || allProducts.length >= data.count) {
+        try {
+          const data = await api.getProducts({ limit, offset });
+          
+          if (data.products.length === 0) {
+            hasMore = false;
+            break;
+          }
+          
+          allProducts = [...allProducts, ...data.products];
+          offset += limit;
+          
+          if (data.products.length < limit) {
+            hasMore = false;
+          }
+        } catch (err) {
+          console.error("Error loading batch:", err);
           hasMore = false;
         }
       }
