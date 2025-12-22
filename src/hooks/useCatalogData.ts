@@ -26,8 +26,22 @@ export const useCatalogData = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.getProducts({ limit: 1000 });
-      setProducts(data.products);
+      let allProducts: Product[] = [];
+      let offset = 0;
+      const limit = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const data = await api.getProducts({ limit, offset });
+        allProducts = [...allProducts, ...data.products];
+        offset += limit;
+        
+        if (data.products.length < limit || allProducts.length >= data.count) {
+          hasMore = false;
+        }
+      }
+
+      setProducts(allProducts);
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({

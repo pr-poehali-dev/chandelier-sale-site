@@ -84,7 +84,7 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     min_price = params.get('min_price')
     max_price = params.get('max_price')
     has_remote = params.get('has_remote')
-    limit = int(params.get('limit', '100'))
+    limit = int(params.get('limit', '400000'))
     offset = int(params.get('offset', '0'))
     
     query = "SELECT * FROM products WHERE 1=1"
