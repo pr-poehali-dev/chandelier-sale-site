@@ -26,7 +26,7 @@ export const useCatalogData = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.getProducts();
+      const data = await api.getProducts({ limit: 1000 });
       setProducts(data.products);
     } catch (error) {
       console.error("Failed to load products:", error);
