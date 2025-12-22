@@ -11,18 +11,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface TypeItem {
-  value: string;
-  label: string;
-  icon: string;
-  color: string;
-}
-
 interface CatalogContentProps {
   filteredProducts: Product[];
   loading: boolean;
   favorites: number[];
-  types: TypeItem[];
   onToggleFavorite: (id: number) => void;
   onAddToCart: (product: Product) => void;
   onResetAll: () => void;
@@ -36,7 +28,6 @@ const CatalogContent = ({
   filteredProducts,
   loading,
   favorites,
-  types,
   onToggleFavorite,
   onAddToCart,
   onResetAll,
@@ -109,7 +100,6 @@ const CatalogContent = ({
       <ProductGrid
         products={filteredProducts}
         favorites={favorites}
-        types={types}
         loading={loading}
         onToggleFavorite={onToggleFavorite}
         onAddToCart={onAddToCart}

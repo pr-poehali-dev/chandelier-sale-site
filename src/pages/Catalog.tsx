@@ -113,8 +113,9 @@ const Catalog = () => {
       let offset = 0;
       const limit = 50;
       let hasMore = true;
+      const maxProducts = 5000;
 
-      while (hasMore) {
+      while (hasMore && allProducts.length < maxProducts) {
         try {
           const data = await api.getProducts({ limit, offset });
           
@@ -404,7 +405,6 @@ const Catalog = () => {
             filteredProducts={paginatedProducts}
             loading={loading}
             favorites={favorites}
-            types={types}
             onToggleFavorite={toggleFavorite}
             onAddToCart={addToCart}
             onResetAll={handleResetAll}

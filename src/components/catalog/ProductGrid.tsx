@@ -4,32 +4,45 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { Product } from '@/lib/api';
 
-interface TypeItem {
-  value: string;
-  label: string;
-  icon: string;
-  color: string;
-}
-
 interface ProductGridProps {
   products: Product[];
-  types: TypeItem[];
   favorites: number[];
+  loading?: boolean;
   onToggleFavorite: (id: number) => void;
   onAddToCart: (product: Product) => void;
 }
 
 const ProductGrid = ({
   products,
-  types,
   favorites,
+  loading,
   onToggleFavorite,
   onAddToCart,
 }: ProductGridProps) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Загрузка товаров...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <p className="text-xl text-muted-foreground mb-2">Товары не найдены</p>
+          <p className="text-sm text-muted-foreground">Попробуйте изменить фильтры</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {products.map((product) => {
-        const productType = types.find(t => t.value === product.type);
         const isLuxury = product.price > 50000;
         const isBudget = product.price < 10000;
         
@@ -88,9 +101,6 @@ const ProductGrid = ({
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  {productType && (
-                    <Icon name={productType.icon as any} className={`h-3 w-3 ${productType.color}`} />
-                  )}
                   {product.brand}
                 </Badge>
                 <div className="flex items-center gap-1 text-sm">
