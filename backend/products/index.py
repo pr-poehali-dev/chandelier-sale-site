@@ -79,6 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     params = event.get('queryStringParameters') or {}
+    product_id = params.get('id')
     brand = params.get('brand')
     product_type = params.get('type')
     min_price = params.get('min_price')
@@ -89,6 +90,10 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     
     query = "SELECT * FROM products WHERE 1=1"
     count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
+    
+    if product_id:
+        query += f" AND id = {int(product_id)}"
+        count_query += f" AND id = {int(product_id)}"
     
     if brand:
         query += f" AND brand = {escape_sql(brand)}"

@@ -27,8 +27,7 @@ const ProductDetail = () => {
   const loadProduct = async () => {
     setLoading(true);
     try {
-      const data = await api.getProducts({ limit: 200 });
-      const foundProduct = data.products.find(p => p.id === Number(id));
+      const foundProduct = await api.getProductById(Number(id));
       if (foundProduct) {
         setProduct(foundProduct);
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');

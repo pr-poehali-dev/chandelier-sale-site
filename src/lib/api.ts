@@ -143,6 +143,20 @@ export const api = {
     return response.json();
   },
 
+  async getProductById(id: number): Promise<Product | null> {
+    const params = new URLSearchParams({ id: String(id) });
+    const url = `${API_URLS.products}?${params.toString()}`;
+    const response = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to fetch product');
+    const data = await response.json();
+    return data.products && data.products.length > 0 ? data.products[0] : null;
+  },
+
   async register(data: {
     email: string;
     password: string;
