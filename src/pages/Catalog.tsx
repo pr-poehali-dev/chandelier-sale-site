@@ -49,6 +49,9 @@ const Catalog = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [brandSearch, setBrandSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const itemsPerPage = 30;
 
   const brands = Array.from(new Set(products.map((p) => p.brand))).sort();
 
@@ -476,11 +479,45 @@ const Catalog = () => {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedBrands,
+    selectedTypes,
+    selectedCategory,
+    priceRange,
+    hasRemote,
+    isDimmable,
+    hasColorChange,
+    isSale,
+    isNew,
+    isPickup,
+    selectedStyles,
+    selectedColors,
+    sizeRange,
+  ]);
+
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.getProducts();
-      setProducts(data.products);
+      let allProducts: Product[] = [];
+      let offset = 0;
+      const limit = 50;
+      let hasMore = true;
+
+      while (hasMore) {
+        const data = await api.getProducts({ limit, offset });
+        allProducts = [...allProducts, ...data.products];
+        offset += limit;
+        
+        if (data.products.length < limit || allProducts.length >= data.count) {
+          hasMore = false;
+        }
+      }
+
+      setProducts(allProducts);
+      setTotalProducts(allProducts.length);
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
@@ -698,7 +735,19 @@ const Catalog = () => {
     setSearchQuery("");
     setSelectedCategory("");
     handleResetFilters();
-    loadProducts();
+    setCurrentPage(1);
+  };
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -769,13 +818,17 @@ const Catalog = () => {
           />
 
           <CatalogContent
-            filteredProducts={filteredProducts}
+            filteredProducts={paginatedProducts}
             loading={loading}
             favorites={favorites}
             types={types}
             onToggleFavorite={toggleFavorite}
             onAddToCart={addToCart}
             onResetAll={handleResetAll}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalCount={filteredProducts.length}
           />
         </div>
       </main>
