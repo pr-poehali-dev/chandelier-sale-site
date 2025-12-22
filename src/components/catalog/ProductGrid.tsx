@@ -208,12 +208,6 @@ const ProductGrid = ({
                     </p>
                   )}
                 </div>
-                {productType && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Icon name={productType.icon as any} className={`h-3 w-3 ${productType.color}`} />
-                    {productType.label}
-                  </Badge>
-                )}
               </div>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex gap-2">
