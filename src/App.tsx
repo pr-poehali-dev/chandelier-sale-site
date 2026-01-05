@@ -17,6 +17,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const Contacts = lazy(() => import("./pages/Contacts"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Collaboration = lazy(() => import("./pages/Collaboration"));
 const PartnerRegistration = lazy(() => import("./pages/PartnerRegistration"));
 const Sitemap = lazy(() => import("./pages/Sitemap"));
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/contacts" element={<Contacts />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin-panel" element={<AdminPanel />} />
               <Route path="/collaboration" element={<Collaboration />} />
               <Route path="/partnership" element={<Collaboration />} />
               <Route path="/partnership/:category" element={<PartnerRegistration />} />

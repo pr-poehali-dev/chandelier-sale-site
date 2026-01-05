@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Get products list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "products": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create product (requires auth)",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Lamp",
+        "price": 5000,
+        "type": "chandeliers",
+        "brand": "Test Brand",
+        "description": "Test product"
+      },
+      "expectedStatus": 500,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

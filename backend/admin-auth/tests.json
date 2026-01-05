@@ -1,0 +1,42 @@
+{
+  "tests": [
+    {
+      "name": "Register new admin",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "admin@test.com",
+        "password": "testpass123",
+        "name": "Test Admin"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "message": "string",
+        "token": "string",
+        "admin": {
+          "id": "number",
+          "email": "string",
+          "name": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login admin",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "login",
+        "email": "admin@test.com",
+        "password": "testpass123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "message": "string",
+        "token": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
