@@ -50,7 +50,8 @@ const Catalog = () => {
   const [brandSearch, setBrandSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const itemsPerPage = 30;
+  const [totalInDB, setTotalInDB] = useState(0);
+  const itemsPerPage = 20;
 
   const categories = [
     { value: "", label: "Все товары" },
@@ -110,9 +111,47 @@ const Catalog = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.getProducts({ limit: 50, offset: 0 });
-      setProducts(data.products);
-      setTotalProducts(data.total || data.products.length);
+      let allProducts: Product[] = [];
+      let offset = 0;
+      const limit = 500;
+      let hasMore = true;
+
+      const firstBatch = await api.getProducts({ limit, offset });
+      allProducts = firstBatch.products;
+      const total = firstBatch.total || 0;
+      setTotalInDB(total);
+      setProducts(allProducts);
+      setTotalProducts(allProducts.length);
+
+      if (total > limit) {
+        const loadMoreBatches = async () => {
+          while (hasMore && allProducts.length < total) {
+            offset += limit;
+            try {
+              const data = await api.getProducts({ limit, offset });
+              if (data.products.length === 0) {
+                hasMore = false;
+                break;
+              }
+              allProducts = [...allProducts, ...data.products];
+              setProducts([...allProducts]);
+              setTotalProducts(allProducts.length);
+              
+              if (data.products.length < limit || allProducts.length >= total) {
+                hasMore = false;
+              }
+            } catch (err) {
+              console.error("Error loading batch:", err);
+              hasMore = false;
+            }
+          }
+        };
+        
+        setLoading(false);
+        loadMoreBatches();
+      } else {
+        setLoading(false);
+      }
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
@@ -120,7 +159,6 @@ const Catalog = () => {
         description: "Не удалось загрузить товары",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -406,6 +444,8 @@ const Catalog = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalCount={filteredProducts.length}
+            totalProducts={totalProducts}
+            totalInDB={totalInDB}
           />
         </div>
       </main>
