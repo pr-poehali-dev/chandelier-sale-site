@@ -10,6 +10,7 @@ import { api, Product } from '@/lib/api';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import ProductInfo from '@/components/product/ProductInfo';
 import ProductTabs from '@/components/product/ProductTabs';
+import SEO from '@/components/SEO';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -108,8 +109,18 @@ const ProductDetail = () => {
     ? [product.image, ...product.images] 
     : [product.image, product.image, product.image];
 
+  const productTitle = `${product.name} — купить в интернет-магазине Lux Light`;
+  const productDescription = `${product.name} по цене ${product.price.toLocaleString('ru-RU')} ₽. ${product.description || 'Качественное освещение с доставкой по России.'}`;
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <SEO 
+        title={productTitle}
+        description={productDescription}
+        image={product.image}
+        type="product"
+        canonicalPath={`/product/${id}`}
+      />
       <Header
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}

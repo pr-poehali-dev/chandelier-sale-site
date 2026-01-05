@@ -11,6 +11,7 @@ import CatalogContent from "@/components/catalog/CatalogContent";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { api, Product, User } from "@/lib/api";
+import SEO from "@/components/SEO";
 
 const Catalog = () => {
   const { toast } = useToast();
@@ -353,8 +354,27 @@ const Catalog = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const categoryNames: Record<string, string> = {
+    'chandelier': 'Люстры',
+    'lamp': 'Настольные лампы',
+    'sconce': 'Бра'
+  };
+
+  const catalogTitle = selectedCategory 
+    ? `${categoryNames[selectedCategory] || 'Каталог'} — купить в интернет-магазине Lux Light`
+    : 'Каталог светильников и люстр — купить с доставкой';
+
+  const catalogDescription = selectedCategory
+    ? `Большой выбор ${(categoryNames[selectedCategory] || '').toLowerCase()} с доставкой по России. Гарантия качества, акции и скидки.`
+    : 'Полный каталог люстр, настольных ламп и светильников. Качественное освещение для вашего дома.';
+
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO 
+        title={catalogTitle}
+        description={catalogDescription}
+        canonicalPath="/catalog"
+      />
       <Header
         cartItemsCount={totalItems}
         onCartClick={() => (window.location.href = "/cart")}

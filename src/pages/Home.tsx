@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import { useCart } from '@/contexts/CartContext';
 import { api, Product, User } from '@/lib/api';
 import ProductGrid from '@/components/catalog/ProductGrid';
+import SEO from '@/components/SEO';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -94,6 +95,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO />
       <Header 
         onAuthClick={() => setShowAuth(true)}
         cartItemsCount={totalItems}
