@@ -1,14 +1,29 @@
+User-agent: *
+Allow: /
+
+# Запрет индексации служебных страниц
+Disallow: /admin
+Disallow: /profile
+Disallow: /cart
+
+# Sitemap
+Sitemap: https://your-domain.ru/sitemap.xml
+
+# Яндекс
+User-agent: Yandex
+Allow: /
+
+# Google
 User-agent: Googlebot
 Allow: /
 
+# Bing
 User-agent: Bingbot
 Allow: /
 
+# Social
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /
