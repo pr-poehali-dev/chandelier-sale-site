@@ -110,49 +110,9 @@ const Catalog = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const cachedProducts = sessionStorage.getItem('catalog_products');
-      const cacheTime = sessionStorage.getItem('catalog_cache_time');
-      const now = Date.now();
-      
-      if (cachedProducts && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) {
-        const cached = JSON.parse(cachedProducts);
-        setProducts(cached);
-        setTotalProducts(cached.length);
-        setLoading(false);
-        return;
-      }
-
-      let allProducts: Product[] = [];
-      let offset = 0;
-      const limit = 50;
-      let hasMore = true;
-      const maxProducts = 5000;
-
-      while (hasMore && allProducts.length < maxProducts) {
-        try {
-          const data = await api.getProducts({ limit, offset });
-          
-          if (data.products.length === 0) {
-            hasMore = false;
-            break;
-          }
-          
-          allProducts = [...allProducts, ...data.products];
-          offset += limit;
-          
-          if (data.products.length < limit) {
-            hasMore = false;
-          }
-        } catch (err) {
-          console.error("Error loading batch:", err);
-          hasMore = false;
-        }
-      }
-      
-      setProducts(allProducts);
-      setTotalProducts(allProducts.length);
-      sessionStorage.setItem('catalog_products', JSON.stringify(allProducts));
-      sessionStorage.setItem('catalog_cache_time', now.toString());
+      const data = await api.getProducts({ limit: 50, offset: 0 });
+      setProducts(data.products);
+      setTotalProducts(data.total || data.products.length);
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
