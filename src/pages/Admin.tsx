@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import JSZip from "jszip";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -525,11 +526,102 @@ const Admin = () => {
     }
   };
 
+  const processJsonData = async (jsonData: any[]) => {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const row of jsonData) {
+      try {
+        const parsePrice = (priceStr: any): number => {
+          if (typeof priceStr === "number") return priceStr;
+          const cleaned = String(priceStr).replace(/[^\d.]/g, "");
+          return Number(cleaned) || 0;
+        };
+
+        const parseBool = (val: any): boolean => {
+          if (typeof val === "boolean") return val;
+          return val === "Да" || val === "да" || val === "true" || val === true;
+        };
+
+        const parseInt = (val: any): number | undefined => {
+          if (!val) return undefined;
+          const num = Number(String(val).replace(/[^\d]/g, ""));
+          return isNaN(num) ? undefined : num;
+        };
+
+        const productData = {
+          name: row["Название"] || row["name"] || "",
+          description: row["Описание"] || row["description"] || "",
+          price: parsePrice(row["Цена"] || row["price"]),
+          brand: row["Бренд"] || row["brand"] || "",
+          type: row["Тип"] || row["type"] || "люстра",
+          image: row["Изображение"] || row["image"] || "",
+          inStock: parseBool(row["В наличии"] || row["inStock"]),
+          rating: Number(row["Рейтинг"] || row["rating"] || 5),
+          reviews: parseInt(row["Отзывы"] || row["reviews"]) || 0,
+
+          article: row["article"] || row["Артикул"],
+          brandCountry: row["brand_country"] || row["Страна бренда"],
+          manufacturerCountry: row["manufacture_country"] || row["Страна производства"],
+          collection: row["collection"] || row["Коллекция"],
+          style: row["style"] || row["Стиль"],
+
+          height: parseInt(row["height_mm"] || row["Высота"]),
+          diameter: parseInt(row["diameter_mm"] || row["Диаметр"]),
+
+          socketType: row["socket"] || row["Цоколь"],
+          lampType: row["lamp_type"] || row["Тип лампы"],
+          lampCount: parseInt(row["lamps_count"] || row["Количество ламп"]),
+          lampPower: parseInt(row["lamp_power_w"] || row["Мощность лампы"]),
+          totalPower: parseInt(row["total_power_w"] || row["Общая мощность"]),
+          lightingArea: parseInt(row["light_area_m2"] || row["Площадь освещения"]),
+          voltage: parseInt(row["voltage_v"] || row["Напряжение"]),
+
+          materials: row["materials"] || row["Материалы"],
+          frameMaterial: row["frame_material"] || row["Материал каркаса"],
+          shadeMaterial: row["shade_material"] || row["Материал плафона"],
+          color: row["color"] || row["Цвет"],
+          frameColor: row["frame_color"] || row["Цвет каркаса"],
+          shadeColor: row["shade_color"] || row["Цвет плафона"],
+
+          shadeDirection: row["shade_direction"] || row["Направление плафонов"],
+          diffuserType: row["diffuser_type"] || row["Тип рассеивателя"],
+          diffuserShape: row["diffuser_shape"] || row["Форма рассеивателя"],
+
+          ipRating: row["ip_rating"] || row["Степень защиты"],
+          interior: row["interior"] || row["Интерьер"],
+          place: row["place"] || row["Место установки"],
+          suspendedCeiling: parseBool(row["suspended_ceiling"] || row["Натяжной потолок"]),
+          mountType: row["mount_type"] || row["Тип крепления"],
+
+          officialWarranty: row["official_warranty"] || row["Официальная гарантия"],
+          shopWarranty: row["shop_warranty"] || row["Гарантия магазина"],
+
+          section: row["section"] || row["Раздел"],
+          catalog: row["catalog"] || row["Каталог"],
+          subcategory: row["subcategory"] || row["Подкатегория"],
+        };
+
+        if (!productData.name || !productData.price || !productData.brand) {
+          errorCount++;
+          continue;
+        }
+
+        await api.createProduct(productData);
+        successCount++;
+      } catch (err) {
+        errorCount++;
+      }
+    }
+
+    return { successCount, errorCount };
+  };
+
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const validExtensions = [".xlsx", ".xls", ".csv", ".json"];
+    const validExtensions = [".xlsx", ".xls", ".csv", ".json", ".zip"];
     const fileArray = Array.from(files);
 
     // Проверка всех файлов
@@ -561,6 +653,42 @@ const Admin = () => {
         const fileExtension = file.name
           .substring(file.name.lastIndexOf("."))
           .toLowerCase();
+        
+        // Обработка ZIP архивов
+        if (fileExtension === ".zip") {
+          const zipData = await readFileAsync(file, fileExtension);
+          const zip = await JSZip.loadAsync(zipData as ArrayBuffer);
+          
+          // Извлекаем все JSON файлы из архива
+          const jsonFiles = Object.keys(zip.files).filter(name => 
+            name.toLowerCase().endsWith('.json') && !zip.files[name].dir
+          );
+          
+          for (const jsonFileName of jsonFiles) {
+            try {
+              const jsonContent = await zip.files[jsonFileName].async('text');
+              const parsedData = JSON.parse(jsonContent);
+              const jsonData = Array.isArray(parsedData) ? parsedData : [parsedData];
+              
+              const result = await processJsonData(jsonData);
+              totalSuccessCount += result.successCount;
+              totalErrorCount += result.errorCount;
+              
+              toast({
+                title: `Обработан файл из архива: ${jsonFileName}`,
+                description: `Добавлено: ${result.successCount}, ошибок: ${result.errorCount}`,
+                duration: 2000,
+              });
+            } catch (err) {
+              console.error(`Error processing ${jsonFileName}:`, err);
+              totalErrorCount++;
+            }
+          }
+          
+          processedFiles++;
+          continue;
+        }
+        
         const data = await readFileAsync(file, fileExtension);
         let jsonData: any[];
 
@@ -586,113 +714,16 @@ const Admin = () => {
           continue;
         }
 
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const row of jsonData) {
-          try {
-            const parsePrice = (priceStr: any): number => {
-              if (typeof priceStr === "number") return priceStr;
-              const cleaned = String(priceStr).replace(/[^\d.]/g, "");
-              return Number(cleaned) || 0;
-            };
-
-            const parseBool = (val: any): boolean => {
-              if (typeof val === "boolean") return val;
-              return (
-                val === "Да" || val === "да" || val === "true" || val === true
-              );
-            };
-
-            const parseInt = (val: any): number | undefined => {
-              if (!val) return undefined;
-              const num = Number(String(val).replace(/[^\d]/g, ""));
-              return isNaN(num) ? undefined : num;
-            };
-
-            const productData = {
-              name: row["Название"] || row["name"] || "",
-              description: row["Описание"] || row["description"] || "",
-              price: parsePrice(row["Цена"] || row["price"]),
-              brand: row["Бренд"] || row["brand"] || "",
-              type: row["Тип"] || row["type"] || "люстра",
-              image: row["Изображение"] || row["image"] || "",
-              inStock: parseBool(row["В наличии"] || row["inStock"]),
-              rating: Number(row["Рейтинг"] || row["rating"] || 5),
-              reviews: parseInt(row["Отзывы"] || row["reviews"]) || 0,
-
-              article: row["article"] || row["Артикул"],
-              brandCountry: row["brand_country"] || row["Страна бренда"],
-              manufacturerCountry:
-                row["manufacture_country"] || row["Страна производства"],
-              collection: row["collection"] || row["Коллекция"],
-              style: row["style"] || row["Стиль"],
-
-              height: parseInt(row["height_mm"] || row["Высота"]),
-              diameter: parseInt(row["diameter_mm"] || row["Диаметр"]),
-
-              socketType: row["socket"] || row["Цоколь"],
-              lampType: row["lamp_type"] || row["Тип лампы"],
-              lampCount: parseInt(row["lamps_count"] || row["Количество ламп"]),
-              lampPower: parseInt(row["lamp_power_w"] || row["Мощность лампы"]),
-              totalPower: parseInt(
-                row["total_power_w"] || row["Общая мощность"],
-              ),
-              lightingArea: parseInt(
-                row["light_area_m2"] || row["Площадь освещения"],
-              ),
-              voltage: parseInt(row["voltage_v"] || row["Напряжение"]),
-
-              materials: row["materials"] || row["Материалы"],
-              frameMaterial: row["frame_material"] || row["Материал каркаса"],
-              shadeMaterial: row["shade_material"] || row["Материал плафона"],
-              color: row["color"] || row["Цвет"],
-              frameColor: row["frame_color"] || row["Цвет каркаса"],
-              shadeColor: row["shade_color"] || row["Цвет плафона"],
-
-              shadeDirection:
-                row["shade_direction"] || row["Направление плафонов"],
-              diffuserType: row["diffuser_type"] || row["Тип рассеивателя"],
-              diffuserShape: row["diffuser_shape"] || row["Форма рассеивателя"],
-
-              ipRating: row["ip_rating"] || row["Степень защиты"],
-              interior: row["interior"] || row["Интерьер"],
-              place: row["place"] || row["Место установки"],
-              suspendedCeiling: parseBool(
-                row["suspended_ceiling"] || row["Натяжной потолок"],
-              ),
-              mountType: row["mount_type"] || row["Тип крепления"],
-
-              officialWarranty:
-                row["official_warranty"] || row["Официальная гарантия"],
-              shopWarranty: row["shop_warranty"] || row["Гарантия магазина"],
-
-              section: row["section"] || row["Раздел"],
-              catalog: row["catalog"] || row["Каталог"],
-              subcategory: row["subcategory"] || row["Подкатегория"],
-            };
-
-            if (!productData.name || !productData.price || !productData.brand) {
-              errorCount++;
-              continue;
-            }
-
-            await api.createProduct(productData);
-            successCount++;
-          } catch (err) {
-            errorCount++;
-          }
-        }
-
-        totalSuccessCount += successCount;
-        totalErrorCount += errorCount;
+        const result = await processJsonData(jsonData);
+        totalSuccessCount += result.successCount;
+        totalErrorCount += result.errorCount;
         processedFiles++;
 
         // Обновить прогресс после каждого файла
         if (processedFiles < fileArray.length) {
           toast({
             title: `Обработано файлов: ${processedFiles}/${fileArray.length}`,
-            description: `Текущий файл: +${successCount} товаров`,
+            description: `Текущий файл: +${result.successCount} товаров`,
             duration: 2000,
           });
         }
@@ -1094,13 +1125,14 @@ const Admin = () => {
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingBulk}
+                title="Поддерживаются: Excel (.xlsx, .xls), CSV (.csv), JSON (.json) и ZIP архивы с JSON файлами"
               >
                 {uploadingBulk ? (
                   <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Icon name="FileSpreadsheet" className="mr-2 h-4 w-4" />
                 )}
-                Импорт Excel
+                Импорт файлов
               </Button>
               <Button
                 variant="outline"
@@ -1112,7 +1144,7 @@ const Admin = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,.csv,.json"
+                accept=".xlsx,.xls,.csv,.json,.zip"
                 className="hidden"
                 onChange={handleBulkUpload}
                 multiple
