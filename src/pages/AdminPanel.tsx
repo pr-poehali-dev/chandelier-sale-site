@@ -25,6 +25,8 @@ interface Product {
   image_url: string;
   in_stock: boolean;
   article: string;
+  rating?: number;
+  reviews?: number;
 }
 
 const AdminPanel = () => {
@@ -33,6 +35,7 @@ const AdminPanel = () => {
   const [showLogin, setShowLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<'add' | 'list'>('list');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +52,9 @@ const AdminPanel = () => {
     article: ''
   });
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -57,6 +62,12 @@ const AdminPanel = () => {
       verifyToken(token);
     }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'list') {
+      loadProducts();
+    }
+  }, [isAuthenticated, activeTab]);
 
   const verifyToken = async (token: string) => {
     try {
@@ -79,6 +90,28 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Token verification failed:', error);
       localStorage.removeItem('admin_token');
+    }
+  };
+
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const url = new URL(ADMIN_PRODUCTS_URL);
+      url.searchParams.append('limit', '50');
+      if (searchTerm) {
+        url.searchParams.append('search', searchTerm);
+      }
+
+      const response = await fetch(url.toString());
+      const data = await response.json();
+      
+      if (response.ok) {
+        setProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error('Failed to load products:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,7 +153,6 @@ const AdminPanel = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImageFile(file);
     setLoading(true);
 
     try {
@@ -140,7 +172,11 @@ const AdminPanel = () => {
 
         const data = await response.json();
         if (response.ok) {
-          setProduct({ ...product, image_url: data.url });
+          if (editingProduct) {
+            setEditingProduct({ ...editingProduct, image_url: data.url });
+          } else {
+            setProduct({ ...product, image_url: data.url });
+          }
           setMessage('Изображение загружено!');
         } else {
           setMessage(data.error || 'Ошибка загрузки изображения');
@@ -184,9 +220,71 @@ const AdminPanel = () => {
           in_stock: true,
           article: ''
         });
-        setImageFile(null);
+        loadProducts();
       } else {
         setMessage(data.error || 'Ошибка добавления товара');
+      }
+    } catch (error) {
+      setMessage('Ошибка соединения с сервером');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(ADMIN_PRODUCTS_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editingProduct)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(`Товар "${editingProduct.name}" успешно обновлён!`);
+        setEditingProduct(null);
+        loadProducts();
+      } else {
+        setMessage(data.error || 'Ошибка обновления товара');
+      }
+    } catch (error) {
+      setMessage('Ошибка соединения с сервером');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm('Вы уверены, что хотите снять товар с продажи?')) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${ADMIN_PRODUCTS_URL}?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Товар снят с продажи');
+        loadProducts();
+      } else {
+        setMessage(data.error || 'Ошибка удаления товара');
       }
     } catch (error) {
       setMessage('Ошибка соединения с сервером');
@@ -294,123 +392,340 @@ const AdminPanel = () => {
           </Button>
         </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold mb-6">Добавить новый товар</h2>
+        <div className="flex gap-4 mb-6">
+          <Button
+            variant={activeTab === 'list' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('list')}
+          >
+            <Icon name="List" className="h-4 w-4 mr-2" />
+            Список товаров
+          </Button>
+          <Button
+            variant={activeTab === 'add' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('add')}
+          >
+            <Icon name="Plus" className="h-4 w-4 mr-2" />
+            Добавить товар
+          </Button>
+        </div>
 
-            <form onSubmit={handleSubmitProduct} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Название *</label>
-                  <input
-                    type="text"
-                    value={product.name}
-                    onChange={(e) => setProduct({ ...product, name: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border bg-background"
-                    required
-                  />
-                </div>
+        {message && (
+          <div className={`p-3 rounded-lg mb-6 ${message.includes('Ошибка') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {message}
+          </div>
+        )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Артикул</label>
-                  <input
-                    type="text"
-                    value={product.article}
-                    onChange={(e) => setProduct({ ...product, article: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border bg-background"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Описание</label>
-                <textarea
-                  value={product.description}
-                  onChange={(e) => setProduct({ ...product, description: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border bg-background"
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Цена (₽) *</label>
-                  <input
-                    type="number"
-                    value={product.price}
-                    onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
-                    className="w-full px-4 py-2 rounded-lg border bg-background"
-                    required
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Бренд</label>
-                  <input
-                    type="text"
-                    value={product.brand}
-                    onChange={(e) => setProduct({ ...product, brand: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border bg-background"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Категория *</label>
-                  <select
-                    value={product.type}
-                    onChange={(e) => setProduct({ ...product, type: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border bg-background"
-                    required
-                  >
-                    <option value="люстра">Люстры</option>
-                    <option value="бра">Бра</option>
-                    <option value="торшер">Торшеры</option>
-                    <option value="настольная лампа">Настольные лампы</option>
-                    <option value="точечный светильник">Точечные светильники</option>
-                    <option value="уличное освещение">Уличное освещение</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Изображение</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full px-4 py-2 rounded-lg border bg-background"
-                />
-                {product.image_url && (
-                  <div className="mt-4">
-                    <img src={product.image_url} alt="Preview" className="h-32 object-cover rounded-lg" />
+        {activeTab === 'list' && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="mb-6">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Поиск товаров..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                    />
                   </div>
-                )}
+                  <Button onClick={loadProducts}>
+                    <Icon name="Search" className="h-4 w-4 mr-2" />
+                    Найти
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="in_stock"
-                  checked={product.in_stock}
-                  onChange={(e) => setProduct({ ...product, in_stock: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="in_stock" className="text-sm font-medium">В наличии</label>
-              </div>
-
-              {message && (
-                <div className={`p-3 rounded-lg ${message.includes('Ошибка') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                  {message}
+              {loading ? (
+                <div className="text-center py-8">Загрузка...</div>
+              ) : (
+                <div className="space-y-4">
+                  {products.map((prod) => (
+                    <div key={prod.id} className="border rounded-lg p-4">
+                      <div className="flex gap-4">
+                        {prod.image_url && (
+                          <img
+                            src={prod.image_url}
+                            alt={prod.name}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{prod.name}</h3>
+                          <p className="text-sm text-muted-foreground">{prod.brand} • {prod.type}</p>
+                          <p className="text-lg font-bold text-primary">{prod.price} ₽</p>
+                          <p className="text-sm">
+                            {prod.in_stock ? (
+                              <span className="text-green-600">В наличии</span>
+                            ) : (
+                              <span className="text-red-600">Нет в наличии</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingProduct(prod)}
+                          >
+                            <Icon name="Edit" className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => prod.id && handleDeleteProduct(prod.id)}
+                          >
+                            <Icon name="Trash2" className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Сохранение...' : 'Добавить товар'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {activeTab === 'add' && (
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="text-2xl font-bold mb-6">Добавить новый товар</h2>
+
+              <form onSubmit={handleSubmitProduct} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Название *</label>
+                    <input
+                      type="text"
+                      value={product.name}
+                      onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Артикул</label>
+                    <input
+                      type="text"
+                      value={product.article}
+                      onChange={(e) => setProduct({ ...product, article: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Описание</label>
+                  <textarea
+                    value={product.description}
+                    onChange={(e) => setProduct({ ...product, description: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border bg-background"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Цена (₽) *</label>
+                    <input
+                      type="number"
+                      value={product.price}
+                      onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                      required
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Бренд</label>
+                    <input
+                      type="text"
+                      value={product.brand}
+                      onChange={(e) => setProduct({ ...product, brand: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Категория *</label>
+                    <select
+                      value={product.type}
+                      onChange={(e) => setProduct({ ...product, type: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                      required
+                    >
+                      <option value="люстра">Люстры</option>
+                      <option value="бра">Бра</option>
+                      <option value="торшер">Торшеры</option>
+                      <option value="настольная лампа">Настольные лампы</option>
+                      <option value="точечный светильник">Точечные светильники</option>
+                      <option value="уличное освещение">Уличное освещение</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Изображение</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full px-4 py-2 rounded-lg border bg-background"
+                  />
+                  {product.image_url && (
+                    <div className="mt-4">
+                      <img src={product.image_url} alt="Preview" className="h-32 object-cover rounded-lg" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="in_stock"
+                    checked={product.in_stock}
+                    onChange={(e) => setProduct({ ...product, in_stock: e.target.checked })}
+                    className="rounded"
+                  />
+                  <label htmlFor="in_stock" className="text-sm font-medium">В наличии</label>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Сохранение...' : 'Добавить товар'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Редактировать товар</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingProduct(null)}>
+                    <Icon name="X" className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                <form onSubmit={handleUpdateProduct} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Название *</label>
+                      <input
+                        type="text"
+                        value={editingProduct.name}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border bg-background"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Артикул</label>
+                      <input
+                        type="text"
+                        value={editingProduct.article}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, article: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Описание</label>
+                    <textarea
+                      value={editingProduct.description}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Цена (₽) *</label>
+                      <input
+                        type="number"
+                        value={editingProduct.price}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                        className="w-full px-4 py-2 rounded-lg border bg-background"
+                        required
+                        min="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Бренд</label>
+                      <input
+                        type="text"
+                        value={editingProduct.brand}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border bg-background"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Категория *</label>
+                      <select
+                        value={editingProduct.type}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, type: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border bg-background"
+                        required
+                      >
+                        <option value="люстра">Люстры</option>
+                        <option value="бра">Бра</option>
+                        <option value="торшер">Торшеры</option>
+                        <option value="настольная лампа">Настольные лампы</option>
+                        <option value="точечный светильник">Точечные светильники</option>
+                        <option value="уличное освещение">Уличное освещение</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Изображение</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full px-4 py-2 rounded-lg border bg-background"
+                    />
+                    {editingProduct.image_url && (
+                      <div className="mt-4">
+                        <img src={editingProduct.image_url} alt="Preview" className="h-32 object-cover rounded-lg" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit_in_stock"
+                      checked={editingProduct.in_stock}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, in_stock: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="edit_in_stock" className="text-sm font-medium">В наличии</label>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      {loading ? 'Сохранение...' : 'Сохранить изменения'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setEditingProduct(null)}>
+                      Отмена
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
 
       <Footer />
