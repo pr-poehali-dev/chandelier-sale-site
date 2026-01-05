@@ -33,6 +33,8 @@ const ProductImageGallery = ({ images, productName }: ProductImageGalleryProps) 
         <img
           src={images[selectedImage]}
           alt={productName}
+          loading="eager"
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-200"
           style={
             isZooming
@@ -59,6 +61,8 @@ const ProductImageGallery = ({ images, productName }: ProductImageGalleryProps) 
             <img
               src={img}
               alt={`${productName} ${idx + 1}`}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           </button>
