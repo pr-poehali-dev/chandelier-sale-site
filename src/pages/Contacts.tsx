@@ -121,21 +121,21 @@ const Contacts = () => {
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                     >
                       <Icon name="Instagram" className="h-5 w-5 text-primary" />
-                      <span>@luxlight_official</span>
+                      <span>@svetitvsem_official</span>
                     </a>
                     <a
                       href="#"
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                     >
                       <Icon name="Facebook" className="h-5 w-5 text-primary" />
-                      <span>LuxLight Russia</span>
+                      <span>Светит всем Russia</span>
                     </a>
                     <a
                       href="#"
                       className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                     >
                       <Icon name="Twitter" className="h-5 w-5 text-primary" />
-                      <span>@luxlight_ru</span>
+                      <span>@svetitvsem_ru</span>
                     </a>
                   </div>
                 </CardContent>

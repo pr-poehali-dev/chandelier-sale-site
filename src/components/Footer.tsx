@@ -9,7 +9,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Icon name="Lightbulb" className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">LuxLight</span>
+              <span className="text-xl font-bold">Светит всем</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Интернет-магазин освещения с лучшими брендами и широким ассортиментом
@@ -72,7 +72,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 LuxLight. Все права защищены.</p>
+          <p>&copy; 2024 Светит всем. Все права защищены.</p>
         </div>
       </div>
     </footer>

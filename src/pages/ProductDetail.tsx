@@ -109,7 +109,7 @@ const ProductDetail = () => {
     ? [product.image, ...product.images] 
     : [product.image, product.image, product.image];
 
-  const productTitle = `${product.name} — купить в интернет-магазине Lux Light`;
+  const productTitle = `${product.name} — купить в интернет-магазине Светит всем`;
   const productDescription = `${product.name} по цене ${product.price.toLocaleString('ru-RU')} ₽. ${product.description || 'Качественное освещение с доставкой по России.'}`;
 
   return (

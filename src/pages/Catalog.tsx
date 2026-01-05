@@ -361,7 +361,7 @@ const Catalog = () => {
   };
 
   const catalogTitle = selectedCategory 
-    ? `${categoryNames[selectedCategory] || 'Каталог'} — купить в интернет-магазине Lux Light`
+    ? `${categoryNames[selectedCategory] || 'Каталог'} — купить в интернет-магазине Светит всем`
     : 'Каталог светильников и люстр — купить с доставкой';
 
   const catalogDescription = selectedCategory

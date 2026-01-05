@@ -53,7 +53,7 @@ const Header = ({ cartItemsCount = 0, onCartClick, onAuthClick }: HeaderProps) =
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <Icon name="Lightbulb" className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">LuxLight</span>
+            <span className="text-xl font-bold">Светит всем</span>
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6">
