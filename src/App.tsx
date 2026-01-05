@@ -19,6 +19,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Collaboration = lazy(() => import("./pages/Collaboration"));
 const PartnerRegistration = lazy(() => import("./pages/PartnerRegistration"));
+const Sitemap = lazy(() => import("./pages/Sitemap"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/partnership" element={<Collaboration />} />
               <Route path="/partnership/:category" element={<PartnerRegistration />} />
               <Route path="/partner-registration" element={<PartnerRegistration />} />
+              <Route path="/sitemap.xml" element={<Sitemap />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
