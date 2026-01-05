@@ -218,7 +218,7 @@ const Home = () => {
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
             Мы работаем только с проверенными производителями освещения
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
             {['LuxCrystal', 'ModernLight', 'OfficeLight', 'DesignLight', 'EuroLux', 'ArtLight', 'SmartLight', 'ClassicLux'].map((brand) => (
               <Link
                 key={brand}
@@ -228,6 +228,15 @@ const Home = () => {
                 <span className="font-semibold text-center">{brand}</span>
               </Link>
             ))}
+          </div>
+          <div className="flex justify-center">
+            <Button size="lg" asChild className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all">
+              <Link to="/catalog?sale=true" className="flex items-center gap-2">
+                <Icon name="Tag" className="h-5 w-5" />
+                Товары брендов со скидкой
+                <Icon name="ArrowRight" className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
