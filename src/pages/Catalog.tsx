@@ -369,7 +369,7 @@ const Catalog = () => {
             />
 
             <CatalogContent
-              products={products}
+              filteredProducts={products}
               favorites={favorites}
               loading={loading}
               onToggleFavorite={toggleFavorite}
@@ -377,7 +377,23 @@ const Catalog = () => {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
-              onShowFilters={() => setShowMobileFilters(true)}
+              totalCount={totalProducts}
+              totalProducts={products.length}
+              totalInDB={totalProducts}
+              onResetAll={() => {
+                setSelectedBrands([]);
+                setPriceRange([0, 150000]);
+                setHasRemote(false);
+                setIsDimmable(false);
+                setHasColorChange(false);
+                setIsSale(false);
+                setIsNew(false);
+                setIsPickup(false);
+                setSelectedStyles([]);
+                setSelectedColors([]);
+                setSearchQuery('');
+                setSelectedCategory('');
+              }}
             />
           </div>
         </div>

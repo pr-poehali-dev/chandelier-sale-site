@@ -30,7 +30,7 @@ const ProductGrid = ({
     );
   }
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
