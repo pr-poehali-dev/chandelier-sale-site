@@ -22,6 +22,8 @@ interface CatalogContentProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   totalCount: number;
+  totalProducts?: number;
+  totalInDB?: number;
 }
 
 const CatalogContent = ({
@@ -35,6 +37,8 @@ const CatalogContent = ({
   totalPages,
   onPageChange,
   totalCount,
+  totalProducts = 0,
+  totalInDB = 0,
 }: CatalogContentProps) => {
   const renderPaginationItems = () => {
     const items = [];
@@ -96,7 +100,11 @@ const CatalogContent = ({
           {loading && (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           )}
-
+          {!loading && totalProducts > 0 && totalInDB > 0 && totalProducts < totalInDB && (
+            <span className="text-xs text-muted-foreground">
+              (загружено {totalProducts} из {totalInDB})
+            </span>
+          )}
         </div>
         <Button variant="ghost" size="sm" onClick={onResetAll}>
           Сбросить всё
