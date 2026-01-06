@@ -116,16 +116,14 @@ def get_products(event: dict) -> dict:
                 count_params.append(category)
             
             if search:
-                count_query += ' AND (name ILIKE %s OR description ILIKE %s OR brand ILIKE %s)'
-                search_term = f'%{search}%'
-                count_params.extend([search_term, search_term, search_term])
+                count_query += " AND (to_tsvector('russian', name) @@ plainto_tsquery('russian', %s) OR to_tsvector('russian', brand) @@ plainto_tsquery('russian', %s))"
+                count_params.extend([search, search])
             
             cur.execute(count_query, count_params)
             total_count = cur.fetchone()[0]
             
             query = f'''
-                SELECT id, name, description, price, brand, type, image_url, 
-                       in_stock, rating, reviews, article
+                SELECT id, name, price, brand, type, image_url, in_stock
                 FROM {schema}.products 
                 WHERE 1=1
             '''
@@ -136,9 +134,8 @@ def get_products(event: dict) -> dict:
                 params_list.append(category)
             
             if search:
-                query += ' AND (name ILIKE %s OR description ILIKE %s OR brand ILIKE %s)'
-                search_term = f'%{search}%'
-                params_list.extend([search_term, search_term, search_term])
+                query += " AND (to_tsvector('russian', name) @@ plainto_tsquery('russian', %s) OR to_tsvector('russian', brand) @@ plainto_tsquery('russian', %s))"
+                params_list.extend([search, search])
             
             query += ' ORDER BY id DESC LIMIT %s OFFSET %s'
             params_list.extend([limit, offset])
@@ -151,15 +148,11 @@ def get_products(event: dict) -> dict:
                 products.append({
                     'id': row[0],
                     'name': row[1],
-                    'description': row[2],
-                    'price': float(row[3]) if row[3] else 0,
-                    'brand': row[4],
-                    'type': row[5],
-                    'image_url': row[6],
-                    'in_stock': row[7],
-                    'rating': float(row[8]) if row[8] else 0,
-                    'reviews': row[9],
-                    'article': row[10] if len(row) > 10 else ''
+                    'price': float(row[2]) if row[2] else 0,
+                    'brand': row[3],
+                    'type': row[4],
+                    'image_url': row[5],
+                    'in_stock': row[6]
                 })
             
             return {

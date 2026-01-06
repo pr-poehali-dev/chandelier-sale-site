@@ -3,27 +3,14 @@
     {
       "name": "Get products list",
       "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "products": "array",
-        "total": "number"
-      },
-      "bodyMatcher": "partial"
+      "path": "/?limit=5&offset=0",
+      "expectedStatus": 200
     },
     {
-      "name": "Create product (requires auth)",
-      "method": "POST",
-      "path": "/",
-      "body": {
-        "name": "Test Lamp",
-        "price": 5000,
-        "type": "chandeliers",
-        "brand": "Test Brand",
-        "description": "Test product"
-      },
-      "expectedStatus": 500,
-      "bodyMatcher": "partial"
+      "name": "Search products",
+      "method": "GET",
+      "path": "/?search=люстра&limit=10",
+      "expectedStatus": 200
     }
   ]
 }

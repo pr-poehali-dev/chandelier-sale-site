@@ -55,8 +55,10 @@ const AdminPanel = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [initialLoad, setInitialLoad] = useState(true);
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -80,11 +82,18 @@ const AdminPanel = () => {
   }, [currentPage]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
     if (isAuthenticated && activeTab === 'list') {
       setCurrentPage(1);
       loadProducts(1);
     }
-  }, [searchTerm]);
+  }, [debouncedSearch]);
 
   const verifyToken = async (token: string) => {
     try {
@@ -116,19 +125,31 @@ const AdminPanel = () => {
       const url = new URL(ADMIN_PRODUCTS_URL);
       url.searchParams.append('limit', itemsPerPage.toString());
       url.searchParams.append('offset', ((page - 1) * itemsPerPage).toString());
-      if (searchTerm) {
-        url.searchParams.append('search', searchTerm);
+      if (debouncedSearch) {
+        url.searchParams.append('search', debouncedSearch);
       }
 
-      const response = await fetch(url.toString());
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(url.toString(), { 
+        signal: controller.signal,
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
       
       if (response.ok) {
         setProducts(data.products || []);
         setTotalProducts(data.total || 0);
+        setInitialLoad(false);
       }
     } catch (error) {
-      console.error('Failed to load products:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Failed to load products:', error);
+        setMessage('Ошибка загрузки товаров');
+      }
     } finally {
       setLoading(false);
     }
@@ -437,52 +458,66 @@ const AdminPanel = () => {
         {activeTab === 'list' && (
           <Card>
             <CardContent className="pt-6">
-              <div className="mb-6">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Поиск товаров..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border bg-background"
-                    />
-                  </div>
-                  <Button onClick={() => { setCurrentPage(1); loadProducts(1); }}>
-                    <Icon name="Search" className="h-4 w-4 mr-2" />
-                    Найти
-                  </Button>
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">
+                    Список товаров
+                    {!initialLoad && (
+                      <span className="ml-2 text-sm text-muted-foreground font-normal">
+                        ({totalProducts} {totalProducts === 1 ? 'товар' : totalProducts < 5 ? 'товара' : 'товаров'})
+                      </span>
+                    )}
+                  </h2>
+                </div>
+                <div className="relative">
+                  <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Поиск товаров по названию, бренду..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border bg-background"
+                  />
                 </div>
               </div>
 
               {loading ? (
-                <div className="text-center py-8">Загрузка...</div>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                  <p className="text-muted-foreground">Загрузка товаров...</p>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-12">
+                  <Icon name="Package" className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg text-muted-foreground">
+                    {searchTerm ? 'Товары не найдены' : 'Нет товаров'}
+                  </p>
+                </div>
               ) : (
                 <>
-                  <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {products.map((prod) => (
-                      <div key={prod.id} className="border rounded-lg p-4">
-                        <div className="flex gap-4">
-                          {prod.image_url && (
-                            <img
-                              src={prod.image_url}
-                              alt={prod.name}
-                              className="w-20 h-20 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{prod.name}</h3>
-                            <p className="text-sm text-muted-foreground">{prod.brand} • {prod.type}</p>
-                            <p className="text-lg font-bold text-primary">{prod.price} ₽</p>
-                            <p className="text-sm">
-                              {prod.in_stock ? (
-                                <span className="text-green-600">В наличии</span>
-                              ) : (
-                                <span className="text-red-600">Нет в наличии</span>
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
+                      <div key={prod.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        {prod.image_url && (
+                          <img
+                            src={prod.image_url}
+                            alt={prod.name}
+                            loading="lazy"
+                            className="w-full h-32 object-cover rounded mb-3"
+                          />
+                        )}
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm line-clamp-2">{prod.name}</h3>
+                          <p className="text-xs text-muted-foreground">{prod.brand} • {prod.type}</p>
+                          <p className="text-lg font-bold text-primary">{prod.price} ₽</p>
+                          <p className="text-xs">
+                            {prod.in_stock ? (
+                              <span className="text-green-600">В наличии</span>
+                            ) : (
+                              <span className="text-red-600">Нет в наличии</span>
+                            )}
+                          </p>
+                          <div className="flex gap-2 pt-2">
                             <Button
                               size="sm"
                               variant="outline"
