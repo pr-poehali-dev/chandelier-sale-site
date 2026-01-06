@@ -55,6 +55,9 @@ const AdminPanel = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -65,9 +68,23 @@ const AdminPanel = () => {
 
   useEffect(() => {
     if (isAuthenticated && activeTab === 'list') {
-      loadProducts();
+      setCurrentPage(1);
+      loadProducts(1);
     }
   }, [isAuthenticated, activeTab]);
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'list') {
+      loadProducts(currentPage);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'list') {
+      setCurrentPage(1);
+      loadProducts(1);
+    }
+  }, [searchTerm]);
 
   const verifyToken = async (token: string) => {
     try {
@@ -93,11 +110,12 @@ const AdminPanel = () => {
     }
   };
 
-  const loadProducts = async () => {
+  const loadProducts = async (page = currentPage) => {
     setLoading(true);
     try {
       const url = new URL(ADMIN_PRODUCTS_URL);
-      url.searchParams.append('limit', '50');
+      url.searchParams.append('limit', itemsPerPage.toString());
+      url.searchParams.append('offset', ((page - 1) * itemsPerPage).toString());
       if (searchTerm) {
         url.searchParams.append('search', searchTerm);
       }
@@ -107,6 +125,7 @@ const AdminPanel = () => {
       
       if (response.ok) {
         setProducts(data.products || []);
+        setTotalProducts(data.total || 0);
       }
     } catch (error) {
       console.error('Failed to load products:', error);
@@ -429,7 +448,7 @@ const AdminPanel = () => {
                       className="w-full px-4 py-2 rounded-lg border bg-background"
                     />
                   </div>
-                  <Button onClick={loadProducts}>
+                  <Button onClick={() => { setCurrentPage(1); loadProducts(1); }}>
                     <Icon name="Search" className="h-4 w-4 mr-2" />
                     Найти
                   </Button>
@@ -439,49 +458,82 @@ const AdminPanel = () => {
               {loading ? (
                 <div className="text-center py-8">Загрузка...</div>
               ) : (
-                <div className="space-y-4">
-                  {products.map((prod) => (
-                    <div key={prod.id} className="border rounded-lg p-4">
-                      <div className="flex gap-4">
-                        {prod.image_url && (
-                          <img
-                            src={prod.image_url}
-                            alt={prod.name}
-                            className="w-20 h-20 object-cover rounded"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{prod.name}</h3>
-                          <p className="text-sm text-muted-foreground">{prod.brand} • {prod.type}</p>
-                          <p className="text-lg font-bold text-primary">{prod.price} ₽</p>
-                          <p className="text-sm">
-                            {prod.in_stock ? (
-                              <span className="text-green-600">В наличии</span>
-                            ) : (
-                              <span className="text-red-600">Нет в наличии</span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingProduct(prod)}
-                          >
-                            <Icon name="Edit" className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => prod.id && handleDeleteProduct(prod.id)}
-                          >
-                            <Icon name="Trash2" className="h-4 w-4" />
-                          </Button>
+                <>
+                  <div className="space-y-4">
+                    {products.map((prod) => (
+                      <div key={prod.id} className="border rounded-lg p-4">
+                        <div className="flex gap-4">
+                          {prod.image_url && (
+                            <img
+                              src={prod.image_url}
+                              alt={prod.name}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{prod.name}</h3>
+                            <p className="text-sm text-muted-foreground">{prod.brand} • {prod.type}</p>
+                            <p className="text-lg font-bold text-primary">{prod.price} ₽</p>
+                            <p className="text-sm">
+                              {prod.in_stock ? (
+                                <span className="text-green-600">В наличии</span>
+                              ) : (
+                                <span className="text-red-600">Нет в наличии</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingProduct(prod)}
+                            >
+                              <Icon name="Edit" className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => prod.id && handleDeleteProduct(prod.id)}
+                            >
+                              <Icon name="Trash2" className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {totalProducts > itemsPerPage && (
+                    <div className="flex justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                      >
+                        <Icon name="ChevronLeft" className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-2 px-4">
+                        <span className="text-sm">
+                          Страница {currentPage} из {Math.ceil(totalProducts / itemsPerPage)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          (всего {totalProducts} товаров)
+                        </span>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage >= Math.ceil(totalProducts / itemsPerPage)}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                      >
+                        <Icon name="ChevronRight" className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
