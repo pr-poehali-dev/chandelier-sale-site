@@ -80,16 +80,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     params = event.get('queryStringParameters') or {}
     product_id = params.get('id')
-    brand = params.get('brand')
+    brands = params.get('brands', '').split(',') if params.get('brands') else []
     product_type = params.get('type')
+    category = params.get('category')
     min_price = params.get('min_price')
     max_price = params.get('max_price')
+    search = params.get('search', '')
     has_remote = params.get('has_remote')
-    limit = int(params.get('limit', '100'))
+    is_dimmable = params.get('is_dimmable')
+    has_color_change = params.get('has_color_change')
+    is_sale = params.get('is_sale')
+    is_new = params.get('is_new')
+    pickup_available = params.get('pickup_available')
+    styles = params.get('styles', '').split(',') if params.get('styles') else []
+    colors = params.get('colors', '').split(',') if params.get('colors') else []
+    limit = int(params.get('limit', '20'))
     offset = int(params.get('offset', '0'))
     
-    if limit > 500:
-        limit = 500
+    if limit > 100:
+        limit = 100
     
     query = "SELECT * FROM products WHERE 1=1"
     count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
@@ -98,9 +107,20 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         query += f" AND id = {int(product_id)}"
         count_query += f" AND id = {int(product_id)}"
     
-    if brand:
-        query += f" AND brand = {escape_sql(brand)}"
-        count_query += f" AND brand = {escape_sql(brand)}"
+    if search:
+        search_term = search.replace("'", "''")
+        query += f" AND (name ILIKE '%{search_term}%' OR brand ILIKE '%{search_term}%' OR type ILIKE '%{search_term}%')"
+        count_query += f" AND (name ILIKE '%{search_term}%' OR brand ILIKE '%{search_term}%' OR type ILIKE '%{search_term}%')"
+    
+    if brands:
+        brands_escaped = [escape_sql(b) for b in brands if b]
+        if brands_escaped:
+            query += f" AND brand IN ({','.join(brands_escaped)})"
+            count_query += f" AND brand IN ({','.join(brands_escaped)})"
+    
+    if category:
+        query += f" AND category = {escape_sql(category)}"
+        count_query += f" AND category = {escape_sql(category)}"
     
     if product_type:
         query += f" AND type = {escape_sql(product_type)}"
@@ -114,9 +134,41 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         query += f" AND price <= {float(max_price)}"
         count_query += f" AND price <= {float(max_price)}"
     
-    if has_remote:
-        query += f" AND has_remote = {escape_sql(has_remote.lower() == 'true')}"
-        count_query += f" AND has_remote = {escape_sql(has_remote.lower() == 'true')}"
+    if has_remote and has_remote.lower() == 'true':
+        query += " AND has_remote = TRUE"
+        count_query += " AND has_remote = TRUE"
+    
+    if is_dimmable and is_dimmable.lower() == 'true':
+        query += " AND is_dimmable = TRUE"
+        count_query += " AND is_dimmable = TRUE"
+    
+    if has_color_change and has_color_change.lower() == 'true':
+        query += " AND has_color_change = TRUE"
+        count_query += " AND has_color_change = TRUE"
+    
+    if is_sale and is_sale.lower() == 'true':
+        query += " AND is_sale = TRUE"
+        count_query += " AND is_sale = TRUE"
+    
+    if is_new and is_new.lower() == 'true':
+        query += " AND is_new = TRUE"
+        count_query += " AND is_new = TRUE"
+    
+    if pickup_available and pickup_available.lower() == 'true':
+        query += " AND pickup_available = TRUE"
+        count_query += " AND pickup_available = TRUE"
+    
+    if styles:
+        styles_escaped = [escape_sql(s) for s in styles if s]
+        if styles_escaped:
+            query += f" AND style IN ({','.join(styles_escaped)})"
+            count_query += f" AND style IN ({','.join(styles_escaped)})"
+    
+    if colors:
+        colors_escaped = [escape_sql(c) for c in colors if c]
+        if colors_escaped:
+            query += f" AND color IN ({','.join(colors_escaped)})"
+            count_query += f" AND color IN ({','.join(colors_escaped)})"
     
     cur.execute(count_query)
     total_count = cur.fetchone()[0]
@@ -194,9 +246,10 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=300'
         },
-        'body': json.dumps({'products': products, 'count': total_count}),
+        'body': json.dumps({'products': products, 'total': total_count}),
         'isBase64Encoded': False
     }
 

@@ -119,12 +119,23 @@ export interface Order {
 export const api = {
   async getProducts(filters?: {
     brand?: string;
+    brands?: string;
+    category?: string;
     type?: string;
     min_price?: number;
     max_price?: number;
+    search?: string;
+    has_remote?: string;
+    is_dimmable?: string;
+    has_color_change?: string;
+    is_sale?: string;
+    is_new?: string;
+    pickup_available?: string;
+    styles?: string;
+    colors?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{ products: Product[]; count: number }> {
+  }): Promise<{ products: Product[]; total: number }> {
     const params = new URLSearchParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {

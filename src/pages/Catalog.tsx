@@ -50,7 +50,6 @@ const Catalog = () => {
   const [brandSearch, setBrandSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [totalInDB, setTotalInDB] = useState(0);
   const itemsPerPage = 20;
 
   const categories = [
@@ -74,8 +73,6 @@ const Catalog = () => {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
-
-    loadProducts();
   }, []);
 
   useEffect(() => {
@@ -105,53 +102,38 @@ const Catalog = () => {
     isPickup,
     selectedStyles,
     selectedColors,
-    sizeRange,
   ]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [currentPage, searchQuery, selectedBrands, selectedCategory, priceRange, hasRemote, isDimmable, hasColorChange, isSale, isNew, isPickup, selectedStyles, selectedColors]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      let allProducts: Product[] = [];
-      let offset = 0;
-      const limit = 500;
-      let hasMore = true;
+      
+      const filters: any = {
+        limit: itemsPerPage,
+        offset: (currentPage - 1) * itemsPerPage,
+      };
 
-      const firstBatch = await api.getProducts({ limit, offset });
-      allProducts = firstBatch.products;
-      const total = firstBatch.total || 0;
-      setTotalInDB(total);
-      setProducts(allProducts);
-      setTotalProducts(allProducts.length);
+      if (searchQuery) filters.search = searchQuery;
+      if (selectedBrands.length > 0) filters.brands = selectedBrands.join(',');
+      if (selectedCategory) filters.category = selectedCategory;
+      if (priceRange[0] > 0) filters.min_price = priceRange[0];
+      if (priceRange[1] < 150000) filters.max_price = priceRange[1];
+      if (hasRemote) filters.has_remote = 'true';
+      if (isDimmable) filters.is_dimmable = 'true';
+      if (hasColorChange) filters.has_color_change = 'true';
+      if (isSale) filters.is_sale = 'true';
+      if (isNew) filters.is_new = 'true';
+      if (isPickup) filters.pickup_available = 'true';
+      if (selectedStyles.length > 0) filters.styles = selectedStyles.join(',');
+      if (selectedColors.length > 0) filters.colors = selectedColors.join(',');
 
-      if (total > limit) {
-        const loadMoreBatches = async () => {
-          while (hasMore && allProducts.length < total) {
-            offset += limit;
-            try {
-              const data = await api.getProducts({ limit, offset });
-              if (data.products.length === 0) {
-                hasMore = false;
-                break;
-              }
-              allProducts = [...allProducts, ...data.products];
-              setProducts([...allProducts]);
-              setTotalProducts(allProducts.length);
-              
-              if (data.products.length < limit || allProducts.length >= total) {
-                hasMore = false;
-              }
-            } catch (err) {
-              console.error("Error loading batch:", err);
-              hasMore = false;
-            }
-          }
-        };
-        
-        setLoading(false);
-        loadMoreBatches();
-      } else {
-        setLoading(false);
-      }
+      const data = await api.getProducts(filters);
+      setProducts(data.products);
+      setTotalProducts(data.total || 0);
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
@@ -159,78 +141,10 @@ const Catalog = () => {
         description: "Не удалось загрузить товары",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      !searchQuery ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.style?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesBrand =
-      selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-
-    const matchesPrice =
-      product.price >= priceRange[0] && product.price <= priceRange[1];
-
-    const matchesRemote = !hasRemote || product.has_remote;
-    const matchesDimmable = !isDimmable || product.is_dimmable;
-    const matchesColorChange = !hasColorChange || product.has_color_change;
-    const matchesSale = !isSale || product.is_sale;
-    const matchesNew = !isNew || product.is_new;
-    const matchesPickup = !isPickup || product.pickup_available;
-
-    const matchesStyle =
-      selectedStyles.length === 0 ||
-      (product.style && selectedStyles.includes(product.style));
-
-    const matchesColor =
-      selectedColors.length === 0 ||
-      (product.color && selectedColors.includes(product.color));
-
-    const matchesSize =
-      (!product.height ||
-        (product.height >= sizeRange.height[0] &&
-          product.height <= sizeRange.height[1])) &&
-      (!product.length ||
-        (product.length >= sizeRange.length[0] &&
-          product.length <= sizeRange.length[1])) &&
-      (!product.depth ||
-        (product.depth >= sizeRange.depth[0] &&
-          product.depth <= sizeRange.depth[1])) &&
-      (!product.width ||
-        (product.width >= sizeRange.width[0] &&
-          product.width <= sizeRange.width[1])) &&
-      (!product.diameter ||
-        (product.diameter >= sizeRange.diameter[0] &&
-          product.diameter <= sizeRange.diameter[1])) &&
-      (!product.chain_length ||
-        (product.chain_length >= sizeRange.chainLength[0] &&
-          product.chain_length <= sizeRange.chainLength[1]));
-
-    return (
-      matchesSearch &&
-      matchesBrand &&
-      matchesCategory &&
-      matchesPrice &&
-      matchesRemote &&
-      matchesDimmable &&
-      matchesColorChange &&
-      matchesSale &&
-      matchesNew &&
-      matchesPickup &&
-      matchesStyle &&
-      matchesColor &&
-      matchesSize
-    );
-  });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -240,137 +154,110 @@ const Catalog = () => {
 
     try {
       const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
         const base64Data = base64.split(",")[1];
 
         try {
-          const result = await api.searchByImage(base64Data);
-          setProducts(result.products);
-          setSearchQuery("");
-          setSelectedBrands([]);
-          setSelectedTypes([]);
+          const response = await fetch(
+            "https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ image: base64Data }),
+            }
+          );
 
-          toast({
-            title: "Поиск завершён",
-            description:
-              result.description || `Найдено ${result.products.length} товаров`,
-          });
+          if (!response.ok) {
+            throw new Error("Search failed");
+          }
+
+          const data = await response.json();
+          if (data.products && data.products.length > 0) {
+            setProducts(data.products);
+            setTotalProducts(data.products.length);
+            toast({
+              title: "Поиск выполнен",
+              description: `Найдено ${data.products.length} похожих товаров`,
+            });
+          } else {
+            toast({
+              title: "Ничего не найдено",
+              description: "Попробуйте другое изображение",
+              variant: "destructive",
+            });
+          }
         } catch (error) {
+          console.error("Image search failed:", error);
           toast({
             title: "Ошибка поиска",
-            description:
-              error instanceof Error ? error.message : "Попробуйте другое фото",
+            description: "Не удалось выполнить поиск по изображению",
             variant: "destructive",
           });
         } finally {
           setImageSearchLoading(false);
         }
       };
-
       reader.readAsDataURL(file);
     } catch (error) {
+      console.error("Failed to read file:", error);
+      setImageSearchLoading(false);
       toast({
         title: "Ошибка",
-        description: "Не удалось обработать изображение",
+        description: "Не удалось загрузить изображение",
         variant: "destructive",
       });
-      setImageSearchLoading(false);
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
     }
   };
 
-  const toggleFavorite = (id: number) => {
-    const newFavorites = favorites.includes(id)
-      ? favorites.filter((fav) => fav !== id)
-      : [...favorites, id];
+  const addToCartHandler = (product: Product) => {
+    addToCart(product);
+    toast({
+      title: "Товар добавлен в корзину",
+      duration: 2000,
+    });
+  };
+
+  const toggleFavorite = (productId: number) => {
+    const newFavorites = favorites.includes(productId)
+      ? favorites.filter((id) => id !== productId)
+      : [...favorites, productId];
 
     setFavorites(newFavorites);
     localStorage.setItem("favorites", JSON.stringify(newFavorites));
 
     toast({
-      title: favorites.includes(id)
+      title: favorites.includes(productId)
         ? "Удалено из избранного"
         : "Добавлено в избранное",
-      description: favorites.includes(id) ? "" : "Товар добавлен в избранное",
+      duration: 2000,
     });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
+  const handleAuthSuccess = (user: User) => {
+    setUser(user);
+    localStorage.setItem("user", JSON.stringify(user));
+    setShowAuth(false);
     toast({
-      title: "Выход выполнен",
-      description: "Вы успешно вышли из аккаунта",
+      title: "Вы вошли в систему",
+      duration: 2000,
     });
   };
-
-  const handleResetFilters = () => {
-    setSelectedBrands([]);
-    setSelectedTypes([]);
-    setPriceRange([0, 150000]);
-    setHasRemote(false);
-    setIsDimmable(false);
-    setHasColorChange(false);
-    setIsSale(false);
-    setIsNew(false);
-    setIsPickup(false);
-    setSelectedStyles([]);
-    setSelectedColors([]);
-    setBrandSearch("");
-    setStyleSearch("");
-    setColorSearch("");
-    setSizeRange({
-      height: [0, 3000],
-      length: [0, 3000],
-      depth: [0, 3000],
-      width: [0, 3000],
-      diameter: [0, 3000],
-      chainLength: [0, 3000],
-    });
-  };
-
-  const handleResetAll = () => {
-    setSearchQuery("");
-    setSelectedCategory("");
-    handleResetFilters();
-    setCurrentPage(1);
-  };
-
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const categoryNames: Record<string, string> = {
-    'chandelier': 'Люстры',
-    'lamp': 'Настольные лампы',
-    'sconce': 'Бра'
-  };
-
-  const catalogTitle = selectedCategory 
-    ? `${categoryNames[selectedCategory] || 'Каталог'} — купить в интернет-магазине Светит всем`
-    : 'Каталог светильников и люстр — купить с доставкой';
-
-  const catalogDescription = selectedCategory
-    ? `Большой выбор ${(categoryNames[selectedCategory] || '').toLowerCase()} с доставкой по России. Гарантия качества, акции и скидки.`
-    : 'Полный каталог люстр, настольных ламп и светильников. Качественное освещение для вашего дома.';
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <SEO 
-        title={catalogTitle}
-        description={catalogDescription}
+    <div className="min-h-screen flex flex-col bg-white">
+      <SEO
+        title="Каталог светильников — купить люстры, бра, торшеры | Светит всем"
+        description="Большой выбор люстр, светильников, бра и торшеров. Более 300 000 товаров с доставкой по всей России. Гарантия качества."
         canonicalPath="/catalog"
       />
       <Header
@@ -379,84 +266,94 @@ const Catalog = () => {
         onAuthClick={() => setShowAuth(true)}
       />
 
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <CatalogHeader user={user} onLogout={handleLogout} />
+      <main className="flex-1">
+        <div className="bg-primary py-4">
+          <div className="container mx-auto px-4">
+            <CategoryNavigation
+              categories={categories}
+              selected={selectedCategory}
+              onSelect={setSelectedCategory}
+            />
+          </div>
+        </div>
 
-        <CategoryNavigation
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-        />
-
-        <CatalogSearch
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          imageSearchLoading={imageSearchLoading}
-          onImageUploadClick={() => fileInputRef.current?.click()}
-          fileInputRef={fileInputRef}
-          onImageUpload={handleImageUpload}
-        />
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          <CatalogSidebar
-            products={products}
-            selectedBrands={selectedBrands}
-            setSelectedBrands={setSelectedBrands}
-            priceRange={priceRange}
-            setPriceRange={setPriceRange}
-            hasRemote={hasRemote}
-            setHasRemote={setHasRemote}
-            isDimmable={isDimmable}
-            setIsDimmable={setIsDimmable}
-            hasColorChange={hasColorChange}
-            setHasColorChange={setHasColorChange}
-            isSale={isSale}
-            setIsSale={setIsSale}
-            isNew={isNew}
-            setIsNew={setIsNew}
-            isPickup={isPickup}
-            setIsPickup={setIsPickup}
-            selectedStyles={selectedStyles}
-            setSelectedStyles={setSelectedStyles}
-            styleSearch={styleSearch}
-            setStyleSearch={setStyleSearch}
-            selectedColors={selectedColors}
-            setSelectedColors={setSelectedColors}
-            colorSearch={colorSearch}
-            setColorSearch={setColorSearch}
-            sizeRange={sizeRange}
-            setSizeRange={setSizeRange}
-            brandSearch={brandSearch}
-            setBrandSearch={setBrandSearch}
-            onResetFilters={handleResetFilters}
-            showMobileFilters={showMobileFilters}
-            setShowMobileFilters={setShowMobileFilters}
-          />
-
-          <CatalogContent
-            filteredProducts={paginatedProducts}
-            loading={loading}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onAddToCart={addToCart}
-            onResetAll={handleResetAll}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            totalCount={filteredProducts.length}
+        <div className="container mx-auto px-4 py-8">
+          <CatalogHeader
             totalProducts={totalProducts}
-            totalInDB={totalInDB}
+            onImageSearch={() => fileInputRef.current?.click()}
+            imageSearchLoading={imageSearchLoading}
           />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
+
+          <CatalogSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+
+          <div className="flex flex-col lg:flex-row gap-8 mt-8">
+            <CatalogSidebar
+              selectedBrands={selectedBrands}
+              onBrandsChange={setSelectedBrands}
+              priceRange={priceRange}
+              onPriceChange={setPriceRange}
+              hasRemote={hasRemote}
+              onRemoteChange={setHasRemote}
+              isDimmable={isDimmable}
+              onDimmableChange={setIsDimmable}
+              hasColorChange={hasColorChange}
+              onColorChangeChange={setHasColorChange}
+              isSale={isSale}
+              onSaleChange={setIsSale}
+              isNew={isNew}
+              onNewChange={setIsNew}
+              isPickup={isPickup}
+              onPickupChange={setIsPickup}
+              selectedStyles={selectedStyles}
+              onStylesChange={setSelectedStyles}
+              styleSearch={styleSearch}
+              onStyleSearchChange={setStyleSearch}
+              selectedColors={selectedColors}
+              onColorsChange={setSelectedColors}
+              colorSearch={colorSearch}
+              onColorSearchChange={setColorSearch}
+              sizeRange={sizeRange}
+              onSizeRangeChange={setSizeRange}
+              showMobileFilters={showMobileFilters}
+              onCloseMobileFilters={() => setShowMobileFilters(false)}
+              brandSearch={brandSearch}
+              onBrandSearchChange={setBrandSearch}
+            />
+
+            <CatalogContent
+              products={products}
+              favorites={favorites}
+              loading={loading}
+              onToggleFavorite={toggleFavorite}
+              onAddToCart={addToCartHandler}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              onShowFilters={() => setShowMobileFilters(true)}
+            />
+          </div>
         </div>
       </main>
 
-      <AuthDialog
-        open={showAuth}
-        onOpenChange={setShowAuth}
-        onAuthSuccess={(user) => setUser(user)}
-      />
-
       <Footer />
+
+      {showAuth && (
+        <AuthDialog
+          open={showAuth}
+          onClose={() => setShowAuth(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
     </div>
   );
 };
