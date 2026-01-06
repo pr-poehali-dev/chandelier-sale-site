@@ -22,8 +22,6 @@ interface CatalogContentProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   totalCount: number;
-  totalProducts?: number;
-  totalInDB?: number;
 }
 
 const CatalogContent = ({
@@ -37,8 +35,6 @@ const CatalogContent = ({
   totalPages,
   onPageChange,
   totalCount,
-  totalProducts = 0,
-  totalInDB = 0,
 }: CatalogContentProps) => {
   const renderPaginationItems = () => {
     const items = [];
@@ -92,20 +88,10 @@ const CatalogContent = ({
 
   return (
     <div className="flex-1">
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">
-            {loading ? "Загрузка..." : `Найдено товаров: ${totalCount}`}
-          </p>
-          {loading && (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          )}
-          {!loading && totalProducts > 0 && totalInDB > 0 && totalProducts < totalInDB && (
-            <span className="text-xs text-muted-foreground">
-              (загружено {totalProducts} из {totalInDB})
-            </span>
-          )}
-        </div>
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {loading ? "Загрузка..." : `Найдено товаров: ${totalCount}`}
+        </p>
         <Button variant="ghost" size="sm" onClick={onResetAll}>
           Сбросить всё
         </Button>

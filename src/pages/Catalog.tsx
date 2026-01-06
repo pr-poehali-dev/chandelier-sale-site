@@ -50,8 +50,7 @@ const Catalog = () => {
   const [brandSearch, setBrandSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [totalInDB, setTotalInDB] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = 30;
 
   const categories = [
     { value: "", label: "Все товары" },
@@ -111,47 +110,49 @@ const Catalog = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      const cachedProducts = sessionStorage.getItem('catalog_products');
+      const cacheTime = sessionStorage.getItem('catalog_cache_time');
+      const now = Date.now();
+      
+      if (cachedProducts && cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) {
+        const cached = JSON.parse(cachedProducts);
+        setProducts(cached);
+        setTotalProducts(cached.length);
+        setLoading(false);
+        return;
+      }
+
       let allProducts: Product[] = [];
       let offset = 0;
-      const limit = 500;
+      const limit = 50;
       let hasMore = true;
+      const maxProducts = 5000;
 
-      const firstBatch = await api.getProducts({ limit, offset });
-      allProducts = firstBatch.products;
-      const total = firstBatch.total || 0;
-      setTotalInDB(total);
+      while (hasMore && allProducts.length < maxProducts) {
+        try {
+          const data = await api.getProducts({ limit, offset });
+          
+          if (data.products.length === 0) {
+            hasMore = false;
+            break;
+          }
+          
+          allProducts = [...allProducts, ...data.products];
+          offset += limit;
+          
+          if (data.products.length < limit) {
+            hasMore = false;
+          }
+        } catch (err) {
+          console.error("Error loading batch:", err);
+          hasMore = false;
+        }
+      }
+      
       setProducts(allProducts);
       setTotalProducts(allProducts.length);
-
-      if (total > limit) {
-        const loadMoreBatches = async () => {
-          while (hasMore && allProducts.length < total) {
-            offset += limit;
-            try {
-              const data = await api.getProducts({ limit, offset });
-              if (data.products.length === 0) {
-                hasMore = false;
-                break;
-              }
-              allProducts = [...allProducts, ...data.products];
-              setProducts([...allProducts]);
-              setTotalProducts(allProducts.length);
-              
-              if (data.products.length < limit || allProducts.length >= total) {
-                hasMore = false;
-              }
-            } catch (err) {
-              console.error("Error loading batch:", err);
-              hasMore = false;
-            }
-          }
-        };
-        
-        setLoading(false);
-        loadMoreBatches();
-      } else {
-        setLoading(false);
-      }
+      sessionStorage.setItem('catalog_products', JSON.stringify(allProducts));
+      sessionStorage.setItem('catalog_cache_time', now.toString());
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
@@ -159,6 +160,7 @@ const Catalog = () => {
         description: "Не удалось загрузить товары",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -444,8 +446,6 @@ const Catalog = () => {
             totalPages={totalPages}
             onPageChange={handlePageChange}
             totalCount={filteredProducts.length}
-            totalProducts={totalProducts}
-            totalInDB={totalInDB}
           />
         </div>
       </main>

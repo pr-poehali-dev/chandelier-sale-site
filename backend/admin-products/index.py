@@ -62,7 +62,7 @@ def get_products(event: dict) -> dict:
     product_id = params.get('id')
     category = params.get('category')
     search = params.get('search')
-    limit = int(params.get('limit', 20))
+    limit = int(params.get('limit', 100))
     offset = int(params.get('offset', 0))
     
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -106,26 +106,9 @@ def get_products(event: dict) -> dict:
                 'body': json.dumps(product)
             }
         else:
-            count_query = f'''
-                SELECT COUNT(*) FROM {schema}.products WHERE 1=1
-            '''
-            count_params = []
-            
-            if category:
-                count_query += ' AND type = %s'
-                count_params.append(category)
-            
-            if search:
-                count_query += ' AND (name ILIKE %s OR description ILIKE %s OR brand ILIKE %s)'
-                search_term = f'%{search}%'
-                count_params.extend([search_term, search_term, search_term])
-            
-            cur.execute(count_query, count_params)
-            total_count = cur.fetchone()[0]
-            
             query = f'''
                 SELECT id, name, description, price, brand, type, image_url, 
-                       in_stock, rating, reviews, article
+                       in_stock, rating, reviews
                 FROM {schema}.products 
                 WHERE 1=1
             '''
@@ -136,9 +119,9 @@ def get_products(event: dict) -> dict:
                 params_list.append(category)
             
             if search:
-                query += ' AND (name ILIKE %s OR description ILIKE %s OR brand ILIKE %s)'
+                query += ' AND (name ILIKE %s OR description ILIKE %s)'
                 search_term = f'%{search}%'
-                params_list.extend([search_term, search_term, search_term])
+                params_list.extend([search_term, search_term])
             
             query += ' ORDER BY id DESC LIMIT %s OFFSET %s'
             params_list.extend([limit, offset])
@@ -158,14 +141,13 @@ def get_products(event: dict) -> dict:
                     'image_url': row[6],
                     'in_stock': row[7],
                     'rating': float(row[8]) if row[8] else 0,
-                    'reviews': row[9],
-                    'article': row[10] if len(row) > 10 else ''
+                    'reviews': row[9]
                 })
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'products': products, 'total': total_count})
+                'body': json.dumps({'products': products, 'total': len(products)})
             }
     finally:
         cur.close()
