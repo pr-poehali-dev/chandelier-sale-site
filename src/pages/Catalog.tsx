@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AuthDialog from "@/components/AuthDialog";
@@ -17,6 +17,8 @@ const Catalog = () => {
   const { toast } = useToast();
   const { addToCart, totalItems } = useCart();
   const [searchParams] = useSearchParams();
+  const { page: urlPage } = useParams();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,8 +50,7 @@ const Catalog = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [brandSearch, setBrandSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const currentPage = parseInt(urlPage || '1', 10);
   const [totalInDB, setTotalInDB] = useState(0);
   const itemsPerPage = 20;
 
@@ -74,8 +75,6 @@ const Catalog = () => {
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
-
-    loadProducts();
   }, []);
 
   useEffect(() => {
@@ -91,67 +90,58 @@ const Catalog = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1 && !searchQuery) {
+      navigate('/catalog');
+    } else if (!searchQuery) {
+      loadProducts();
+    }
   }, [
-    searchQuery,
     selectedBrands,
     selectedCategory,
     priceRange,
     hasRemote,
-    isDimmable,
-    hasColorChange,
-    isSale,
-    isNew,
-    isPickup,
-    selectedStyles,
-    selectedColors,
-    sizeRange,
   ]);
+
+  useEffect(() => {
+    if (!searchQuery) {
+      loadProducts();
+    }
+  }, [currentPage]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      let allProducts: Product[] = [];
-      let offset = 0;
-      const limit = 500;
-      let hasMore = true;
-
-      const firstBatch = await api.getProducts({ limit, offset });
-      allProducts = firstBatch.products;
-      const total = firstBatch.total || 0;
-      setTotalInDB(total);
-      setProducts(allProducts);
-      setTotalProducts(allProducts.length);
-
-      if (total > limit) {
-        const loadMoreBatches = async () => {
-          while (hasMore && allProducts.length < total) {
-            offset += limit;
-            try {
-              const data = await api.getProducts({ limit, offset });
-              if (data.products.length === 0) {
-                hasMore = false;
-                break;
-              }
-              allProducts = [...allProducts, ...data.products];
-              setProducts([...allProducts]);
-              setTotalProducts(allProducts.length);
-              
-              if (data.products.length < limit || allProducts.length >= total) {
-                hasMore = false;
-              }
-            } catch (err) {
-              console.error("Error loading batch:", err);
-              hasMore = false;
-            }
-          }
-        };
-        
-        setLoading(false);
-        loadMoreBatches();
-      } else {
-        setLoading(false);
+      const offset = (currentPage - 1) * itemsPerPage;
+      
+      const filters: any = {
+        limit: itemsPerPage,
+        offset: offset,
+      };
+      
+      if (selectedBrands.length > 0) {
+        filters.brand = selectedBrands[0];
       }
+      
+      if (selectedCategory) {
+        filters.type = selectedCategory;
+      }
+      
+      if (priceRange[0] > 0) {
+        filters.min_price = priceRange[0];
+      }
+      
+      if (priceRange[1] < 150000) {
+        filters.max_price = priceRange[1];
+      }
+      
+      if (hasRemote) {
+        filters.has_remote = 'true';
+      }
+
+      const data = await api.getProducts(filters);
+      setProducts(data.products);
+      setTotalInDB(data.total || 0);
+      setLoading(false);
     } catch (error) {
       console.error("Failed to load products:", error);
       toast({
@@ -172,15 +162,6 @@ const Catalog = () => {
       product.style?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesBrand =
-      selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-
-    const matchesPrice =
-      product.price >= priceRange[0] && product.price <= priceRange[1];
-
-    const matchesRemote = !hasRemote || product.has_remote;
     const matchesDimmable = !isDimmable || product.is_dimmable;
     const matchesColorChange = !hasColorChange || product.has_color_change;
     const matchesSale = !isSale || product.is_sale;
@@ -217,10 +198,6 @@ const Catalog = () => {
 
     return (
       matchesSearch &&
-      matchesBrand &&
-      matchesCategory &&
-      matchesPrice &&
-      matchesRemote &&
       matchesDimmable &&
       matchesColorChange &&
       matchesSale &&
@@ -337,18 +314,16 @@ const Catalog = () => {
     setSearchQuery("");
     setSelectedCategory("");
     handleResetFilters();
-    setCurrentPage(1);
+    navigate('/catalog');
   };
 
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedProducts = filteredProducts;
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const totalPages = Math.ceil(totalInDB / itemsPerPage);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    const path = page === 1 ? '/catalog' : `/catalog/${page}`;
+    navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -366,12 +341,14 @@ const Catalog = () => {
     ? `Большой выбор ${(categoryNames[selectedCategory] || '').toLowerCase()} с доставкой по России. Гарантия качества, акции и скидки.`
     : 'Полный каталог люстр, настольных ламп и светильников. Качественное освещение для вашего дома.';
 
+  const canonicalPath = currentPage === 1 ? '/catalog' : `/catalog/${currentPage}`;
+
   return (
     <div className="min-h-screen flex flex-col">
       <SEO 
         title={catalogTitle}
         description={catalogDescription}
-        canonicalPath="/catalog"
+        canonicalPath={canonicalPath}
       />
       <Header
         cartItemsCount={totalItems}
@@ -443,9 +420,7 @@ const Catalog = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
-            totalCount={filteredProducts.length}
-            totalProducts={totalProducts}
-            totalInDB={totalInDB}
+            totalCount={totalInDB}
           />
         </div>
       </main>
