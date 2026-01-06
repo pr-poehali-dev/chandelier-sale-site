@@ -85,11 +85,21 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     min_price = params.get('min_price')
     max_price = params.get('max_price')
     has_remote = params.get('has_remote')
+    date_from = params.get('date_from')
+    date_to = params.get('date_to')
+    sort_by = params.get('sort_by', 'id')
+    sort_order = params.get('sort_order', 'ASC')
     limit = int(params.get('limit', '100'))
     offset = int(params.get('offset', '0'))
     
     if limit > 500:
         limit = 500
+    
+    if sort_by not in ['id', 'created_at', 'price', 'name']:
+        sort_by = 'id'
+    
+    if sort_order.upper() not in ['ASC', 'DESC']:
+        sort_order = 'ASC'
     
     query = "SELECT * FROM products WHERE 1=1"
     count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
@@ -118,10 +128,18 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
         query += f" AND has_remote = {escape_sql(has_remote.lower() == 'true')}"
         count_query += f" AND has_remote = {escape_sql(has_remote.lower() == 'true')}"
     
+    if date_from:
+        query += f" AND created_at >= {escape_sql(date_from)}::timestamp"
+        count_query += f" AND created_at >= {escape_sql(date_from)}::timestamp"
+    
+    if date_to:
+        query += f" AND created_at <= {escape_sql(date_to)}::timestamp"
+        count_query += f" AND created_at <= {escape_sql(date_to)}::timestamp"
+    
     cur.execute(count_query)
     total_count = cur.fetchone()[0]
     
-    query += f" ORDER BY id LIMIT {limit} OFFSET {offset}"
+    query += f" ORDER BY {sort_by} {sort_order.upper()} LIMIT {limit} OFFSET {offset}"
     
     cur.execute(query)
     rows = cur.fetchall()
