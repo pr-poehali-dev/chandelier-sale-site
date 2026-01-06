@@ -10,7 +10,6 @@ import CatalogFilters from "./CatalogFilters";
 import { Product } from "@/lib/api";
 
 interface CatalogSidebarProps {
-  products: Product[];
   selectedBrands: string[];
   setSelectedBrands: (brands: string[]) => void;
   priceRange: number[];
@@ -52,7 +51,6 @@ interface CatalogSidebarProps {
 }
 
 const CatalogSidebar = ({
-  products,
   selectedBrands,
   setSelectedBrands,
   priceRange,
@@ -89,7 +87,6 @@ const CatalogSidebar = ({
     <>
       <aside className="hidden lg:block w-64 shrink-0">
         <CatalogFilters
-          products={products}
           selectedBrands={selectedBrands}
           setSelectedBrands={setSelectedBrands}
           priceRange={priceRange}
@@ -138,7 +135,6 @@ const CatalogSidebar = ({
           </SheetHeader>
           <div className="mt-6">
             <CatalogFilters
-              products={products}
               selectedBrands={selectedBrands}
               setSelectedBrands={setSelectedBrands}
               priceRange={priceRange}

@@ -7,7 +7,6 @@ import Icon from '@/components/ui/icon';
 import { Product } from '@/lib/api';
 
 interface CatalogFiltersProps {
-  products: Product[];
   selectedBrands: string[];
   setSelectedBrands: (brands: string[]) => void;
   priceRange: number[];
@@ -47,7 +46,6 @@ interface CatalogFiltersProps {
 }
 
 const CatalogFilters = ({
-  products,
   selectedBrands,
   setSelectedBrands,
   priceRange,
@@ -78,9 +76,28 @@ const CatalogFilters = ({
   setBrandSearch,
   onResetFilters,
 }: CatalogFiltersProps) => {
-  const brands = Array.from(new Set(products.map(p => p.brand))).sort();
-  const colors = Array.from(new Set(products.map(p => p.color).filter(Boolean))).sort();
-  const styles = Array.from(new Set(products.map(p => p.style).filter(Boolean))).sort();
+  // Популярные бренды (статический список для быстрой фильтрации)
+  const brands = [
+    'Favourite', 'Eurosvet', 'ST Luce', 'Maytoni', 'Arte Lamp',
+    'Odeon Light', 'Lightstar', 'Lumion', 'Citilux', 'MW-Light',
+    'Chiaro', 'Mantra', 'Ideal Lux', 'Eglo', 'Toplight',
+    'F-promo', 'Escada', 'Crystal Lux', 'Lucia Tucci', 'Stilfort',
+    'Globo', 'Paulmann', 'Massive', 'Donolux', 'Brilliant'
+  ].sort();
+  
+  // Популярные цвета
+  const colors = [
+    'Белый', 'Черный', 'Золотой', 'Серебристый', 'Хром',
+    'Бронза', 'Медь', 'Коричневый', 'Серый', 'Прозрачный',
+    'Бежевый', 'Слоновая кость', 'Никель', 'Матовый черный', 'Матовое золото'
+  ].sort();
+  
+  // Популярные стили
+  const styles = [
+    'Современный', 'Классический', 'Лофт', 'Минимализм', 'Хай-тек',
+    'Скандинавский', 'Прованс', 'Барокко', 'Модерн', 'Ар-деко',
+    'Кантри', 'Этнический', 'Эко', 'Индустриальный', 'Ретро'
+  ].sort();
 
   const filteredBrands = brandSearch
     ? brands.filter(brand => brand.toLowerCase().includes(brandSearch.toLowerCase()))

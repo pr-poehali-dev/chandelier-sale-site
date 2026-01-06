@@ -299,35 +299,55 @@ const Catalog = () => {
           <div className="flex flex-col lg:flex-row gap-8 mt-8">
             <CatalogSidebar
               selectedBrands={selectedBrands}
-              onBrandsChange={setSelectedBrands}
+              setSelectedBrands={setSelectedBrands}
               priceRange={priceRange}
-              onPriceChange={setPriceRange}
+              setPriceRange={setPriceRange}
               hasRemote={hasRemote}
-              onRemoteChange={setHasRemote}
+              setHasRemote={setHasRemote}
               isDimmable={isDimmable}
-              onDimmableChange={setIsDimmable}
+              setIsDimmable={setIsDimmable}
               hasColorChange={hasColorChange}
-              onColorChangeChange={setHasColorChange}
+              setHasColorChange={setHasColorChange}
               isSale={isSale}
-              onSaleChange={setIsSale}
+              setIsSale={setIsSale}
               isNew={isNew}
-              onNewChange={setIsNew}
+              setIsNew={setIsNew}
               isPickup={isPickup}
-              onPickupChange={setIsPickup}
+              setIsPickup={setIsPickup}
               selectedStyles={selectedStyles}
-              onStylesChange={setSelectedStyles}
+              setSelectedStyles={setSelectedStyles}
               styleSearch={styleSearch}
-              onStyleSearchChange={setStyleSearch}
+              setStyleSearch={setStyleSearch}
               selectedColors={selectedColors}
-              onColorsChange={setSelectedColors}
+              setSelectedColors={setSelectedColors}
               colorSearch={colorSearch}
-              onColorSearchChange={setColorSearch}
+              setColorSearch={setColorSearch}
               sizeRange={sizeRange}
-              onSizeRangeChange={setSizeRange}
+              setSizeRange={setSizeRange}
               showMobileFilters={showMobileFilters}
-              onCloseMobileFilters={() => setShowMobileFilters(false)}
+              setShowMobileFilters={setShowMobileFilters}
               brandSearch={brandSearch}
-              onBrandSearchChange={setBrandSearch}
+              setBrandSearch={setBrandSearch}
+              onResetFilters={() => {
+                setSelectedBrands([]);
+                setPriceRange([0, 150000]);
+                setHasRemote(false);
+                setIsDimmable(false);
+                setHasColorChange(false);
+                setIsSale(false);
+                setIsNew(false);
+                setIsPickup(false);
+                setSelectedStyles([]);
+                setSelectedColors([]);
+                setSizeRange({
+                  height: [0, 3000],
+                  length: [0, 3000],
+                  depth: [0, 3000],
+                  width: [0, 3000],
+                  diameter: [0, 3000],
+                  chainLength: [0, 3000],
+                });
+              }}
             />
 
             <CatalogContent
