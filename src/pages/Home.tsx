@@ -68,11 +68,16 @@ const Home = () => {
 
   const loadFeaturedProducts = async () => {
     setLoading(true);
+    console.log('🏠 Загрузка товаров на главной странице...');
+    const startTime = Date.now();
+    
     try {
       const data = await api.getProducts({ limit: 6 });
+      const loadTime = Date.now() - startTime;
+      console.log(`✅ Главная: загружено ${data.products.length} товаров за ${loadTime}мс`);
       setFeaturedProducts(data.products);
     } catch (error) {
-      console.error('Failed to load products:', error);
+      console.error('❌ Главная: ошибка загрузки товаров:', error);
     } finally {
       setLoading(false);
     }

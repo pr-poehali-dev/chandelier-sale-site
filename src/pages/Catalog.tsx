@@ -105,12 +105,25 @@ const Catalog = () => {
   ]);
 
   useEffect(() => {
-    loadProducts();
+    const timer = setTimeout(() => {
+      console.log('🔄 Загрузка товаров с фильтрами:', {
+        page: currentPage,
+        query: searchQuery,
+        brands: selectedBrands.length,
+        category: selectedCategory,
+        styles: selectedStyles.length,
+        colors: selectedColors.length,
+      });
+      loadProducts();
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [currentPage, searchQuery, selectedBrands, selectedCategory, priceRange, hasRemote, isDimmable, hasColorChange, isSale, isNew, isPickup, selectedStyles, selectedColors]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
+      const startTime = Date.now();
       
       const filters: any = {
         limit: itemsPerPage,
@@ -131,11 +144,16 @@ const Catalog = () => {
       if (selectedStyles.length > 0) filters.styles = selectedStyles.join(',');
       if (selectedColors.length > 0) filters.colors = selectedColors.join(',');
 
+      console.log('📡 API запрос с фильтрами:', filters);
       const data = await api.getProducts(filters);
+      
+      const loadTime = Date.now() - startTime;
+      console.log(`✅ Товары загружены: ${data.products.length} шт. за ${loadTime}мс`);
+      
       setProducts(data.products);
       setTotalProducts(data.total || 0);
     } catch (error) {
-      console.error("Failed to load products:", error);
+      console.error("❌ Ошибка загрузки товаров:", error);
       toast({
         title: "Ошибка загрузки",
         description: "Не удалось загрузить товары",
