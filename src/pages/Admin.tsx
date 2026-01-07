@@ -138,6 +138,13 @@ const Admin = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      console.log('🔄 Загрузка товаров админки с фильтрами:', {
+        query: searchQuery,
+        brand: filterBrand,
+        type: filterType,
+        stock: filterStock,
+        category: filterCategory,
+      });
       loadProducts();
     }, 300);
 
@@ -161,10 +168,11 @@ const Admin = () => {
       if (filterStock === 'out') filters.in_stock = 'false';
       if (filterCategory !== 'all') filters.category = filterCategory;
 
+      console.log('📡 API запрос админки с фильтрами:', filters);
       const data = await api.getProducts(filters);
       
       const loadTime = Date.now() - startTime;
-      console.log(`✅ Товары загружены: ${data.products.length} шт. за ${loadTime}мс`);
+      console.log(`✅ Товары админки загружены: ${data.products.length} шт. за ${loadTime}мс`);
       
       setProducts(data.products);
     } catch (error) {
