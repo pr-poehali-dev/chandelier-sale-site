@@ -59,6 +59,9 @@ const Admin = () => {
   const [partnerApplications, setPartnerApplications] = useState<any[]>([]);
   const [partnersLoading, setPartnersLoading] = useState(false);
   const [filterCategory, setFilterCategory] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const itemsPerPage = 100;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -137,8 +140,13 @@ const Admin = () => {
   }, [navigate]);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterBrand, filterType, filterStock, filterCategory]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       console.log('🔄 Загрузка товаров админки с фильтрами:', {
+        page: currentPage,
         query: searchQuery,
         brand: filterBrand,
         type: filterType,
@@ -149,7 +157,7 @@ const Admin = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, filterBrand, filterType, filterStock, filterCategory]);
+  }, [currentPage, searchQuery, filterBrand, filterType, filterStock, filterCategory]);
 
   const loadProducts = async () => {
     try {
@@ -157,8 +165,8 @@ const Admin = () => {
       const startTime = Date.now();
       
       const filters: any = {
-        limit: 1000,
-        offset: 0,
+        limit: itemsPerPage,
+        offset: (currentPage - 1) * itemsPerPage,
       };
 
       if (searchQuery) filters.search = searchQuery;
@@ -172,9 +180,10 @@ const Admin = () => {
       const data = await api.getProducts(filters);
       
       const loadTime = Date.now() - startTime;
-      console.log(`✅ Товары админки загружены: ${data.products.length} шт. за ${loadTime}мс`);
+      console.log(`✅ Товары админки загружены: ${data.products.length} шт. за ${loadTime}мс (всего: ${data.total})`);
       
       setProducts(data.products);
+      setTotalProducts(data.total || 0);
     } catch (error) {
       console.error("Load products error:", error);
       const errorMessage =
@@ -1046,23 +1055,7 @@ const Admin = () => {
     new Set(products.map((p) => p.type).filter((t) => t)),
   ).sort();
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.description &&
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesBrand = filterBrand === "all" || product.brand === filterBrand;
-    const matchesType = filterType === "all" || product.type === filterType;
-    const matchesStock =
-      filterStock === "all" ||
-      (filterStock === "inStock" && product.inStock) ||
-      (filterStock === "outOfStock" && !product.inStock);
-
-    return matchesSearch && matchesBrand && matchesType && matchesStock;
-  });
+  const filteredProducts = products;
 
   const stats = {
     totalProducts: products.length,
@@ -1465,7 +1458,7 @@ const Admin = () => {
             </div>
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Показано: {filteredProducts.length} из {products.length} товаров
+                Показано: {products.length} из {totalProducts} товаров (страница {currentPage})
               </p>
               {(searchQuery ||
                 filterBrand !== "all" ||
@@ -1492,7 +1485,7 @@ const Admin = () => {
         <Tabs defaultValue="products" className="space-y-6">
           <TabsList>
             <TabsTrigger value="products">
-              Товары ({products.length})
+              Товары ({totalProducts})
             </TabsTrigger>
             <TabsTrigger value="orders">Заказы ({orders.length})</TabsTrigger>
             <TabsTrigger value="partners">Партнёры ({partnerApplications.length})</TabsTrigger>
@@ -1629,6 +1622,35 @@ const Admin = () => {
                 </Card>
               ))}
             </div>
+
+            {totalProducts > itemsPerPage && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="ChevronLeft" className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Страница {currentPage} из {Math.ceil(totalProducts / itemsPerPage)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({totalProducts} товаров)
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalProducts / itemsPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalProducts / itemsPerPage)}
+                >
+                  <Icon name="ChevronRight" className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="orders">
