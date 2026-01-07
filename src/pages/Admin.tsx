@@ -139,28 +139,27 @@ const Admin = () => {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      let allProducts: Product[] = [];
-      let offset = 0;
-      const limit = 100;
-      let hasMore = true;
-
-      while (hasMore) {
-        const data = await api.getProducts({ limit, offset });
+      const initialLimit = 50;
+      const data = await api.getProducts({ limit: initialLimit, offset: 0 });
+      
+      setProducts(data.products);
+      setLoading(false);
+      
+      if (data.total > initialLimit) {
+        let offset = initialLimit;
+        const batchSize = 100;
         
-        if (data.products.length === 0) {
-          hasMore = false;
-          break;
-        }
-        
-        allProducts = [...allProducts, ...data.products];
-        offset += limit;
-        
-        if (data.products.length < limit) {
-          hasMore = false;
+        while (offset < data.total) {
+          const nextData = await api.getProducts({ limit: batchSize, offset });
+          
+          if (nextData.products.length === 0) break;
+          
+          setProducts(prev => [...prev, ...nextData.products]);
+          offset += batchSize;
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-
-      setProducts(allProducts);
     } catch (error) {
       console.error("Load products error:", error);
       const errorMessage =
