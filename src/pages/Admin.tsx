@@ -550,94 +550,91 @@ const Admin = () => {
   };
 
   const processJsonData = async (jsonData: any[]) => {
-    let successCount = 0;
-    let errorCount = 0;
+    const parsePrice = (priceStr: any): number => {
+      if (typeof priceStr === "number") return priceStr;
+      const cleaned = String(priceStr).replace(/[^\d.]/g, "");
+      return Number(cleaned) || 0;
+    };
 
-    for (const row of jsonData) {
-      try {
-        const parsePrice = (priceStr: any): number => {
-          if (typeof priceStr === "number") return priceStr;
-          const cleaned = String(priceStr).replace(/[^\d.]/g, "");
-          return Number(cleaned) || 0;
-        };
+    const parseBool = (val: any): boolean => {
+      if (typeof val === "boolean") return val;
+      return val === "Да" || val === "да" || val === "true" || val === true;
+    };
 
-        const parseBool = (val: any): boolean => {
-          if (typeof val === "boolean") return val;
-          return val === "Да" || val === "да" || val === "true" || val === true;
-        };
+    const parseInt = (val: any): number | undefined => {
+      if (!val) return undefined;
+      const num = Number(String(val).replace(/[^\d]/g, ""));
+      return isNaN(num) ? undefined : num;
+    };
 
-        const parseInt = (val: any): number | undefined => {
-          if (!val) return undefined;
-          const num = Number(String(val).replace(/[^\d]/g, ""));
-          return isNaN(num) ? undefined : num;
-        };
+    // Подготовка всех товаров в массив
+    const products = jsonData.map(row => ({
+      name: row["Название"] || row["name"] || "",
+      description: row["Описание"] || row["description"] || "",
+      price: parsePrice(row["Цена"] || row["price"]),
+      brand: row["Бренд"] || row["brand"] || "",
+      type: row["Тип"] || row["type"] || "люстра",
+      image: row["Изображение"] || row["image"] || "",
+      inStock: parseBool(row["В наличии"] || row["inStock"]),
+      rating: Number(row["Рейтинг"] || row["rating"] || 5),
+      reviews: parseInt(row["Отзывы"] || row["reviews"]) || 0,
 
-        const productData = {
-          name: row["Название"] || row["name"] || "",
-          description: row["Описание"] || row["description"] || "",
-          price: parsePrice(row["Цена"] || row["price"]),
-          brand: row["Бренд"] || row["brand"] || "",
-          type: row["Тип"] || row["type"] || "люстра",
-          image: row["Изображение"] || row["image"] || "",
-          inStock: parseBool(row["В наличии"] || row["inStock"]),
-          rating: Number(row["Рейтинг"] || row["rating"] || 5),
-          reviews: parseInt(row["Отзывы"] || row["reviews"]) || 0,
+      article: row["article"] || row["Артикул"],
+      brandCountry: row["brand_country"] || row["Страна бренда"],
+      manufacturerCountry: row["manufacture_country"] || row["Страна производства"],
+      collection: row["collection"] || row["Коллекция"],
+      style: row["style"] || row["Стиль"],
 
-          article: row["article"] || row["Артикул"],
-          brandCountry: row["brand_country"] || row["Страна бренда"],
-          manufacturerCountry: row["manufacture_country"] || row["Страна производства"],
-          collection: row["collection"] || row["Коллекция"],
-          style: row["style"] || row["Стиль"],
+      height: parseInt(row["height_mm"] || row["Высота"]),
+      diameter: parseInt(row["diameter_mm"] || row["Диаметр"]),
 
-          height: parseInt(row["height_mm"] || row["Высота"]),
-          diameter: parseInt(row["diameter_mm"] || row["Диаметр"]),
+      socketType: row["socket"] || row["Цоколь"],
+      lampType: row["lamp_type"] || row["Тип лампы"],
+      lampCount: parseInt(row["lamps_count"] || row["Количество ламп"]),
+      lampPower: parseInt(row["lamp_power_w"] || row["Мощность лампы"]),
+      totalPower: parseInt(row["total_power_w"] || row["Общая мощность"]),
+      lightingArea: parseInt(row["light_area_m2"] || row["Площадь освещения"]),
+      voltage: parseInt(row["voltage_v"] || row["Напряжение"]),
 
-          socketType: row["socket"] || row["Цоколь"],
-          lampType: row["lamp_type"] || row["Тип лампы"],
-          lampCount: parseInt(row["lamps_count"] || row["Количество ламп"]),
-          lampPower: parseInt(row["lamp_power_w"] || row["Мощность лампы"]),
-          totalPower: parseInt(row["total_power_w"] || row["Общая мощность"]),
-          lightingArea: parseInt(row["light_area_m2"] || row["Площадь освещения"]),
-          voltage: parseInt(row["voltage_v"] || row["Напряжение"]),
+      materials: row["materials"] || row["Материалы"],
+      frameMaterial: row["frame_material"] || row["Материал каркаса"],
+      shadeMaterial: row["shade_material"] || row["Материал плафона"],
+      color: row["color"] || row["Цвет"],
+      frameColor: row["frame_color"] || row["Цвет каркаса"],
+      shadeColor: row["shade_color"] || row["Цвет плафона"],
 
-          materials: row["materials"] || row["Материалы"],
-          frameMaterial: row["frame_material"] || row["Материал каркаса"],
-          shadeMaterial: row["shade_material"] || row["Материал плафона"],
-          color: row["color"] || row["Цвет"],
-          frameColor: row["frame_color"] || row["Цвет каркаса"],
-          shadeColor: row["shade_color"] || row["Цвет плафона"],
+      shadeDirection: row["shade_direction"] || row["Направление плафонов"],
+      diffuserType: row["diffuser_type"] || row["Тип рассеивателя"],
+      diffuserShape: row["diffuser_shape"] || row["Форма рассеивателя"],
 
-          shadeDirection: row["shade_direction"] || row["Направление плафонов"],
-          diffuserType: row["diffuser_type"] || row["Тип рассеивателя"],
-          diffuserShape: row["diffuser_shape"] || row["Форма рассеивателя"],
+      ipRating: row["ip_rating"] || row["Степень защиты"],
+      interior: row["interior"] || row["Интерьер"],
+      place: row["place"] || row["Место установки"],
+      suspendedCeiling: parseBool(row["suspended_ceiling"] || row["Натяжной потолок"]),
+      mountType: row["mount_type"] || row["Тип крепления"],
 
-          ipRating: row["ip_rating"] || row["Степень защиты"],
-          interior: row["interior"] || row["Интерьер"],
-          place: row["place"] || row["Место установки"],
-          suspendedCeiling: parseBool(row["suspended_ceiling"] || row["Натяжной потолок"]),
-          mountType: row["mount_type"] || row["Тип крепления"],
+      officialWarranty: row["official_warranty"] || row["Официальная гарантия"],
+      shopWarranty: row["shop_warranty"] || row["Гарантия магазина"],
 
-          officialWarranty: row["official_warranty"] || row["Официальная гарантия"],
-          shopWarranty: row["shop_warranty"] || row["Гарантия магазина"],
+      section: row["section"] || row["Раздел"],
+      catalog: row["catalog"] || row["Каталог"],
+      subcategory: row["subcategory"] || row["Подкатегория"],
+    })).filter(p => p.name && p.price && p.brand); // Фильтруем невалидные
 
-          section: row["section"] || row["Раздел"],
-          catalog: row["catalog"] || row["Каталог"],
-          subcategory: row["subcategory"] || row["Подкатегория"],
-        };
-
-        if (!productData.name || !productData.price || !productData.brand) {
-          errorCount++;
-          continue;
-        }
-
-        await api.createProduct(productData);
-        successCount++;
-      } catch (err) {
-        errorCount++;
-      }
+    // Один запрос для всех товаров!
+    try {
+      const result = await api.bulkCreateProducts(products);
+      return { 
+        successCount: result.success || 0, 
+        errorCount: result.errors || 0 
+      };
+    } catch (err) {
+      console.error('Bulk import error:', err);
+      return { 
+        successCount: 0, 
+        errorCount: products.length 
+      };
     }
-
-    return { successCount, errorCount };
   };
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

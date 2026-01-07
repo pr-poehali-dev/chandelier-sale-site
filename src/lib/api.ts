@@ -252,6 +252,21 @@ export const api = {
     return response.json();
   },
 
+  async bulkCreateProducts(products: Omit<Product, 'id'>[]): Promise<{ success: number; errors: number; details?: string[] }> {
+    const response = await fetch(API_URLS.products, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Bulk create error:', response.status, errorText);
+      throw new Error(`Failed to bulk create products: ${response.status}`);
+    }
+    return response.json();
+  },
+
   async updateProduct(id: number, data: Partial<Omit<Product, 'id'>>): Promise<Product> {
     const response = await fetch(`${API_URLS.products}?id=${id}`, {
       method: 'PUT',
