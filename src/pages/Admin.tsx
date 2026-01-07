@@ -1625,6 +1625,14 @@ const Admin = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  <Icon name="ChevronsLeft" className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
@@ -1632,7 +1640,23 @@ const Admin = () => {
                 </Button>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Страница {currentPage} из {Math.ceil(totalProducts / itemsPerPage)}
+                    Страница
+                  </span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={Math.ceil(totalProducts / itemsPerPage)}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= Math.ceil(totalProducts / itemsPerPage)) {
+                        setCurrentPage(page);
+                      }
+                    }}
+                    className="w-16 h-8 text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    из {Math.ceil(totalProducts / itemsPerPage)}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     ({totalProducts} товаров)
@@ -1645,6 +1669,14 @@ const Admin = () => {
                   disabled={currentPage >= Math.ceil(totalProducts / itemsPerPage)}
                 >
                   <Icon name="ChevronRight" className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.ceil(totalProducts / itemsPerPage))}
+                  disabled={currentPage >= Math.ceil(totalProducts / itemsPerPage)}
+                >
+                  <Icon name="ChevronsRight" className="h-4 w-4" />
                 </Button>
               </div>
             )}
