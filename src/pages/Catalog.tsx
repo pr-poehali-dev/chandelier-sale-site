@@ -285,7 +285,7 @@ const Catalog = () => {
       />
 
       <main className="flex-1">
-        <div className="bg-primary py-4">
+        <div className="py-4 bg-[#ffffff]">
           <div className="container mx-auto px-4">
             <CategoryNavigation
               categories={categories}
