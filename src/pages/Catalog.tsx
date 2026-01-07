@@ -88,23 +88,6 @@ const Catalog = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    searchQuery,
-    selectedBrands,
-    selectedCategory,
-    priceRange,
-    hasRemote,
-    isDimmable,
-    hasColorChange,
-    isSale,
-    isNew,
-    isPickup,
-    selectedStyles,
-    selectedColors,
-  ]);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       console.log('🔄 Загрузка товаров с фильтрами:', {
         page: currentPage,
@@ -115,7 +98,7 @@ const Catalog = () => {
         colors: selectedColors.length,
       });
       loadProducts();
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [currentPage, searchQuery, selectedBrands, selectedCategory, priceRange, hasRemote, isDimmable, hasColorChange, isSale, isNew, isPickup, selectedStyles, selectedColors]);

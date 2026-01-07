@@ -53,7 +53,7 @@ const ChatWidget = () => {
   useEffect(() => {
     if (isOpen && sessionId) {
       loadMessages();
-      const interval = setInterval(loadMessages, 3000);
+      const interval = setInterval(loadMessages, 30000);
       return () => clearInterval(interval);
     }
   }, [isOpen, sessionId]);
