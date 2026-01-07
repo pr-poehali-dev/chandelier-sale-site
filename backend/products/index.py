@@ -97,8 +97,8 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     limit = int(params.get('limit', '20'))
     offset = int(params.get('offset', '0'))
     
-    if limit > 100:
-        limit = 100
+    if limit > 10000:
+        limit = 10000
     
     query = "SELECT * FROM products WHERE 1=1"
     count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
