@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Cleanup duplicates endpoint",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "deleted": "number",
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
