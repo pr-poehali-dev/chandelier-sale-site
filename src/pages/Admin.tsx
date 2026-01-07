@@ -157,7 +157,7 @@ const Admin = () => {
       const startTime = Date.now();
       
       const filters: any = {
-        limit: 10000,
+        limit: 1000,
         offset: 0,
       };
 
