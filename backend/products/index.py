@@ -522,7 +522,7 @@ def handle_bulk_delete(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     }
 
 def handle_bulk_import(products: list, cur, conn) -> Dict[str, Any]:
-    '''Массовый импорт товаров (один запрос вместо N)'''
+    '''Массовый импорт товаров через единый INSERT (без циклов)'''
     if not products:
         cur.close()
         conn.close()
@@ -533,104 +533,136 @@ def handle_bulk_import(products: list, cur, conn) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    success_count = 0
+    # Подготовка VALUES для массового INSERT
+    values_parts = []
     error_count = 0
     errors = []
     
     for product in products:
-        try:
-            name = product.get('name')
-            price = product.get('price')
-            brand = product.get('brand')
-            product_type = product.get('type')
-            
-            if not all([name, brand, product_type]) or price is None:
-                error_count += 1
-                errors.append(f"Пропущено: {name or 'Без названия'} - отсутствуют обязательные поля")
-                continue
-            
-            image = product.get('image', '')
-            description = product.get('description', '')
-            in_stock = product.get('inStock', True)
-            rating = product.get('rating', 5.0)
-            reviews = product.get('reviews', 0)
-            has_remote = product.get('hasRemote', False)
-            is_dimmable = product.get('isDimmable', False)
-            has_color_change = product.get('hasColorChange', False)
-            
-            article = product.get('article')
-            brand_country = product.get('brandCountry')
-            manufacturer_country = product.get('manufacturerCountry')
-            collection = product.get('collection')
-            style = product.get('style')
-            lamp_type = product.get('lampType')
-            socket_type = product.get('socketType')
-            bulb_type = product.get('bulbType')
-            lamp_count = product.get('lampCount')
-            lamp_power = product.get('lampPower')
-            total_power = product.get('totalPower')
-            lighting_area = product.get('lightingArea')
-            voltage = product.get('voltage')
-            color = product.get('color')
-            height = product.get('height')
-            diameter = product.get('diameter')
-            length = product.get('length')
-            width = product.get('width')
-            depth = product.get('depth')
-            chain_length = product.get('chainLength')
-            materials = product.get('materials')
-            frame_material = product.get('frameMaterial')
-            shade_material = product.get('shadeMaterial')
-            frame_color = product.get('frameColor')
-            shade_color = product.get('shadeColor')
-            shade_direction = product.get('shadeDirection')
-            diffuser_type = product.get('diffuserType')
-            diffuser_shape = product.get('diffuserShape')
-            ip_rating = product.get('ipRating')
-            interior = product.get('interior')
-            place = product.get('place')
-            suspended_ceiling = product.get('suspendedCeiling', False)
-            mount_type = product.get('mountType')
-            official_warranty = product.get('officialWarranty')
-            shop_warranty = product.get('shopWarranty')
-            section = product.get('section')
-            catalog = product.get('catalog')
-            subcategory = product.get('subcategory')
-            images = product.get('images', [])
-            
-            query = f"""
-            INSERT INTO products (
-                name, description, price, brand, type, image_url, in_stock, rating, reviews,
-                has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
-                collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power, total_power,
-                lighting_area, voltage, color, height, diameter, length, width, depth, chain_length,
-                materials, frame_material, shade_material, frame_color, shade_color, shade_direction,
-                diffuser_type, diffuser_shape, ip_rating, interior, place, suspended_ceiling, mount_type,
-                official_warranty, shop_warranty, section, catalog, subcategory, images
-            ) VALUES (
-                {escape_sql(name)}, {escape_sql(description)}, {price}, {escape_sql(brand)}, {escape_sql(product_type)},
-                {escape_sql(image)}, {escape_sql(in_stock)}, {rating}, {reviews}, {escape_sql(has_remote)},
-                {escape_sql(is_dimmable)}, {escape_sql(has_color_change)}, {escape_sql(article)}, {escape_sql(brand_country)},
-                {escape_sql(manufacturer_country)}, {escape_sql(collection)}, {escape_sql(style)}, {escape_sql(lamp_type)},
-                {escape_sql(socket_type)}, {escape_sql(bulb_type)}, {escape_sql(lamp_count)}, {escape_sql(lamp_power)},
-                {escape_sql(total_power)}, {escape_sql(lighting_area)}, {escape_sql(voltage)}, {escape_sql(color)},
-                {escape_sql(height)}, {escape_sql(diameter)}, {escape_sql(length)}, {escape_sql(width)}, {escape_sql(depth)},
-                {escape_sql(chain_length)}, {escape_sql(materials)}, {escape_sql(frame_material)}, {escape_sql(shade_material)},
-                {escape_sql(frame_color)}, {escape_sql(shade_color)}, {escape_sql(shade_direction)}, {escape_sql(diffuser_type)},
-                {escape_sql(diffuser_shape)}, {escape_sql(ip_rating)}, {escape_sql(interior)}, {escape_sql(place)},
-                {escape_sql(suspended_ceiling)}, {escape_sql(mount_type)}, {escape_sql(official_warranty)}, {escape_sql(shop_warranty)},
-                {escape_sql(section)}, {escape_sql(catalog)}, {escape_sql(subcategory)}, {escape_sql(images)}
-            )
-            """
-            
-            cur.execute(query)
-            success_count += 1
-            
-        except Exception as e:
+        name = product.get('name')
+        price = product.get('price')
+        brand = product.get('brand')
+        product_type = product.get('type')
+        
+        if not all([name, brand, product_type]) or price is None:
             error_count += 1
-            errors.append(f"Ошибка: {name or 'Без названия'} - {str(e)}")
+            errors.append(f"Пропущено: {name or 'Без названия'} - отсутствуют обязательные поля")
+            continue
+        
+        image = product.get('image', '')
+        description = product.get('description', '')
+        in_stock = product.get('inStock', True)
+        rating = product.get('rating', 5.0)
+        reviews = product.get('reviews', 0)
+        has_remote = product.get('hasRemote', False)
+        is_dimmable = product.get('isDimmable', False)
+        has_color_change = product.get('hasColorChange', False)
+        
+        article = product.get('article')
+        brand_country = product.get('brandCountry')
+        manufacturer_country = product.get('manufacturerCountry')
+        collection = product.get('collection')
+        style = product.get('style')
+        lamp_type = product.get('lampType')
+        socket_type = product.get('socketType')
+        bulb_type = product.get('bulbType')
+        lamp_count = product.get('lampCount')
+        lamp_power = product.get('lampPower')
+        total_power = product.get('totalPower')
+        lighting_area = product.get('lightingArea')
+        voltage = product.get('voltage')
+        color = product.get('color')
+        height = product.get('height')
+        diameter = product.get('diameter')
+        length = product.get('length')
+        width = product.get('width')
+        depth = product.get('depth')
+        chain_length = product.get('chainLength')
+        materials = product.get('materials')
+        frame_material = product.get('frameMaterial')
+        shade_material = product.get('shadeMaterial')
+        frame_color = product.get('frameColor')
+        shade_color = product.get('shadeColor')
+        shade_direction = product.get('shadeDirection')
+        diffuser_type = product.get('diffuserType')
+        diffuser_shape = product.get('diffuserShape')
+        ip_rating = product.get('ipRating')
+        interior = product.get('interior')
+        place = product.get('place')
+        suspended_ceiling = product.get('suspendedCeiling', False)
+        mount_type = product.get('mountType')
+        official_warranty = product.get('officialWarranty')
+        shop_warranty = product.get('shopWarranty')
+        section = product.get('section')
+        catalog = product.get('catalog')
+        subcategory = product.get('subcategory')
+        images = product.get('images', [])
+        
+        # Формируем одну строку VALUES
+        value_row = f"""(
+            {escape_sql(name)}, {escape_sql(description)}, {price}, {escape_sql(brand)}, {escape_sql(product_type)},
+            {escape_sql(image)}, {escape_sql(in_stock)}, {rating}, {reviews}, {escape_sql(has_remote)},
+            {escape_sql(is_dimmable)}, {escape_sql(has_color_change)}, {escape_sql(article)}, {escape_sql(brand_country)},
+            {escape_sql(manufacturer_country)}, {escape_sql(collection)}, {escape_sql(style)}, {escape_sql(lamp_type)},
+            {escape_sql(socket_type)}, {escape_sql(bulb_type)}, {escape_sql(lamp_count)}, {escape_sql(lamp_power)},
+            {escape_sql(total_power)}, {escape_sql(lighting_area)}, {escape_sql(voltage)}, {escape_sql(color)},
+            {escape_sql(height)}, {escape_sql(diameter)}, {escape_sql(length)}, {escape_sql(width)}, {escape_sql(depth)},
+            {escape_sql(chain_length)}, {escape_sql(materials)}, {escape_sql(frame_material)}, {escape_sql(shade_material)},
+            {escape_sql(frame_color)}, {escape_sql(shade_color)}, {escape_sql(shade_direction)}, {escape_sql(diffuser_type)},
+            {escape_sql(diffuser_shape)}, {escape_sql(ip_rating)}, {escape_sql(interior)}, {escape_sql(place)},
+            {escape_sql(suspended_ceiling)}, {escape_sql(mount_type)}, {escape_sql(official_warranty)}, {escape_sql(shop_warranty)},
+            {escape_sql(section)}, {escape_sql(catalog)}, {escape_sql(subcategory)}, {escape_sql(images)}
+        )"""
+        values_parts.append(value_row)
     
-    conn.commit()
+    if not values_parts:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'message': 'Нет валидных товаров для импорта',
+                'success': 0,
+                'errors': error_count,
+                'details': errors[:10]
+            }),
+            'isBase64Encoded': False
+        }
+    
+    # Единый INSERT со всеми значениями
+    query = f"""
+    INSERT INTO t_p94134469_chandelier_sale_site.products (
+        name, description, price, brand, type, image_url, in_stock, rating, reviews,
+        has_remote, is_dimmable, has_color_change, article, brand_country, manufacturer_country,
+        collection, style, lamp_type, socket_type, bulb_type, lamp_count, lamp_power, total_power,
+        lighting_area, voltage, color, height, diameter, length, width, depth, chain_length,
+        materials, frame_material, shade_material, frame_color, shade_color, shade_direction,
+        diffuser_type, diffuser_shape, ip_rating, interior, place, suspended_ceiling, mount_type,
+        official_warranty, shop_warranty, section, catalog, subcategory, images
+    ) VALUES
+    {', '.join(values_parts)}
+    """
+    
+    try:
+        cur.execute(query)
+        success_count = len(values_parts)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({
+                'error': f'Ошибка массового импорта: {str(e)}',
+                'success': 0,
+                'errors': error_count + len(values_parts)
+            }),
+            'isBase64Encoded': False
+        }
+    
     cur.close()
     conn.close()
     
