@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -1877,6 +1878,7 @@ const Admin = () => {
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Детали заказа №{selectedOrder?.id}</DialogTitle>
+              <DialogDescription>Информация о заказе и товарах</DialogDescription>
             </DialogHeader>
             {selectedOrder && (
               <div className="space-y-4">
@@ -1992,6 +1994,7 @@ const Admin = () => {
             <DialogTitle>
               {isNewProduct ? "Добавить товар" : "Редактировать товар"}
             </DialogTitle>
+            <DialogDescription>Заполните информацию о товаре</DialogDescription>
             <p className="text-sm text-muted-foreground mt-2">
               <span className="text-red-500">*</span> — обязательные поля
             </p>
@@ -2992,6 +2995,7 @@ const Admin = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Импорт товаров с сайтов</DialogTitle>
+            <DialogDescription>Введите URL-адреса товаров для массового импорта</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
