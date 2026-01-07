@@ -100,8 +100,8 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
     if limit > 1000:
         limit = 1000
     
-    query = "SELECT * FROM products WHERE 1=1"
-    count_query = "SELECT COUNT(*) FROM products WHERE 1=1"
+    query = "SELECT * FROM t_p94134469_chandelier_sale_site.products WHERE 1=1"
+    count_query = "SELECT COUNT(*) FROM t_p94134469_chandelier_sale_site.products WHERE 1=1"
     
     if product_id:
         query += f" AND id = {int(product_id)}"
@@ -119,8 +119,8 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             count_query += f" AND brand IN ({','.join(brands_escaped)})"
     
     if category:
-        query += f" AND category = {escape_sql(category)}"
-        count_query += f" AND category = {escape_sql(category)}"
+        query += f" AND catalog = {escape_sql(category)}"
+        count_query += f" AND catalog = {escape_sql(category)}"
     
     if product_type:
         query += f" AND type = {escape_sql(product_type)}"

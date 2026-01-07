@@ -10,6 +10,7 @@ interface ProductGridProps {
   loading?: boolean;
   onToggleFavorite: (id: number) => void;
   onAddToCart: (product: Product) => void;
+  viewMode?: 'grid' | 'list';
 }
 
 const ProductGrid = ({
@@ -18,6 +19,7 @@ const ProductGrid = ({
   loading,
   onToggleFavorite,
   onAddToCart,
+  viewMode = 'grid',
 }: ProductGridProps) => {
   if (loading) {
     return (
@@ -41,7 +43,7 @@ const ProductGrid = ({
     );
   }
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
       {products.map((product) => {
         const isLuxury = product.price > 50000;
         const isBudget = product.price < 10000;
@@ -53,11 +55,11 @@ const ProductGrid = ({
               isLuxury ? 'border-2 border-yellow-500/20 hover:border-yellow-500/40' :
               isBudget ? 'border-green-500/20 hover:border-green-500/40' :
               'hover:border-primary/20'
-            }`}
+            } ${viewMode === 'list' ? 'flex flex-row' : ''}`}
             onClick={() => window.location.href = `/product/${product.id}`}
           >
-            <CardHeader className="p-0 relative">
-              <div className="aspect-square overflow-hidden bg-muted relative">
+            <CardHeader className={`p-0 relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
+              <div className={`overflow-hidden bg-muted relative ${viewMode === 'list' ? 'h-full' : 'aspect-square'}`}>
                 <img
                   src={product.image}
                   alt={product.name}
@@ -100,7 +102,7 @@ const ProductGrid = ({
                 />
               </Button>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className={`p-4 space-y-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="flex items-center gap-1">
                   {product.brand}

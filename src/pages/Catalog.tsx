@@ -289,8 +289,8 @@ const Catalog = () => {
           <div className="container mx-auto px-4">
             <CategoryNavigation
               categories={categories}
-              selected={selectedCategory}
-              onSelect={setSelectedCategory}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
             />
           </div>
         </div>

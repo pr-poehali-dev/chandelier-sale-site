@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ProductGrid from "./ProductGrid";
 import { Product } from "@/lib/api";
+import Icon from "@/components/ui/icon";
 import {
   Pagination,
   PaginationContent,
@@ -90,6 +92,8 @@ const CatalogContent = ({
     return items;
   };
 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
   return (
     <div className="flex-1">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
@@ -106,9 +110,29 @@ const CatalogContent = ({
             </span>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={onResetAll}>
-          Сбросить всё
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex border rounded-md">
+            <Button 
+              variant={viewMode === 'grid' ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setViewMode('grid')}
+              className="rounded-r-none"
+            >
+              <Icon name="Grid3x3" className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === 'list' ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setViewMode('list')}
+              className="rounded-l-none"
+            >
+              <Icon name="List" className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onResetAll}>
+            Сбросить всё
+          </Button>
+        </div>
       </div>
 
       <ProductGrid
@@ -117,6 +141,7 @@ const CatalogContent = ({
         loading={loading}
         onToggleFavorite={onToggleFavorite}
         onAddToCart={onAddToCart}
+        viewMode={viewMode}
       />
 
       {totalPages > 1 && (
