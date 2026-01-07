@@ -131,35 +131,41 @@ const Admin = () => {
       return;
     }
 
-    loadProducts();
     loadOrders();
     loadPartnerApplications();
   }, [navigate]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProducts();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, filterBrand, filterType, filterStock, filterCategory]);
+
   const loadProducts = async () => {
-    setLoading(true);
     try {
-      const initialLimit = 50;
-      const data = await api.getProducts({ limit: initialLimit, offset: 0 });
+      setLoading(true);
+      const startTime = Date.now();
+      
+      const filters: any = {
+        limit: 10000,
+        offset: 0,
+      };
+
+      if (searchQuery) filters.search = searchQuery;
+      if (filterBrand !== 'all') filters.brands = filterBrand;
+      if (filterType !== 'all') filters.category = filterType;
+      if (filterStock === 'in') filters.in_stock = 'true';
+      if (filterStock === 'out') filters.in_stock = 'false';
+      if (filterCategory !== 'all') filters.category = filterCategory;
+
+      const data = await api.getProducts(filters);
+      
+      const loadTime = Date.now() - startTime;
+      console.log(`✅ Товары загружены: ${data.products.length} шт. за ${loadTime}мс`);
       
       setProducts(data.products);
-      setLoading(false);
-      
-      if (data.total > initialLimit) {
-        let offset = initialLimit;
-        const batchSize = 100;
-        
-        while (offset < data.total) {
-          const nextData = await api.getProducts({ limit: batchSize, offset });
-          
-          if (nextData.products.length === 0) break;
-          
-          setProducts(prev => [...prev, ...nextData.products]);
-          offset += batchSize;
-          
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
     } catch (error) {
       console.error("Load products error:", error);
       const errorMessage =
