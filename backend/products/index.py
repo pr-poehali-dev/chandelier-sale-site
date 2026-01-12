@@ -170,6 +170,9 @@ def handle_get(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             query += f" AND color IN ({','.join(colors_escaped)})"
             count_query += f" AND color IN ({','.join(colors_escaped)})"
     
+    query += " AND in_stock = TRUE"
+    count_query += " AND in_stock = TRUE"
+    
     cur.execute(count_query)
     total_count = cur.fetchone()[0]
     
