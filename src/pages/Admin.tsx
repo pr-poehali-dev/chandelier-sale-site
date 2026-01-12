@@ -503,6 +503,64 @@ const Admin = () => {
     }
   };
 
+  const handleMarkSelectedInStock = async () => {
+    if (selectedProducts.length === 0) return;
+    if (!confirm(`Отметить ${selectedProducts.length} товаров как "в наличии"?`)) return;
+
+    setUpdatingStock(true);
+    try {
+      for (const id of selectedProducts) {
+        await api.updateProduct(id, { inStock: true });
+      }
+
+      toast({
+        title: "Успешно",
+        description: `Обновлено товаров: ${selectedProducts.length}`,
+      });
+
+      setSelectedProducts([]);
+      await loadProducts();
+    } catch (error) {
+      console.error("Update stock error:", error);
+      toast({
+        title: "Ошибка обновления",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingStock(false);
+    }
+  };
+
+  const handleMarkSelectedOutOfStock = async () => {
+    if (selectedProducts.length === 0) return;
+    if (!confirm(`Отметить ${selectedProducts.length} товаров как "нет в наличии"?`)) return;
+
+    setUpdatingStock(true);
+    try {
+      for (const id of selectedProducts) {
+        await api.updateProduct(id, { inStock: false });
+      }
+
+      toast({
+        title: "Успешно",
+        description: `Обновлено товаров: ${selectedProducts.length}`,
+      });
+
+      setSelectedProducts([]);
+      await loadProducts();
+    } catch (error) {
+      console.error("Update stock error:", error);
+      toast({
+        title: "Ошибка обновления",
+        description: error instanceof Error ? error.message : "Неизвестная ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingStock(false);
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (selectedProducts.length === 0) return;
     if (!confirm(`Удалить ${selectedProducts.length} товаров?`)) return;
@@ -1490,7 +1548,7 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="products">
-            <div className="mb-4">
+            <div className="mb-4 flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" onClick={toggleSelectAll}>
                 <Icon
                   name={
@@ -1504,6 +1562,30 @@ const Admin = () => {
                   ? "Снять выделение"
                   : "Выбрать все"}
               </Button>
+              
+              {selectedProducts.length > 0 && (
+                <>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handleMarkSelectedInStock}
+                    disabled={updatingStock}
+                  >
+                    <Icon name="Check" className="mr-2 h-4 w-4" />
+                    В наличии ({selectedProducts.length})
+                  </Button>
+                  
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleMarkSelectedOutOfStock}
+                    disabled={updatingStock}
+                  >
+                    <Icon name="X" className="mr-2 h-4 w-4" />
+                    Нет в наличии ({selectedProducts.length})
+                  </Button>
+                </>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
