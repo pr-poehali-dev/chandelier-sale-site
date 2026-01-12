@@ -452,17 +452,32 @@ def handle_put(event: Dict[str, Any], cur, conn) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    query = f"UPDATE products SET {', '.join(updates)} WHERE id = {int(product_id)}"
+    query = f"UPDATE products SET {', '.join(updates)} WHERE id = {int(product_id)} RETURNING *"
     
     cur.execute(query)
+    updated_product = cur.fetchone()
     conn.commit()
+    
+    if not updated_product:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Product not found'}),
+            'isBase64Encoded': False
+        }
+    
+    columns = [desc[0] for desc in cur.description]
+    product_data = dict(zip(columns, updated_product))
+    
     cur.close()
     conn.close()
     
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({'message': 'Product updated'}),
+        'body': json.dumps(product_data, cls=DecimalEncoder),
         'isBase64Encoded': False
     }
 
