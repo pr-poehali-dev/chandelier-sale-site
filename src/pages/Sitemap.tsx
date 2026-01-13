@@ -11,7 +11,7 @@ const Sitemap = () => {
   const generateSitemap = async () => {
     try {
       const products = await api.getProducts();
-      const baseUrl = 'https://lux-light.online';
+      const baseUrl = 'https://светит.shop';
       const today = new Date().toISOString().split('T')[0];
 
       const staticPages = [

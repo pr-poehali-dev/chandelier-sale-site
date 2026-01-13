@@ -7,7 +7,7 @@ Disallow: /profile
 Disallow: /cart
 
 # Sitemap
-Sitemap: https://lux-light.online/sitemap.xml
+Sitemap: https://светит.shop/sitemap.xml
 
 # Яндекс
 User-agent: Yandex

@@ -17,7 +17,7 @@ const SEO = ({
   canonicalPath 
 }: SEOProps) => {
   const location = useLocation();
-  const baseUrl = 'https://lux-light.online';
+  const baseUrl = 'https://светит.shop';
   const defaultTitle = 'Люстры и светильники — купить в интернет-магазине с доставкой по России';
   const defaultDescription = 'Большой выбор люстр, настольных ламп, бра и светильников известных брендов. Гарантия качества, быстрая доставка по России, акции и скидки до 50%.';
   const defaultImage = 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/og-image-1766397458210.png';
