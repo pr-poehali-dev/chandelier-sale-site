@@ -3,7 +3,7 @@
   <!-- Главная страница -->
   <url>
     <loc>https://светит.shop/</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -11,7 +11,7 @@
   <!-- Каталог -->
   <url>
     <loc>https://светит.shop/catalog</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -19,21 +19,21 @@
   <!-- Категории каталога -->
   <url>
     <loc>https://светит.shop/catalog?type=chandelier</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://светит.shop/catalog?type=lamp</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://светит.shop/catalog?type=sconce</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -41,7 +41,7 @@
   <!-- О компании -->
   <url>
     <loc>https://светит.shop/about</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -49,7 +49,7 @@
   <!-- Доставка -->
   <url>
     <loc>https://светит.shop/delivery</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -57,7 +57,7 @@
   <!-- Блог -->
   <url>
     <loc>https://светит.shop/blog</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -65,7 +65,7 @@
   <!-- Контакты -->
   <url>
     <loc>https://светит.shop/contacts</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -73,8 +73,16 @@
   <!-- Партнёрство -->
   <url>
     <loc>https://светит.shop/collaboration</loc>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  
+  <!-- Корзина -->
+  <url>
+    <loc>https://светит.shop/cart</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>
