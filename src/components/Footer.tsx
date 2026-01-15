@@ -23,6 +23,7 @@ const Footer = () => {
               <li><Link to="/catalog?type=lamp" className="text-muted-foreground hover:text-primary">Настольные лампы</Link></li>
               <li><Link to="/catalog?type=sconce" className="text-muted-foreground hover:text-primary">Бра</Link></li>
               <li><Link to="/catalog?type=spotlight" className="text-muted-foreground hover:text-primary">Споты</Link></li>
+              <li><Link to="/catalog?type=track" className="text-muted-foreground hover:text-primary">Трековые светильники</Link></li>
             </ul>
           </div>
 

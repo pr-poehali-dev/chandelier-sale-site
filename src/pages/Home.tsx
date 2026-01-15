@@ -36,6 +36,11 @@ const Home = () => {
       image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/2544184f-df96-433d-8e76-14c189cae2d4.jpg',
       link: '/catalog?type=sconce',
     },
+    {
+      name: 'Трековые светильники',
+      image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/8b58c88a-caa8-4802-bfd8-fea8c222b354.jpg',
+      link: '/catalog?type=track',
+    },
   ];
 
   const features = [
@@ -136,7 +141,7 @@ const Home = () => {
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
           Популярные категории
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {categories.map((category, index) => (
             <Link
               key={category.name}
