@@ -132,16 +132,16 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-16 container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+      <section className="py-20 container mx-auto px-4">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
           Популярные категории
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {categories.map((category, index) => (
             <Link
               key={category.name}
               to={category.link}
-              className="group relative overflow-hidden rounded-xl aspect-square animate-scale-in"
+              className="group relative overflow-hidden rounded-2xl aspect-[4/5] animate-scale-in shadow-xl hover:shadow-2xl transition-all duration-300"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <img
@@ -149,10 +149,10 @@ const Home = () => {
                 alt={category.name}
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                <h3 className="text-white text-2xl font-bold">{category.name}</h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-8">
+                <h3 className="text-white text-3xl md:text-4xl font-bold group-hover:translate-y-[-8px] transition-transform duration-300">{category.name}</h3>
               </div>
             </Link>
           ))}
