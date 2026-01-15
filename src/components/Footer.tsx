@@ -34,6 +34,16 @@ const Footer = () => {
               <li><Link to="/collaboration" className="text-muted-foreground hover:text-primary">Сотрудничество</Link></li>
               <li><Link to="/blog" className="text-muted-foreground hover:text-primary">Блог</Link></li>
               <li><Link to="/contacts" className="text-muted-foreground hover:text-primary">Контакты</Link></li>
+              <li>
+                <a 
+                  href="https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/bucket/oferta_svetit_vsem.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Оферта
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -73,16 +83,6 @@ const Footer = () => {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; 2024 Светит всем. Все права защищены.</p>
-          <p className="mt-2">
-            <a 
-              href="https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/bucket/oferta_svetit_vsem.pdf" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:text-primary underline"
-            >
-              Оферта
-            </a>
-          </p>
         </div>
       </div>
     </footer>
