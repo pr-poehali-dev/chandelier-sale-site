@@ -83,6 +83,8 @@ const Footer = () => {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>&copy; 2024 Светит всем. Все права защищены.</p>
+          <p className="mt-2">ИП Антипин Александр Владимирович</p>
+          <p className="mt-1">ИНН 027315098098 | ОГРНИП 324028000109082</p>
         </div>
       </div>
     </footer>

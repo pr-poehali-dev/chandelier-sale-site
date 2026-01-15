@@ -41,6 +41,14 @@ const About = () => {
                   помочь вам с выбором идеального освещения для любого интерьера.
                 </p>
               </div>
+              <div className="mt-8 p-6 bg-muted rounded-lg">
+                <h3 className="font-semibold mb-3">Реквизиты</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p><span className="font-medium">ИП:</span> Антипин Александр Владимирович</p>
+                  <p><span className="font-medium">ИНН:</span> 027315098098</p>
+                  <p><span className="font-medium">ОГРНИП:</span> 324028000109082</p>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {stats.map((stat, index) => (
