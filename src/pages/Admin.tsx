@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api, Product, Order } from "@/lib/api";
 import ChatTab from "@/components/admin/ChatTab";
 import BestDealsManager from "@/components/admin/BestDealsManager";
+import DebugPanel, { LogEntry } from "@/components/admin/DebugPanel";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -63,6 +64,20 @@ const Admin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const itemsPerPage = 100;
+  const [debugLogs, setDebugLogs] = useState<LogEntry[]>([]);
+
+  const addLog = (level: LogEntry["level"], category: string, message: string, details?: any) => {
+    const log: LogEntry = {
+      id: `${Date.now()}-${Math.random()}`,
+      timestamp: new Date(),
+      level,
+      category,
+      message,
+      details,
+    };
+    setDebugLogs((prev) => [...prev, log]);
+    console.log(`[${level.toUpperCase()}] ${category}: ${message}`, details || "");
+  };
 
   const [formData, setFormData] = useState({
     name: "",
@@ -177,10 +192,16 @@ const Admin = () => {
       if (filterStock === 'out') filters.in_stock = 'false';
       if (filterCategory !== 'all') filters.category = filterCategory;
 
+      addLog("info", "Загрузка товаров", "Отправка запроса к API", filters);
       console.log('📡 API запрос админки с фильтрами:', filters);
       const data = await api.getProducts(filters);
       
       const loadTime = Date.now() - startTime;
+      addLog("success", "Загрузка товаров", `Товары загружены: ${data.products.length} шт. за ${loadTime}мс`, {
+        count: data.products.length,
+        total: data.total,
+        loadTime,
+      });
       console.log(`✅ Товары админки загружены: ${data.products.length} шт. за ${loadTime}мс (всего: ${data.total})`);
       
       setProducts(data.products);
@@ -189,6 +210,9 @@ const Admin = () => {
       console.error("Load products error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Неизвестная ошибка";
+      addLog("error", "Загрузка товаров", errorMessage, {
+        error: error instanceof Error ? error.stack : String(error),
+      });
       toast({
         title: "Ошибка загрузки товаров",
         description: `${errorMessage}. Проверьте подключение к интернету или обновите страницу.`,
@@ -418,13 +442,17 @@ const Admin = () => {
   const handleSave = async () => {
     try {
       if (isNewProduct) {
+        addLog("info", "Сохранение товара", "Создание нового товара", formData);
         await api.createProduct(formData);
+        addLog("success", "Сохранение товара", "Товар успешно создан");
         toast({
           title: "Успешно",
           description: "Товар создан",
         });
       } else if (editingProduct) {
+        addLog("info", "Сохранение товара", `Обновление товара #${editingProduct.id}`, formData);
         await api.updateProduct(editingProduct.id, formData);
+        addLog("success", "Сохранение товара", `Товар #${editingProduct.id} успешно обновлён`);
         toast({
           title: "Успешно",
           description: "Товар обновлён",
@@ -437,6 +465,10 @@ const Admin = () => {
       const errorMessage =
         error instanceof Error ? error.message : "Неизвестная ошибка";
       const action = isNewProduct ? "создать" : "обновить";
+      addLog("error", "Сохранение товара", `Не удалось ${action} товар: ${errorMessage}`, {
+        error: error instanceof Error ? error.stack : String(error),
+        formData,
+      });
       toast({
         title: `Не удалось ${action} товар`,
         description: `${errorMessage}. Проверьте заполнение обязательных полей (название, цена, бренд, тип).`,
@@ -1550,6 +1582,10 @@ const Admin = () => {
               Выгодные цены
             </TabsTrigger>
             <TabsTrigger value="chat">Чат</TabsTrigger>
+            <TabsTrigger value="debug">
+              <Icon name="Bug" className="mr-2 h-4 w-4" />
+              Debug ({debugLogs.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -2022,6 +2058,10 @@ const Admin = () => {
           <TabsContent value="best-deals">
             <BestDealsManager />
           </TabsContent>
+
+          <TabsContent value="debug">
+            <DebugPanel logs={debugLogs} onClear={() => setDebugLogs([])} />
+          </TabsContent>
         </Tabs>
 
         <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
@@ -2234,9 +2274,21 @@ const Admin = () => {
                     className="hidden"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (!file) return;
+                      if (!file) {
+                        addLog("warning", "Загрузка изображения", "Файл не выбран");
+                        return;
+                      }
+
+                      addLog("info", "Загрузка изображения", `Начало загрузки: ${file.name}`, {
+                        fileName: file.name,
+                        fileSize: file.size,
+                        fileType: file.type,
+                      });
 
                       if (!file.type.startsWith("image/")) {
+                        addLog("error", "Загрузка изображения", "Неверный тип файла", {
+                          fileType: file.type,
+                        });
                         toast({
                           title: "Ошибка",
                           description: "Выберите изображение",
@@ -2251,6 +2303,10 @@ const Admin = () => {
                         const formDataUpload = new FormData();
                         formDataUpload.append("file", file);
 
+                        addLog("info", "Загрузка изображения", "Отправка запроса на сервер", {
+                          url: "https://api.poehali.dev/upload",
+                        });
+
                         const response = await fetch(
                           "https://api.poehali.dev/upload",
                           {
@@ -2259,9 +2315,26 @@ const Admin = () => {
                           },
                         );
 
-                        if (!response.ok) throw new Error("Upload failed");
+                        addLog("info", "Загрузка изображения", `Ответ сервера: ${response.status}`, {
+                          status: response.status,
+                          statusText: response.statusText,
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          addLog("error", "Загрузка изображения", "Ошибка сервера", {
+                            status: response.status,
+                            statusText: response.statusText,
+                            errorText,
+                          });
+                          throw new Error(`Upload failed: ${response.status} ${errorText}`);
+                        }
 
                         const data = await response.json();
+                        addLog("success", "Загрузка изображения", "Изображение успешно загружено", {
+                          url: data.url,
+                        });
+                        
                         setFormData((prev) => ({ ...prev, image: data.url }));
 
                         toast({
@@ -2269,6 +2342,10 @@ const Admin = () => {
                           description: "Изображение загружено",
                         });
                       } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
+                        addLog("error", "Загрузка изображения", errorMessage, {
+                          error: error instanceof Error ? error.stack : String(error),
+                        });
                         toast({
                           title: "Ошибка",
                           description: "Не удалось загрузить изображение",
