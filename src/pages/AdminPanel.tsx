@@ -37,6 +37,8 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'add' | 'list' | 'best-deals'>('list');
+  
+  console.log('AdminPanel activeTab:', activeTab);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
