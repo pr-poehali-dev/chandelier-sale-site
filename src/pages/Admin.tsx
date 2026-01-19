@@ -2355,7 +2355,7 @@ const Admin = () => {
                           fileSize: file.size,
                         });
 
-                        const uploadResponse = await fetch('https://api.poehali.dev/api/storage/upload', {
+                        const uploadResponse = await fetch('https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f', {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',

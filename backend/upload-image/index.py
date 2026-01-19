@@ -17,26 +17,30 @@ def handler(event: dict, context) -> dict:
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Authorization'
             },
-            'body': ''
+            'body': '',
+            'isBase64Encoded': False
         }
     
     if method != 'POST':
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Метод не поддерживается'})
+            'body': json.dumps({'error': 'Метод не поддерживается'}),
+            'isBase64Encoded': False
         }
     
     try:
         body = json.loads(event.get('body', '{}'))
-        image_data = body.get('image')
+        image_data = body.get('file') or body.get('image')
         filename = body.get('filename', f'{uuid.uuid4()}.jpg')
+        content_type_from_body = body.get('contentType', '')
         
         if not image_data:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Изображение не предоставлено'})
+                'body': json.dumps({'error': 'Изображение не предоставлено'}),
+                'isBase64Encoded': False
             }
         
         # Декодируем base64 изображение
@@ -45,12 +49,17 @@ def handler(event: dict, context) -> dict:
         
         image_bytes = base64.b64decode(image_data)
         
-        # Определяем content type по расширению
-        content_type = 'image/jpeg'
-        if filename.lower().endswith('.png'):
-            content_type = 'image/png'
-        elif filename.lower().endswith('.webp'):
-            content_type = 'image/webp'
+        # Определяем content type
+        if content_type_from_body:
+            content_type = content_type_from_body
+        else:
+            content_type = 'image/jpeg'
+            if filename.lower().endswith('.png'):
+                content_type = 'image/png'
+            elif filename.lower().endswith('.webp'):
+                content_type = 'image/webp'
+            elif filename.lower().endswith('.gif'):
+                content_type = 'image/gif'
         
         # Создаем путь для сохранения
         folder = body.get('folder', 'products')
@@ -81,12 +90,14 @@ def handler(event: dict, context) -> dict:
                 'message': 'Изображение успешно загружено',
                 'url': cdn_url,
                 'key': key
-            })
+            }),
+            'isBase64Encoded': False
         }
     
     except Exception as e:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e)})
+            'body': json.dumps({'error': str(e)}),
+            'isBase64Encoded': False
         }
