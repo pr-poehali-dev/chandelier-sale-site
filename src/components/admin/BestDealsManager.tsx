@@ -206,7 +206,17 @@ const BestDealsManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Управление выгодными предложениями</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Управление выгодными предложениями</h2>
+          <a 
+            href="/best-deals" 
+            target="_blank"
+            className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-1"
+          >
+            <Icon name="ExternalLink" className="h-3 w-3" />
+            Открыть страницу "Товары по выгодным ценам"
+          </a>
+        </div>
         <Button onClick={() => setShowAddForm(!showAddForm)}>
           <Icon name={showAddForm ? 'X' : 'Plus'} className="h-4 w-4 mr-2" />
           {showAddForm ? 'Отмена' : 'Добавить товар'}
