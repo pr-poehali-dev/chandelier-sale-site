@@ -7,6 +7,7 @@ import { CartProvider } from "./contexts/CartContext";
 import ChatWidget from "./components/ChatWidget";
 import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
+import BestDeals from "./pages/BestDeals";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import About from "./pages/About";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/catalog/:page" element={<Catalog />} />
+            <Route path="/best-deals" element={<BestDeals />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/about" element={<About />} />

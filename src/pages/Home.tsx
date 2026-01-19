@@ -133,7 +133,10 @@ const Home = () => {
                 <Link to="/about">О компании</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/catalog">Товары по самым выгодным ценам в России</Link>
+                <Link to="/best-deals">
+                  <Icon name="Percent" className="mr-2 h-5 w-5" />
+                  Товары по самым выгодным ценам
+                </Link>
               </Button>
             </div>
           </div>
