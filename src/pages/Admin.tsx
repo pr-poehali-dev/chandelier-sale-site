@@ -30,6 +30,7 @@ import Icon from "@/components/ui/icon";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product, Order } from "@/lib/api";
 import ChatTab from "@/components/admin/ChatTab";
+import BestDealsManager from "@/components/admin/BestDealsManager";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -1544,6 +1545,10 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="orders">Заказы ({orders.length})</TabsTrigger>
             <TabsTrigger value="partners">Партнёры ({partnerApplications.length})</TabsTrigger>
+            <TabsTrigger value="best-deals">
+              <Icon name="Percent" className="mr-2 h-4 w-4" />
+              Выгодные цены
+            </TabsTrigger>
             <TabsTrigger value="chat">Чат</TabsTrigger>
           </TabsList>
 
@@ -2012,6 +2017,10 @@ const Admin = () => {
 
           <TabsContent value="chat">
             <ChatTab />
+          </TabsContent>
+
+          <TabsContent value="best-deals">
+            <BestDealsManager />
           </TabsContent>
         </Tabs>
 
