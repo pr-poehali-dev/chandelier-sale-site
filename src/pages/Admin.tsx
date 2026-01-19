@@ -2300,42 +2300,58 @@ const Admin = () => {
                       setUploadingImage(true);
 
                       try {
-                        const formDataUpload = new FormData();
-                        formDataUpload.append("file", file);
+                        addLog("info", "Загрузка изображения", "Конвертация в base64");
 
-                        addLog("info", "Загрузка изображения", "Отправка запроса на сервер", {
-                          url: "https://api.poehali.dev/upload",
+                        const reader = new FileReader();
+                        const base64Promise = new Promise<string>((resolve, reject) => {
+                          reader.onload = () => resolve(reader.result as string);
+                          reader.onerror = reject;
+                          reader.readAsDataURL(file);
                         });
 
-                        const response = await fetch(
-                          "https://api.poehali.dev/upload",
-                          {
-                            method: "POST",
-                            body: formDataUpload,
+                        const base64Data = await base64Promise;
+                        const base64String = base64Data.split(',')[1];
+
+                        addLog("info", "Загрузка изображения", "Отправка на сервер хранилища", {
+                          fileName: file.name,
+                          fileSize: file.size,
+                        });
+
+                        const uploadResponse = await fetch('https://api.poehali.dev/api/storage/upload', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
                           },
-                        );
-
-                        addLog("info", "Загрузка изображения", `Ответ сервера: ${response.status}`, {
-                          status: response.status,
-                          statusText: response.statusText,
+                          body: JSON.stringify({
+                            file: base64String,
+                            filename: file.name,
+                            contentType: file.type,
+                          }),
                         });
 
-                        if (!response.ok) {
-                          const errorText = await response.text();
-                          addLog("error", "Загрузка изображения", "Ошибка сервера", {
-                            status: response.status,
-                            statusText: response.statusText,
+                        addLog("info", "Загрузка изображения", `Ответ сервера: ${uploadResponse.status}`, {
+                          status: uploadResponse.status,
+                          statusText: uploadResponse.statusText,
+                        });
+
+                        if (!uploadResponse.ok) {
+                          const errorText = await uploadResponse.text();
+                          addLog("error", "Загрузка изображения", "Ошибка сервера хранилища", {
+                            status: uploadResponse.status,
+                            statusText: uploadResponse.statusText,
                             errorText,
                           });
-                          throw new Error(`Upload failed: ${response.status} ${errorText}`);
+                          throw new Error(`Upload failed: ${uploadResponse.status}`);
                         }
 
-                        const data = await response.json();
+                        const uploadData = await uploadResponse.json();
+                        const imageUrl = uploadData.url;
+
                         addLog("success", "Загрузка изображения", "Изображение успешно загружено", {
-                          url: data.url,
+                          url: imageUrl,
                         });
                         
-                        setFormData((prev) => ({ ...prev, image: data.url }));
+                        setFormData((prev) => ({ ...prev, image: imageUrl }));
 
                         toast({
                           title: "Успешно",
