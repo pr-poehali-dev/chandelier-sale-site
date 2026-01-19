@@ -2283,15 +2283,53 @@ const Admin = () => {
                         fileName: file.name,
                         fileSize: file.size,
                         fileType: file.type,
+                        fileExtension: file.name.split('.').pop(),
                       });
 
-                      if (!file.type.startsWith("image/")) {
-                        addLog("error", "Загрузка изображения", "Неверный тип файла", {
+                      // Проверка MIME-типа и расширения файла
+                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+                      const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+                      if (!file.type.startsWith("image/") || !allowedTypes.includes(file.type)) {
+                        addLog("error", "Загрузка изображения", "Неверный формат файла", {
                           fileType: file.type,
+                          fileName: file.name,
+                          allowedTypes,
                         });
                         toast({
-                          title: "Ошибка",
-                          description: "Выберите изображение",
+                          title: "Ошибка формата",
+                          description: `Файл "${file.name}" имеет неподдерживаемый формат. Используйте JPG, PNG, GIF или WEBP`,
+                          variant: "destructive",
+                          duration: 5000,
+                        });
+                        return;
+                      }
+
+                      if (fileExtension && !allowedExtensions.includes(fileExtension)) {
+                        addLog("error", "Загрузка изображения", "Неверное расширение файла", {
+                          fileExtension,
+                          fileName: file.name,
+                          allowedExtensions,
+                        });
+                        toast({
+                          title: "Ошибка расширения",
+                          description: `Расширение "${fileExtension}" не поддерживается. Используйте .jpg, .png, .gif или .webp`,
+                          variant: "destructive",
+                          duration: 5000,
+                        });
+                        return;
+                      }
+
+                      // Проверка размера (макс 10MB)
+                      if (file.size > 10 * 1024 * 1024) {
+                        addLog("error", "Загрузка изображения", "Файл слишком большой", {
+                          fileSize: file.size,
+                          maxSize: 10 * 1024 * 1024,
+                        });
+                        toast({
+                          title: "Файл слишком большой",
+                          description: "Максимальный размер изображения: 10 МБ",
                           variant: "destructive",
                         });
                         return;
