@@ -439,6 +439,143 @@ const Admin = () => {
     setIsDialogOpen(true);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      addLog("warning", "Загрузка изображения", "Файл не выбран");
+      return;
+    }
+
+    addLog("info", "Загрузка изображения", `Начало загрузки: ${file.name}`, {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      fileExtension: file.name.split('.').pop(),
+    });
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+    if (!file.type.startsWith("image/") || !allowedTypes.includes(file.type)) {
+      addLog("error", "Загрузка изображения", "Неверный формат файла", {
+        fileType: file.type,
+        fileName: file.name,
+        allowedTypes,
+      });
+      toast({
+        title: "Ошибка формата",
+        description: `Файл "${file.name}" имеет неподдерживаемый формат. Используйте JPG, PNG, GIF или WEBP`,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (fileExtension && !allowedExtensions.includes(fileExtension)) {
+      addLog("error", "Загрузка изображения", "Неверное расширение файла", {
+        fileExtension,
+        fileName: file.name,
+        allowedExtensions,
+      });
+      toast({
+        title: "Ошибка расширения",
+        description: `Расширение "${fileExtension}" не поддерживается. Используйте .jpg, .png, .gif или .webp`,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      addLog("error", "Загрузка изображения", "Файл слишком большой", {
+        fileSize: file.size,
+        maxSize: 10 * 1024 * 1024,
+      });
+      toast({
+        title: "Файл слишком большой",
+        description: "Максимальный размер изображения: 10 МБ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      addLog("info", "Загрузка изображения", "Конвертация в base64");
+
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const base64Data = await base64Promise;
+      const base64String = base64Data.split(',')[1];
+
+      addLog("info", "Загрузка изображения", "Отправка на сервер хранилища", {
+        fileName: file.name,
+        fileSize: file.size,
+      });
+
+      const uploadResponse = await fetch('https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file: base64String,
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      addLog("info", "Загрузка изображения", `Ответ сервера: ${uploadResponse.status}`, {
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        addLog("error", "Загрузка изображения", "Ошибка сервера хранилища", {
+          status: uploadResponse.status,
+          statusText: uploadResponse.statusText,
+          errorText,
+        });
+        throw new Error(`Upload failed: ${uploadResponse.status}`);
+      }
+
+      const uploadData = await uploadResponse.json();
+      const imageUrl = uploadData.url;
+
+      addLog("success", "Загрузка изображения", "Изображение успешно загружено", {
+        url: imageUrl,
+      });
+      
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+
+      toast({
+        title: "Успешно",
+        description: "Изображение загружено",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
+      addLog("error", "Загрузка изображения", errorMessage, {
+        error: error instanceof Error ? error.stack : String(error),
+      });
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить изображение",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (isNewProduct) {
@@ -2272,144 +2409,7 @@ const Admin = () => {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) {
-                        addLog("warning", "Загрузка изображения", "Файл не выбран");
-                        return;
-                      }
-
-                      addLog("info", "Загрузка изображения", `Начало загрузки: ${file.name}`, {
-                        fileName: file.name,
-                        fileSize: file.size,
-                        fileType: file.type,
-                        fileExtension: file.name.split('.').pop(),
-                      });
-
-                      // Проверка MIME-типа и расширения файла
-                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-                      const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-                      if (!file.type.startsWith("image/") || !allowedTypes.includes(file.type)) {
-                        addLog("error", "Загрузка изображения", "Неверный формат файла", {
-                          fileType: file.type,
-                          fileName: file.name,
-                          allowedTypes,
-                        });
-                        toast({
-                          title: "Ошибка формата",
-                          description: `Файл "${file.name}" имеет неподдерживаемый формат. Используйте JPG, PNG, GIF или WEBP`,
-                          variant: "destructive",
-                          duration: 5000,
-                        });
-                        return;
-                      }
-
-                      if (fileExtension && !allowedExtensions.includes(fileExtension)) {
-                        addLog("error", "Загрузка изображения", "Неверное расширение файла", {
-                          fileExtension,
-                          fileName: file.name,
-                          allowedExtensions,
-                        });
-                        toast({
-                          title: "Ошибка расширения",
-                          description: `Расширение "${fileExtension}" не поддерживается. Используйте .jpg, .png, .gif или .webp`,
-                          variant: "destructive",
-                          duration: 5000,
-                        });
-                        return;
-                      }
-
-                      // Проверка размера (макс 10MB)
-                      if (file.size > 10 * 1024 * 1024) {
-                        addLog("error", "Загрузка изображения", "Файл слишком большой", {
-                          fileSize: file.size,
-                          maxSize: 10 * 1024 * 1024,
-                        });
-                        toast({
-                          title: "Файл слишком большой",
-                          description: "Максимальный размер изображения: 10 МБ",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-
-                      setUploadingImage(true);
-
-                      try {
-                        addLog("info", "Загрузка изображения", "Конвертация в base64");
-
-                        const reader = new FileReader();
-                        const base64Promise = new Promise<string>((resolve, reject) => {
-                          reader.onload = () => resolve(reader.result as string);
-                          reader.onerror = reject;
-                          reader.readAsDataURL(file);
-                        });
-
-                        const base64Data = await base64Promise;
-                        const base64String = base64Data.split(',')[1];
-
-                        addLog("info", "Загрузка изображения", "Отправка на сервер хранилища", {
-                          fileName: file.name,
-                          fileSize: file.size,
-                        });
-
-                        const uploadResponse = await fetch('https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            file: base64String,
-                            filename: file.name,
-                            contentType: file.type,
-                          }),
-                        });
-
-                        addLog("info", "Загрузка изображения", `Ответ сервера: ${uploadResponse.status}`, {
-                          status: uploadResponse.status,
-                          statusText: uploadResponse.statusText,
-                        });
-
-                        if (!uploadResponse.ok) {
-                          const errorText = await uploadResponse.text();
-                          addLog("error", "Загрузка изображения", "Ошибка сервера хранилища", {
-                            status: uploadResponse.status,
-                            statusText: uploadResponse.statusText,
-                            errorText,
-                          });
-                          throw new Error(`Upload failed: ${uploadResponse.status}`);
-                        }
-
-                        const uploadData = await uploadResponse.json();
-                        const imageUrl = uploadData.url;
-
-                        addLog("success", "Загрузка изображения", "Изображение успешно загружено", {
-                          url: imageUrl,
-                        });
-                        
-                        setFormData((prev) => ({ ...prev, image: imageUrl }));
-
-                        toast({
-                          title: "Успешно",
-                          description: "Изображение загружено",
-                        });
-                      } catch (error) {
-                        const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
-                        addLog("error", "Загрузка изображения", errorMessage, {
-                          error: error instanceof Error ? error.stack : String(error),
-                        });
-                        toast({
-                          title: "Ошибка",
-                          description: "Не удалось загрузить изображение",
-                          variant: "destructive",
-                        });
-                      } finally {
-                        setUploadingImage(false);
-                        e.target.value = "";
-                      }
-                    }}
+                    onChange={handleImageUpload}
                   />
                 </div>
                 {formData.image && (
