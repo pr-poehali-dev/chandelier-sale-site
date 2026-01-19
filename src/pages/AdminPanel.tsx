@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BestDealsManager from '@/components/admin/BestDealsManager';
 
 const ADMIN_AUTH_URL = 'https://functions.poehali.dev/44942252-4c42-4971-9ae8-c9e43de1ca10';
 const ADMIN_PRODUCTS_URL = 'https://functions.poehali.dev/722ef0fd-ab85-4438-b34d-464a0b50d4d7';
@@ -35,7 +36,7 @@ const AdminPanel = () => {
   const [showLogin, setShowLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'add' | 'list'>('list');
+  const [activeTab, setActiveTab] = useState<'add' | 'list' | 'best-deals'>('list');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -447,6 +448,13 @@ const AdminPanel = () => {
             <Icon name="Plus" className="h-4 w-4 mr-2" />
             Добавить товар
           </Button>
+          <Button
+            variant={activeTab === 'best-deals' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('best-deals')}
+          >
+            <Icon name="Percent" className="h-4 w-4 mr-2" />
+            Выгодные цены
+          </Button>
         </div>
 
         {message && (
@@ -686,6 +694,10 @@ const AdminPanel = () => {
               </form>
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === 'best-deals' && (
+          <BestDealsManager />
         )}
 
         {editingProduct && (

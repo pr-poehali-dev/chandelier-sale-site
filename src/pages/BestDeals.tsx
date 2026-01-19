@@ -3,33 +3,47 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AuthDialog from "@/components/AuthDialog";
-import ProductGrid from "@/components/catalog/ProductGrid";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
-import { api, Product } from "@/lib/api";
 import SEO from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
+
+interface BestDealProduct {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  discountPrice?: number;
+  brand?: string;
+  imageUrl?: string;
+  images: string[];
+  inStock: boolean;
+}
 
 const BestDeals = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToCart, totalItems } = useCart();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<BestDealProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState<number[]>([]);
   const [showAuth, setShowAuth] = useState(false);
+
+  const BEST_DEALS_API = "https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6";
 
   useEffect(() => {
     loadProducts();
-    loadFavorites();
   }, []);
 
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api.getProducts({ sale: true, limit: 100 });
-      setProducts(data.products);
+      const response = await fetch(BEST_DEALS_API);
+      if (!response.ok) throw new Error('Ошибка загрузки');
+      const data = await response.json();
+      setProducts(data.products || []);
     } catch (error) {
       console.error('Ошибка загрузки товаров:', error);
       toast({
@@ -42,27 +56,12 @@ const BestDeals = () => {
     }
   };
 
-  const loadFavorites = () => {
-    const stored = localStorage.getItem('favorites');
-    if (stored) {
-      setFavorites(JSON.parse(stored));
-    }
-  };
-
-  const handleToggleFavorite = (id: number) => {
-    const newFavorites = favorites.includes(id)
-      ? favorites.filter(fav => fav !== id)
-      : [...favorites, id];
-    setFavorites(newFavorites);
-    localStorage.setItem('favorites', JSON.stringify(newFavorites));
-  };
-
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: BestDealProduct) => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.discountPrice || product.price,
-      image: product.images[0],
+      image: product.images[0] || product.imageUrl || '',
       quantity: 1,
     });
     toast({
@@ -101,27 +100,99 @@ const BestDeals = () => {
         </section>
 
         <section className="py-12 container mx-auto px-4">
-          <div className="mb-8">
-            <p className="text-center text-muted-foreground">
-              Найдено товаров: <span className="font-bold">{products.length}</span>
-            </p>
-          </div>
-
-          <ProductGrid
-            products={products}
-            loading={loading}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            onAddToCart={handleAddToCart}
-            onProductClick={(id) => navigate(`/product/${id}`)}
-          />
-
-          {!loading && products.length === 0 && (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <div className="aspect-square bg-muted" />
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-muted rounded mb-2" />
+                    <div className="h-4 bg-muted rounded w-2/3" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
             <div className="text-center py-16">
               <Icon name="ShoppingBag" className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">Пока нет акционных товаров</h3>
-              <p className="text-muted-foreground">Следите за обновлениями!</p>
+              <h3 className="text-xl font-semibold mb-2">Товаров пока нет</h3>
+              <p className="text-muted-foreground mb-6">
+                Товары появятся здесь после добавления через админ-панель
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="mb-8">
+                <p className="text-center text-muted-foreground">
+                  Найдено товаров: <span className="font-bold">{products.length}</span>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => {
+                  const mainImage = product.images[0] || product.imageUrl || '';
+                  const discount = product.discountPrice 
+                    ? Math.round((1 - product.discountPrice / product.price) * 100)
+                    : 0;
+
+                  return (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                      <div className="relative aspect-square overflow-hidden bg-muted">
+                        {mainImage ? (
+                          <img 
+                            src={mainImage} 
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Icon name="Image" className="h-16 w-16 text-muted-foreground" />
+                          </div>
+                        )}
+                        {discount > 0 && (
+                          <Badge variant="destructive" className="absolute top-3 right-3">
+                            -{discount}%
+                          </Badge>
+                        )}
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                          {product.name}
+                        </h3>
+                        {product.brand && (
+                          <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
+                        )}
+                        <div className="flex items-baseline gap-2 mb-4">
+                          {product.discountPrice ? (
+                            <>
+                              <span className="text-2xl font-bold text-red-500">
+                                {product.discountPrice.toLocaleString('ru-RU')} ₽
+                              </span>
+                              <span className="text-sm text-muted-foreground line-through">
+                                {product.price.toLocaleString('ru-RU')} ₽
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-2xl font-bold">
+                              {product.price.toLocaleString('ru-RU')} ₽
+                            </span>
+                          )}
+                        </div>
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleAddToCart(product)}
+                          disabled={!product.inStock}
+                        >
+                          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+                          {product.inStock ? 'В корзину' : 'Нет в наличии'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
           )}
         </section>
       </main>
