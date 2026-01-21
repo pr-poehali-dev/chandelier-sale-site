@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Получить список всех файлов",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "files": "array",
+        "count": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Поиск файлов с фильтром по имени",
+      "method": "GET",
+      "path": "/?name=13.PNG",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "files": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
