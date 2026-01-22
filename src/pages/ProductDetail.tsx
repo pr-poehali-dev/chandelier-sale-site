@@ -29,20 +29,32 @@ const ProductDetail = () => {
     setLoading(true);
     let foundProduct = null;
     
+    const productId = Number(id);
+    console.log('🔍 Загрузка товара ID:', id, 'преобразован в:', productId);
+    
     try {
-      foundProduct = await api.getProductById(Number(id));
+      foundProduct = await api.getProductById(productId);
+      console.log('✅ Товар найден в основном каталоге:', foundProduct);
     } catch (error) {
-      console.log('Товар не найден в основном каталоге, проверяю best-deals...');
+      console.log('⚠️ Товар не найден в основном каталоге, проверяю best-deals...');
     }
     
     if (!foundProduct) {
       try {
         const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
+        console.log('🌐 Запрос к best-deals API...');
         const response = await fetch(BEST_DEALS_API);
         if (response.ok) {
           const data = await response.json();
-          const bestDealProduct = data.products?.find((p: any) => p.id === Number(id));
+          console.log('📦 Получено товаров из best-deals:', data.products?.length);
+          console.log('🔍 Ищу товар с ID:', productId, 'тип:', typeof productId);
+          const bestDealProduct = data.products?.find((p: any) => {
+            console.log('Сравниваю:', p.id, 'тип:', typeof p.id, 'с искомым:', productId);
+            return p.id === productId;
+          });
+          console.log('🔎 Поиск товара ID', productId, '- результат:', bestDealProduct ? 'НАЙДЕН' : 'НЕ НАЙДЕН');
           if (bestDealProduct) {
+            console.log('📝 Найденный товар best-deals:', bestDealProduct);
             foundProduct = {
               id: bestDealProduct.id,
               name: bestDealProduct.name,
@@ -57,18 +69,23 @@ const ProductDetail = () => {
               rating: 4.5,
               reviews: 0,
             } as any;
+            console.log('✅ Товар из best-deals преобразован:', foundProduct);
+          } else {
+            console.log('❌ Товар НЕ найден в списке products, доступные ID:', data.products?.map((p: any) => p.id).slice(0, 10));
           }
         }
       } catch (bestDealsError) {
-        console.error('Ошибка загрузки из best-deals:', bestDealsError);
+        console.error('❌ Ошибка загрузки из best-deals:', bestDealsError);
       }
     }
     
     if (foundProduct) {
+      console.log('✅ Товар установлен в state');
       setProduct(foundProduct);
       const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
       setIsFavorite(favorites.includes(foundProduct.id));
     } else {
+      console.log('❌ Товар не найден нигде, показываю ошибку');
       toast({
         title: 'Товар не найден',
         variant: 'destructive',
