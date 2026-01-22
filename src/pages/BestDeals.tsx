@@ -39,13 +39,15 @@ const BestDeals = () => {
 
   const loadProducts = async () => {
     setLoading(true);
+    console.log('🛍️ Загрузка товаров из best-deals API...');
     try {
       const response = await fetch(BEST_DEALS_API);
       if (!response.ok) throw new Error('Ошибка загрузки');
       const data = await response.json();
+      console.log('✅ Загружено товаров:', data.products?.length, data);
       setProducts(data.products || []);
     } catch (error) {
-      console.error('Ошибка загрузки товаров:', error);
+      console.error('❌ Ошибка загрузки товаров:', error);
       toast({
         title: "Ошибка загрузки",
         description: "Не удалось загрузить товары",
@@ -136,7 +138,11 @@ const BestDeals = () => {
                     : 0;
 
                   return (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                    <Card 
+                      key={product.id} 
+                      className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer"
+                      onClick={() => navigate(`/product/${product.id}`)}
+                    >
                       <div className="relative aspect-square overflow-hidden bg-muted">
                         {mainImage ? (
                           <img 
@@ -144,6 +150,11 @@ const BestDeals = () => {
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              console.error('❌ Ошибка загрузки картинки:', mainImage);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                            onLoad={() => console.log('✅ Картинка загружена:', mainImage)}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -181,7 +192,10 @@ const BestDeals = () => {
                         </div>
                         <Button 
                           className="w-full"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
                           disabled={!product.inStock}
                         >
                           <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
