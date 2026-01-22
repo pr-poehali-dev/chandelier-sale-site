@@ -132,7 +132,7 @@ const Home = () => {
               <Button size="lg" variant="outline" asChild>
                 <Link to="/about">О компании</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="destructive" asChild>
                 <Link to="/best-deals">Товары по самым выгодным ценам России</Link>
               </Button>
             </div>
