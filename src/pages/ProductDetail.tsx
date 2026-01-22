@@ -27,58 +27,56 @@ const ProductDetail = () => {
 
   const loadProduct = async () => {
     setLoading(true);
+    let foundProduct = null;
+    
     try {
-      let foundProduct = await api.getProductById(Number(id));
-      
-      if (!foundProduct) {
-        try {
-          const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
-          const response = await fetch(BEST_DEALS_API);
-          if (response.ok) {
-            const data = await response.json();
-            const bestDealProduct = data.products?.find((p: any) => p.id === Number(id));
-            if (bestDealProduct) {
-              foundProduct = {
-                id: bestDealProduct.id,
-                name: bestDealProduct.name,
-                description: bestDealProduct.description || '',
-                price: bestDealProduct.discountPrice || bestDealProduct.price,
-                originalPrice: bestDealProduct.price !== bestDealProduct.discountPrice ? bestDealProduct.price : undefined,
-                brand: bestDealProduct.brand || 'Без бренда',
-                type: 'Люстра',
-                image: bestDealProduct.images[0] || bestDealProduct.imageUrl || '',
-                images: bestDealProduct.images || [],
-                inStock: bestDealProduct.inStock,
-                rating: 4.5,
-                reviews: 0,
-              } as any;
-            }
-          }
-        } catch (bestDealsError) {
-          console.error('Ошибка загрузки из best-deals:', bestDealsError);
-        }
-      }
-      
-      if (foundProduct) {
-        setProduct(foundProduct);
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        setIsFavorite(favorites.includes(foundProduct.id));
-      } else {
-        toast({
-          title: 'Товар не найден',
-          variant: 'destructive',
-        });
-        navigate('/catalog');
-      }
+      foundProduct = await api.getProductById(Number(id));
     } catch (error) {
+      console.log('Товар не найден в основном каталоге, проверяю best-deals...');
+    }
+    
+    if (!foundProduct) {
+      try {
+        const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
+        const response = await fetch(BEST_DEALS_API);
+        if (response.ok) {
+          const data = await response.json();
+          const bestDealProduct = data.products?.find((p: any) => p.id === Number(id));
+          if (bestDealProduct) {
+            foundProduct = {
+              id: bestDealProduct.id,
+              name: bestDealProduct.name,
+              description: bestDealProduct.description || '',
+              price: bestDealProduct.discountPrice || bestDealProduct.price,
+              originalPrice: bestDealProduct.price !== bestDealProduct.discountPrice ? bestDealProduct.price : undefined,
+              brand: bestDealProduct.brand || 'Без бренда',
+              type: 'Люстра',
+              image: bestDealProduct.images[0] || bestDealProduct.imageUrl || '',
+              images: bestDealProduct.images || [],
+              inStock: bestDealProduct.inStock,
+              rating: 4.5,
+              reviews: 0,
+            } as any;
+          }
+        }
+      } catch (bestDealsError) {
+        console.error('Ошибка загрузки из best-deals:', bestDealsError);
+      }
+    }
+    
+    if (foundProduct) {
+      setProduct(foundProduct);
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      setIsFavorite(favorites.includes(foundProduct.id));
+    } else {
       toast({
-        title: 'Ошибка загрузки',
-        description: 'Не удалось загрузить товар',
+        title: 'Товар не найден',
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
+      navigate('/best-deals');
     }
+    
+    setLoading(false);
   };
 
   const addToCart = () => {
