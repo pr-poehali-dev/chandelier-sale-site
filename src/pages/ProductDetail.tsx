@@ -28,7 +28,37 @@ const ProductDetail = () => {
   const loadProduct = async () => {
     setLoading(true);
     try {
-      const foundProduct = await api.getProductById(Number(id));
+      let foundProduct = await api.getProductById(Number(id));
+      
+      if (!foundProduct) {
+        try {
+          const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
+          const response = await fetch(BEST_DEALS_API);
+          if (response.ok) {
+            const data = await response.json();
+            const bestDealProduct = data.products?.find((p: any) => p.id === Number(id));
+            if (bestDealProduct) {
+              foundProduct = {
+                id: bestDealProduct.id,
+                name: bestDealProduct.name,
+                description: bestDealProduct.description || '',
+                price: bestDealProduct.discountPrice || bestDealProduct.price,
+                originalPrice: bestDealProduct.price !== bestDealProduct.discountPrice ? bestDealProduct.price : undefined,
+                brand: bestDealProduct.brand || 'Без бренда',
+                type: 'Люстра',
+                image: bestDealProduct.images[0] || bestDealProduct.imageUrl || '',
+                images: bestDealProduct.images || [],
+                inStock: bestDealProduct.inStock,
+                rating: 4.5,
+                reviews: 0,
+              } as any;
+            }
+          }
+        } catch (bestDealsError) {
+          console.error('Ошибка загрузки из best-deals:', bestDealsError);
+        }
+      }
+      
       if (foundProduct) {
         setProduct(foundProduct);
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');

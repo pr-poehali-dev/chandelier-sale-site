@@ -70,10 +70,20 @@ const ProductInfo = ({
         </div>
 
         <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-          <div className="flex items-baseline gap-2 mb-2">
+          <div className="flex items-baseline gap-3 mb-2">
             <span className="text-4xl font-bold text-gray-900">
               {product.price.toLocaleString()} ₽
             </span>
+            {(product as any).originalPrice && (product as any).originalPrice !== product.price && (
+              <>
+                <span className="text-2xl text-gray-400 line-through">
+                  {(product as any).originalPrice.toLocaleString()} ₽
+                </span>
+                <Badge variant="destructive" className="text-sm">
+                  -{Math.round((1 - product.price / (product as any).originalPrice) * 100)}%
+                </Badge>
+              </>
+            )}
           </div>
           {product.price > 50000 && (
             <p className="text-sm text-gray-500">
