@@ -19,6 +19,7 @@ import Admin from "./pages/Admin";
 import AdminPanel from "./pages/AdminPanel";
 import Collaboration from "./pages/Collaboration";
 import PartnerRegistration from "./pages/PartnerRegistration";
+import Logs from "./pages/Logs";
 import Sitemap from "./pages/Sitemap";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/partnership" element={<Collaboration />} />
             <Route path="/partnership/:category" element={<PartnerRegistration />} />
             <Route path="/partner-registration" element={<PartnerRegistration />} />
+            <Route path="/logs" element={<Logs />} />
             <Route path="/sitemap.xml" element={<Sitemap />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
