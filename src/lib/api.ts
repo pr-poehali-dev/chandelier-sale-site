@@ -1,6 +1,6 @@
 const API_URLS = {
   products: 'https://functions.poehali.dev/c44b8670-1a85-41f5-9bd4-b828cbf10cca',
-  auth: 'https://functions.poehali.dev/8ff2e88b-9f98-45e4-8e1a-0c1196c9196a',
+  auth: 'https://functions.poehali.dev/34222c3d-94fd-4e6d-81d4-4f387c9f2dad',
   seedProducts: 'https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0',
   searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
   importProducts: 'https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1',
@@ -175,10 +175,14 @@ export const api = {
     last_name?: string;
     phone?: string;
   }): Promise<User> {
-    const response = await fetch(API_URLS.auth, {
+    const response = await fetch(`${API_URLS.auth}?action=register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'register', ...data }),
+      body: JSON.stringify({ 
+        email: data.email, 
+        password: data.password, 
+        name: data.first_name 
+      }),
     });
     
     if (!response.ok) {
@@ -186,14 +190,22 @@ export const api = {
       throw new Error(error.error || 'Registration failed');
     }
     
-    return response.json();
+    const result = await response.json();
+    
+    return {
+      user_id: result.user_id,
+      email: data.email,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      token: result.access_token || ''
+    };
   },
 
   async login(email: string, password: string): Promise<User> {
-    const response = await fetch(API_URLS.auth, {
+    const response = await fetch(`${API_URLS.auth}?action=login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', email, password }),
+      body: JSON.stringify({ email, password }),
     });
     
     if (!response.ok) {
@@ -201,7 +213,19 @@ export const api = {
       throw new Error(error.error || 'Login failed');
     }
     
-    return response.json();
+    const result = await response.json();
+    
+    if (result.access_token) {
+      localStorage.setItem('access_token', result.access_token);
+      localStorage.setItem('refresh_token', result.refresh_token);
+    }
+    
+    return {
+      user_id: result.user.id,
+      email: result.user.email,
+      first_name: result.user.name || '',
+      token: result.access_token
+    };
   },
 
   async seedProducts(): Promise<{ message: string; added: number; total: number }> {
