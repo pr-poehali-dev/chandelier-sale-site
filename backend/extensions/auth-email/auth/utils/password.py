@@ -1,6 +1,7 @@
 """Password utilities."""
 import re
 import bcrypt
+import hashlib
 
 
 def hash_password(password: str) -> str:
@@ -9,8 +10,12 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    """Verify password against bcrypt hash."""
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
+    """Verify password against bcrypt hash or legacy SHA-256."""
+    if password_hash.startswith('$2b$') or password_hash.startswith('$2a$'):
+        return bcrypt.checkpw(password.encode(), password_hash.encode())
+    else:
+        sha256_hash = hashlib.sha256(password.encode()).hexdigest()
+        return sha256_hash == password_hash
 
 
 def validate_password(password: str) -> tuple[bool, str]:
