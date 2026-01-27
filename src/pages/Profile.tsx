@@ -92,6 +92,40 @@ const Profile = () => {
     navigate('/catalog');
   };
 
+  const handlePayment = async (order: Order) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/e3058241-5116-4769-bb20-8408a02fd10e', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: order.total_amount,
+          user_name: order.customer_name,
+          user_email: order.customer_email,
+          order_id: order.id,
+          cart_items: []
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: data.error || 'Не удалось создать платёж',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка оплаты',
+        description: 'Попробуйте позже',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -100,6 +134,8 @@ const Profile = () => {
         return <Badge className="bg-blue-600">В обработке</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-600">Ожидает</Badge>;
+      case 'awaiting_payment':
+        return <Badge className="bg-orange-600">Ожидает оплаты</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Отменён</Badge>;
       default:
@@ -364,6 +400,15 @@ const Profile = () => {
                         )}
 
                         <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                          {order.status === 'awaiting_payment' && (
+                            <Button 
+                              onClick={() => handlePayment(order)}
+                              className="flex-1"
+                            >
+                              <Icon name="CreditCard" className="mr-2 h-4 w-4" />
+                              Оплатить
+                            </Button>
+                          )}
                           <Button variant="outline" className="flex-1">
                             <Icon name="RotateCcw" className="mr-2 h-4 w-4" />
                             <span className="hidden sm:inline">Повторить заказ</span>
