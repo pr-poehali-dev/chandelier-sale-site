@@ -75,7 +75,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Вход / Регистрация</SheetTitle>
