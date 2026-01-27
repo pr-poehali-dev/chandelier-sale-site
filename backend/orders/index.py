@@ -99,11 +99,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             items = body.get('items', [])
             payment_method = body.get('payment_method', 'card')
             
+            print(f'📦 Создание заказа: name={customer_name}, email={customer_email}, phone={customer_phone}, address={customer_address}, items_count={len(items)}')
+            
             if not all([customer_name, customer_email, customer_phone, customer_address, items]):
+                missing = []
+                if not customer_name: missing.append('customer_name')
+                if not customer_email: missing.append('customer_email')
+                if not customer_phone: missing.append('customer_phone')
+                if not customer_address: missing.append('customer_address')
+                if not items: missing.append('items')
+                print(f'❌ Отсутствуют поля: {missing}')
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Заполните все обязательные поля'}, ensure_ascii=False),
+                    'body': json.dumps({'error': f'Заполните все обязательные поля: {", ".join(missing)}'}, ensure_ascii=False),
                     'isBase64Encoded': False
                 }
             

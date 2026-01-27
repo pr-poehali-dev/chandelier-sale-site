@@ -373,8 +373,14 @@ export const api = {
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create order');
+      const errorText = await response.text();
+      console.error('❌ Ошибка создания заказа:', response.status, errorText);
+      try {
+        const error = JSON.parse(errorText);
+        throw new Error(error.error || 'Не удалось оформить заказ');
+      } catch {
+        throw new Error(`Ошибка сервера (${response.status}). Попробуйте позже`);
+      }
     }
     
     return response.json();

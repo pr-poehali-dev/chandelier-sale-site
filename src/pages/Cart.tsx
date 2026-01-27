@@ -72,12 +72,13 @@ const Cart = () => {
         items: cartItems.map(item => ({
           product_id: item.id,
           product_name: item.name,
-          product_image: item.image,
+          product_image: item.image || '',
           quantity: item.quantity,
           price: item.price,
         })),
       };
 
+      console.log('📦 Отправка заказа:', orderData);
       const result = await api.createOrder(orderData);
 
       // Отправляем СМС уведомление
@@ -112,10 +113,10 @@ const Cart = () => {
       clearCart();
       setTimeout(() => navigate('/'), 3000);
     } catch (error) {
-      console.error('Order error:', error);
+      console.error('❌ Ошибка оформления заказа:', error);
       toast({
         title: 'Ошибка оформления заказа',
-        description: error instanceof Error ? error.message : 'Неизвестная ошибка',
+        description: error instanceof Error ? error.message : 'Попробуйте еще раз или свяжитесь с поддержкой',
         variant: 'destructive',
       });
     } finally {
