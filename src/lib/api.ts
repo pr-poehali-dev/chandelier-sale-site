@@ -174,7 +174,7 @@ export const api = {
     first_name: string;
     last_name?: string;
     phone?: string;
-  }): Promise<User> {
+  }): Promise<{ requiresVerification: boolean; email: string }> {
     const response = await fetch(`${API_URLS.auth}?action=register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -187,17 +187,41 @@ export const api = {
     
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      throw new Error(error.message || error.error || 'Ошибка регистрации');
+    }
+    
+    const result = await response.json();
+    return { 
+      requiresVerification: true, 
+      email: data.email 
+    };
+  },
+
+  async verifyEmail(email: string, code: string): Promise<User> {
+    const response = await fetch(`${API_URLS.auth}?action=verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || error.error || 'Неверный код');
     }
     
     const result = await response.json();
     
-    if (result.email_verification_required) {
-      throw new Error('Требуется подтверждение email. Проверьте почту.');
+    if (result.access_token) {
+      localStorage.setItem('access_token', result.access_token);
+      localStorage.setItem('refresh_token', result.refresh_token);
     }
     
-    const loginResult = await this.login(data.email, data.password);
-    return loginResult;
+    return {
+      user_id: result.user.id,
+      email: result.user.email,
+      first_name: result.user.name || '',
+      token: result.access_token
+    };
   },
 
   async login(email: string, password: string): Promise<User> {
