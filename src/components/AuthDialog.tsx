@@ -17,6 +17,8 @@ interface AuthDialogProps {
 const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     email: '',
@@ -102,14 +104,24 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
               </div>
               <div>
                 <Label htmlFor="login-password">Пароль</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••"
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="login-password"
+                    type={showLoginPassword ? "text" : "password"}
+                    placeholder="••••••"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name={showLoginPassword ? "EyeOff" : "Eye"} className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Вход...' : 'Войти'}
@@ -161,15 +173,25 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
               </div>
               <div>
                 <Label htmlFor="register-password">Пароль *</Label>
-                <Input
-                  id="register-password"
-                  type="password"
-                  placeholder="Минимум 6 символов"
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  required
-                  minLength={6}
-                />
+                <div className="relative">
+                  <Input
+                    id="register-password"
+                    type={showRegisterPassword ? "text" : "password"}
+                    placeholder="Минимум 6 символов"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    required
+                    minLength={6}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name={showRegisterPassword ? "EyeOff" : "Eye"} className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Регистрация...' : 'Зарегистрироваться'}
