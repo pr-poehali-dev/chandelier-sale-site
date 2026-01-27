@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test missing amount",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "user_name": "Test User",
+        "user_email": "test@example.com",
+        "cart_items": []
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test missing user data",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "amount": 1000
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

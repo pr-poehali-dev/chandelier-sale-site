@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test missing parameters",
+      "method": "POST",
+      "path": "/",
+      "body": "",
+      "expectedStatus": 400
+    },
+    {
+      "name": "Test invalid signature",
+      "method": "GET",
+      "path": "/?OutSum=100.00&InvId=123456&SignatureValue=INVALIDSIGNATURE",
+      "expectedStatus": 400
+    }
+  ]
+}
