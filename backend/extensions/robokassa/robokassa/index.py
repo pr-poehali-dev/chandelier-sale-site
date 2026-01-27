@@ -87,6 +87,7 @@ def handler(event: dict, context) -> dict:
                 SET robokassa_inv_id = %s
                 WHERE id = %s
             """, (robokassa_inv_id, order_id))
+            order_number = f"Заказ №{order_id}"
         else:
             # Создаём новый заказ (старая логика)
             order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
@@ -135,7 +136,6 @@ def handler(event: dict, context) -> dict:
 
         payment_url = f"{ROBOKASSA_URL}?{urlencode(query_params)}"
 
-        cur.execute("UPDATE orders SET payment_url = %s WHERE id = %s", (payment_url, order_id))
         conn.commit()
         cur.close()
         conn.close()
