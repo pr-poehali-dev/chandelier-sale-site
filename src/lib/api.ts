@@ -192,13 +192,12 @@ export const api = {
     
     const result = await response.json();
     
-    return {
-      user_id: result.user_id,
-      email: data.email,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      token: result.access_token || ''
-    };
+    if (result.email_verification_required) {
+      throw new Error('Требуется подтверждение email. Проверьте почту.');
+    }
+    
+    const loginResult = await this.login(data.email, data.password);
+    return loginResult;
   },
 
   async login(email: string, password: string): Promise<User> {
