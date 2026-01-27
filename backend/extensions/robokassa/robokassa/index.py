@@ -75,27 +75,33 @@ def handler(event: dict, context) -> dict:
         cur = conn.cursor()
 
         # Генерация уникального InvoiceID
-        for _ in range(10):
-            robokassa_inv_id = random.randint(100000, 2147483647)
-            cur.execute("SELECT COUNT(*) FROM orders WHERE robokassa_inv_id = %s", (robokassa_inv_id,))
-            if cur.fetchone()[0] == 0:
-                break
-
-        order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
-
-        cur.execute("""
-            INSERT INTO orders (order_number, user_name, user_email, user_phone, amount, robokassa_inv_id, status, delivery_address, order_comment)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment))
-
-        order_id = cur.fetchone()[0]
-
-        for item in cart_items:
+        robokassa_inv_id = random.randint(100000, 2147483647)
+        
+        # Используем существующий order_id если передан
+        order_id = data.get('order_id')
+        
+        if order_id:
+            # Обновляем существующий заказ
             cur.execute("""
-                INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
+                UPDATE t_p94134469_chandelier_sale_site.orders 
+                SET robokassa_inv_id = %s
+                WHERE id = %s
+            """, (robokassa_inv_id, order_id))
+        else:
+            # Создаём новый заказ (старая логика)
+            order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
+            cur.execute("""
+                INSERT INTO t_p94134469_chandelier_sale_site.orders (order_number, user_name, user_email, user_phone, amount, robokassa_inv_id, status, delivery_address, order_comment)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment))
+            order_id = cur.fetchone()[0]
+
+            for item in cart_items:
+                cur.execute("""
+                    INSERT INTO t_p94134469_chandelier_sale_site.order_items (order_id, product_id, product_name, product_price, quantity)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
 
         # Формирование ссылки на оплату
         amount_str = f"{amount:.2f}"
