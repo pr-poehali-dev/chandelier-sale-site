@@ -56,18 +56,22 @@ const AdminOrdersTab = ({
                             ? "default"
                             : order.status === "pending"
                               ? "secondary"
-                              : order.status === "processing"
+                              : order.status === "awaiting_payment"
                                 ? "outline"
-                                : "destructive"
+                                : order.status === "processing"
+                                  ? "outline"
+                                  : "destructive"
                         }
                       >
                         {order.status === "pending"
                           ? "Ожидает"
-                          : order.status === "processing"
-                            ? "В обработке"
-                            : order.status === "completed"
-                              ? "Выполнен"
-                              : "Отменён"}
+                          : order.status === "awaiting_payment"
+                            ? "Ожидает оплаты"
+                            : order.status === "processing"
+                              ? "В обработке"
+                              : order.status === "completed"
+                                ? "Выполнен"
+                                : "Отменён"}
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
@@ -150,6 +154,9 @@ const AdminOrdersTab = ({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Ожидает</SelectItem>
+                          <SelectItem value="awaiting_payment">
+                            Ожидает оплаты
+                          </SelectItem>
                           <SelectItem value="processing">
                             В обработке
                           </SelectItem>
