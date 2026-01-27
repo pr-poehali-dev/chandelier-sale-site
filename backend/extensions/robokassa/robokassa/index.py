@@ -78,7 +78,7 @@ def handler(event: dict, context) -> dict:
         robokassa_inv_id = random.randint(100000, 2147483647)
         
         # Используем существующий order_id если передан
-        order_id = data.get('order_id')
+        order_id = payload.get('order_id')
         
         if order_id:
             # Обновляем существующий заказ
