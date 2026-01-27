@@ -1,10 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
+import { useCart } from '@/contexts/CartContext';
 
 const Delivery = () => {
+  const navigate = useNavigate();
+  const { totalItems } = useCart();
   const deliveryOptions = [
     {
       icon: 'Truck',
@@ -74,7 +78,11 @@ const Delivery = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header 
+        cartItemsCount={totalItems}
+        onCartClick={() => navigate('/cart')}
+        onAuthClick={() => {}}
+      />
 
       <main className="flex-1">
         <section className="bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 py-20">

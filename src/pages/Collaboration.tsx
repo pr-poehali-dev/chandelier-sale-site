@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useCart } from '@/contexts/CartContext';
 
 interface PartnerCategory {
   id: string;
@@ -78,6 +79,7 @@ const partnerCategories: PartnerCategory[] = [
 
 const Collaboration = () => {
   const navigate = useNavigate();
+  const { totalItems } = useCart();
 
   const handleCategorySelect = (categoryId: string) => {
     navigate(`/partnership/${categoryId}`);
@@ -85,7 +87,11 @@ const Collaboration = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header 
+        cartItemsCount={totalItems}
+        onCartClick={() => navigate('/cart')}
+        onAuthClick={() => {}}
+      />
 
       <main className="flex-1">
         <section className="bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 py-20">

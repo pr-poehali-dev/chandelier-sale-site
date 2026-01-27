@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import { useCart } from '@/contexts/CartContext';
 
 interface CategoryInfo {
   title: string;
@@ -79,6 +80,7 @@ const PartnerRegistration = () => {
   const [searchParams] = useSearchParams();
   const params = useParams();
   const { toast } = useToast();
+  const { totalItems } = useCart();
   
   const category = params.category || searchParams.get('category') || 'designers';
   const categoryInfo = categoryData[category] || categoryData.designers;
@@ -156,7 +158,11 @@ const PartnerRegistration = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header 
+        cartItemsCount={totalItems}
+        onCartClick={() => navigate('/cart')}
+        onAuthClick={() => {}}
+      />
 
       <main className="flex-1 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
         <div className="container mx-auto px-4 py-16">

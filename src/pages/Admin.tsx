@@ -12,10 +12,12 @@ import ProductsManager from "@/components/admin/ProductsManager";
 import OrdersManager from "@/components/admin/OrdersManager";
 import PartnersManager from "@/components/admin/PartnersManager";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import { useCart } from "@/contexts/CartContext";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { totalItems } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -708,7 +710,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
-        cartItemsCount={0}
+        cartItemsCount={totalItems}
         onCartClick={() => navigate("/cart")}
         onAuthClick={() => {}}
       />

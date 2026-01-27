@@ -10,10 +10,12 @@ import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import { User, Product, Order, api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/contexts/CartContext';
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { totalItems } = useCart();
   const [user, setUser] = useState<User | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -111,7 +113,11 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header 
+        cartItemsCount={totalItems}
+        onCartClick={() => navigate('/cart')}
+        onAuthClick={() => {}}
+      />
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">

@@ -1,11 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useCart } from '@/contexts/CartContext';
 
 const Blog = () => {
+  const navigate = useNavigate();
+  const { totalItems } = useCart();
   const articles = [
     {
       id: 1,
@@ -65,7 +69,11 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header 
+        cartItemsCount={totalItems}
+        onCartClick={() => navigate('/cart')}
+        onAuthClick={() => {}}
+      />
 
       <main className="flex-1">
         <section className="bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 py-20">
