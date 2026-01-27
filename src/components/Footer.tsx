@@ -37,7 +37,7 @@ const Footer = () => {
               <li><Link to="/contacts" className="text-muted-foreground hover:text-primary">Контакты</Link></li>
               <li>
                 <a 
-                  href="https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/bucket/oferta_svetit_vsem.pdf" 
+                  href="https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/bucket/2cb0878b-ea20-4420-8f46-a4db562b1fe2.docx" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary"
