@@ -22,6 +22,7 @@ const Cart = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [isCheckout, setIsCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [customerName, setCustomerName] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +30,10 @@ const Cart = () => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim();
+      setCustomerName(fullName);
     }
   }, []);
 
@@ -42,10 +46,10 @@ const Cart = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!deliveryAddress || !phone) {
+    if (!customerName || !deliveryAddress || !phone) {
       toast({
         title: 'Ошибка',
-        description: 'Заполните все поля доставки',
+        description: 'Заполните все обязательные поля',
         variant: 'destructive',
       });
       return;
@@ -64,7 +68,7 @@ const Cart = () => {
 
     try {
       const orderData = {
-        customer_name: `${user.first_name} ${user.last_name || ''}`.trim(),
+        customer_name: customerName.trim(),
         customer_email: user.email,
         customer_phone: phone,
         customer_address: deliveryAddress,
@@ -88,7 +92,7 @@ const Cart = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             phone: phone,
-            customer_name: `${user.first_name} ${user.last_name || ''}`.trim(),
+            customer_name: customerName.trim(),
           }),
         });
       } catch (smsError) {
@@ -219,22 +223,35 @@ const Cart = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="address">Адрес доставки</Label>
+                      <Label htmlFor="name">ФИО *</Label>
+                      <Input
+                        id="name"
+                        placeholder="Иванов Иван Иванович"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="address">Адрес доставки *</Label>
                       <Input
                         id="address"
                         placeholder="Москва, ул. Примерная, д. 1, кв. 1"
                         value={deliveryAddress}
                         onChange={(e) => setDeliveryAddress(e.target.value)}
+                        required
                       />
                     </div>
 
                     <div>
-                      <Label htmlFor="phone">Телефон</Label>
+                      <Label htmlFor="phone">Телефон *</Label>
                       <Input
                         id="phone"
                         placeholder="+7 (999) 999-99-99"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        required
                       />
                     </div>
 
