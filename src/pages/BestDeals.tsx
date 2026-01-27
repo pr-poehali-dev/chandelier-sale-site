@@ -212,7 +212,11 @@ const BestDeals = () => {
       </main>
 
       <Footer />
-      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth}
+        onAuthSuccess={() => {}}
+      />
     </div>
   );
 };

@@ -385,13 +385,11 @@ const Catalog = () => {
 
       <Footer />
 
-      {showAuth && (
-        <AuthDialog
-          open={showAuth}
-          onClose={() => setShowAuth(false)}
-          onSuccess={handleAuthSuccess}
-        />
-      )}
+      <AuthDialog
+        open={showAuth}
+        onOpenChange={setShowAuth}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };
