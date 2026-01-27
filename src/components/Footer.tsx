@@ -45,6 +45,16 @@ const Footer = () => {
                   Оферта
                 </a>
               </li>
+              <li>
+                <a 
+                  href="https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/bucket/5da0f65f-367e-4bbe-b03b-a0b77d1d58ec.docx" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  Политика обработки персональных данных
+                </a>
+              </li>
             </ul>
           </div>
 
