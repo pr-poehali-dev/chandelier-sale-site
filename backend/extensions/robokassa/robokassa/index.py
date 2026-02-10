@@ -74,26 +74,28 @@ def handler(event: dict, context) -> dict:
         conn = get_db_connection()
         cur = conn.cursor()
 
+        schema = os.environ.get('MAIN_DB_SCHEMA', 'public')
+        
         # Генерация уникального InvoiceID
         for _ in range(10):
             robokassa_inv_id = random.randint(100000, 2147483647)
-            cur.execute("SELECT COUNT(*) FROM orders WHERE robokassa_inv_id = %s", (robokassa_inv_id,))
+            cur.execute(f"SELECT COUNT(*) FROM {schema}.orders WHERE robokassa_inv_id = %s", (robokassa_inv_id,))
             if cur.fetchone()[0] == 0:
                 break
 
         order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
 
-        cur.execute("""
-            INSERT INTO orders (order_number, user_name, user_email, user_phone, amount, robokassa_inv_id, status, delivery_address, order_comment)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        cur.execute(f"""
+            INSERT INTO {schema}.orders (order_number, customer_name, customer_email, customer_phone, total_amount, robokassa_inv_id, status, delivery_address, order_comment, customer_address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment))
+        """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment, user_address))
 
         order_id = cur.fetchone()[0]
 
         for item in cart_items:
-            cur.execute("""
-                INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity)
+            cur.execute(f"""
+                INSERT INTO {schema}.order_items (order_id, product_id, product_name, product_price, quantity)
                 VALUES (%s, %s, %s, %s, %s)
             """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
 
@@ -129,7 +131,7 @@ def handler(event: dict, context) -> dict:
 
         payment_url = f"{ROBOKASSA_URL}?{urlencode(query_params)}"
 
-        cur.execute("UPDATE orders SET payment_url = %s WHERE id = %s", (payment_url, order_id))
+        cur.execute(f"UPDATE {schema}.orders SET payment_url = %s WHERE id = %s", (payment_url, order_id))
         conn.commit()
         cur.close()
         conn.close()

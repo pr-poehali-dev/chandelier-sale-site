@@ -71,19 +71,21 @@ def handler(event: dict, context) -> dict:
     # Обновление статуса заказа
     conn = get_db_connection()
     cur = conn.cursor()
+    
+    schema = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
-    cur.execute("""
-        UPDATE orders
-        SET status = 'paid', paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+    cur.execute(f"""
+        UPDATE {schema}.orders
+        SET status = 'paid', updated_at = CURRENT_TIMESTAMP
         WHERE robokassa_inv_id = %s AND status = 'pending'
-        RETURNING id, order_number, user_email
+        RETURNING id, order_number, customer_email
     """, (int(inv_id),))
 
     result = cur.fetchone()
 
     if not result:
         # Проверяем, может уже оплачен
-        cur.execute("SELECT status FROM orders WHERE robokassa_inv_id = %s", (int(inv_id),))
+        cur.execute(f"SELECT status FROM {schema}.orders WHERE robokassa_inv_id = %s", (int(inv_id),))
         existing = cur.fetchone()
         conn.close()
 
