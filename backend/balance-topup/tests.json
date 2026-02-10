@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Create balance topup payment",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "amount": 1000,
+        "user_email": "test@example.com",
+        "user_name": "Тестовый пользователь"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "payment_url": "string",
+        "invoice_id": "string",
+        "amount": 1000
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
