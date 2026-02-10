@@ -94,7 +94,7 @@ const Profile = () => {
 
   const handlePayment = async (order: Order) => {
     try {
-      const response = await fetch('https://functions.poehali.dev/e3058241-5116-4769-bb20-8408a02fd10e', {
+      const response = await fetch('https://functions.poehali.dev/eb9797fc-7fdb-4119-ab81-aee45041262d', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
