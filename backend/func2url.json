@@ -1,5 +1,4 @@
 {
-  "balance-topup": "https://functions.poehali.dev/51b14897-eb4f-42f2-989e-4c89f4f206f4",
   "robokassa-robokassa-webhook": "https://functions.poehali.dev/9ef0b5db-92ef-4139-b88d-98c8cfe920bc",
   "robokassa-robokassa": "https://functions.poehali.dev/eb9797fc-7fdb-4119-ab81-aee45041262d",
   "auth-email-auth": "https://functions.poehali.dev/34222c3d-94fd-4e6d-81d4-4f387c9f2dad",

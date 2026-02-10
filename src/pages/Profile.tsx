@@ -126,40 +126,6 @@ const Profile = () => {
     }
   };
 
-  const handleTopupBalance = async (amount: number) => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch('https://functions.poehali.dev/51b14897-eb4f-42f2-989e-4c89f4f206f4', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          user_email: user.email,
-          user_name: `${user.first_name} ${user.last_name}`
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.payment_url) {
-        window.location.href = data.payment_url;
-      } else {
-        toast({
-          title: 'Ошибка',
-          description: data.error || 'Не удалось создать платёж',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Ошибка пополнения',
-        description: 'Попробуйте позже',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -251,24 +217,6 @@ const Profile = () => {
                     <div className="flex items-center gap-2">
                       <Icon name="TrendingUp" className="h-4 w-4 text-primary" />
                       <span>Заказов: {orders.length}</span>
-                    </div>
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground mb-2">Пополнить баланс</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleTopupBalance(500)}>
-                        500 ₽
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleTopupBalance(1000)}>
-                        1000 ₽
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleTopupBalance(2000)}>
-                        2000 ₽
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleTopupBalance(5000)}>
-                        5000 ₽
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
