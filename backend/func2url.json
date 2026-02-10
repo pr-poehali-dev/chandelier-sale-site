@@ -1,21 +1,9 @@
 {
-  "robokassa-robokassa-webhook": "https://functions.poehali.dev/79cee5d2-2e6c-4520-a147-83f6d84611ad",
-  "robokassa-robokassa": "https://functions.poehali.dev/fd36765e-6bf1-4956-ba7c-e37c1234a970",
   "auth-email-auth": "https://functions.poehali.dev/34222c3d-94fd-4e6d-81d4-4f387c9f2dad",
   "list-s3-files": "https://functions.poehali.dev/2e0a7e96-31e7-47d5-894a-41329676a0fa",
   "best-deals": "https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6",
-  "cleanup-duplicates": "https://functions.poehali.dev/7a5191c6-760e-49bc-9b8b-679e50cfec64",
-  "upload-image": "https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f",
-  "admin-products": "https://functions.poehali.dev/722ef0fd-ab85-4438-b34d-464a0b50d4d7",
-  "admin-auth": "https://functions.poehali.dev/44942252-4c42-4971-9ae8-c9e43de1ca10",
   "send-sms": "https://functions.poehali.dev/e5d08b0b-95a7-45e3-9e30-8fadba06e40f",
-  "chat": "https://functions.poehali.dev/d551e786-cb55-48fa-93a9-271785689233",
   "partner-applications": "https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a",
   "orders": "https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a",
-  "crawl-products": "https://functions.poehali.dev/5845aa6f-cc5c-416c-86f8-13f4d13f0f2e",
-  "import-products": "https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1",
-  "search-image": "https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467",
-  "seed-products": "https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0",
-  "auth": "https://functions.poehali.dev/8ff2e88b-9f98-45e4-8e1a-0c1196c9196a",
   "products": "https://functions.poehali.dev/c44b8670-1a85-41f5-9bd4-b828cbf10cca"
 }
