@@ -94,6 +94,23 @@ const Profile = () => {
 
   const handlePayment = async (order: Order) => {
     try {
+      console.log('💳 Инициализация оплаты для заказа:', order.id);
+      
+      // Обновляем статус заказа на "ожидает оплаты"
+      const updateResponse = await fetch(`https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${order.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'awaiting_payment'
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Не удалось обновить статус заказа');
+      }
+
+      console.log('✅ Статус заказа обновлен на awaiting_payment');
+
       const response = await fetch('https://functions.poehali.dev/eb9797fc-7fdb-4119-ab81-aee45041262d', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,6 +126,7 @@ const Profile = () => {
       const data = await response.json();
       
       if (data.payment_url) {
+        console.log('🔗 Перенаправление на Robokassa:', data.payment_url);
         window.location.href = data.payment_url;
       } else {
         toast({
@@ -118,9 +136,10 @@ const Profile = () => {
         });
       }
     } catch (error) {
+      console.error('❌ Ошибка оплаты:', error);
       toast({
         title: 'Ошибка оплаты',
-        description: 'Попробуйте позже',
+        description: error instanceof Error ? error.message : 'Попробуйте позже',
         variant: 'destructive'
       });
     }

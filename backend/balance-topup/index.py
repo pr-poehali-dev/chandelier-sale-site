@@ -3,7 +3,7 @@ import hashlib
 import os
 
 def handler(event: dict, context) -> dict:
-    '''API для пополнения баланса через Robokassa'''
+    '''API для оплаты заказа через Robokassa'
     method = event.get('httpMethod', 'GET')
 
     if method == 'OPTIONS':
@@ -25,6 +25,7 @@ def handler(event: dict, context) -> dict:
             amount = body.get('amount')
             user_email = body.get('user_email')
             user_name = body.get('user_name', 'Пользователь')
+            order_id = body.get('order_id')
 
             if not amount or not user_email:
                 return {
@@ -51,8 +52,12 @@ def handler(event: dict, context) -> dict:
                     'isBase64Encoded': False
                 }
 
-            invoice_id = f"balance_{user_email}_{context.request_id[:8]}"
-            description = f"Пополнение баланса"
+            if order_id:
+                invoice_id = f"order_{order_id}"
+                description = f"Оплата заказа №{order_id}"
+            else:
+                invoice_id = f"balance_{user_email}_{context.request_id[:8]}"
+                description = f"Пополнение баланса"
 
             signature_string = f"{merchant_login}:{amount}:{invoice_id}:{password1}"
             signature = hashlib.md5(signature_string.encode()).hexdigest()
