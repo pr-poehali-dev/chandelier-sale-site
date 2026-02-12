@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -26,6 +26,19 @@ const Cart = () => {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('ru-RU');
+    setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+  };
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -65,8 +78,10 @@ const Cart = () => {
     }
 
     setIsSubmitting(true);
+    setLogs([]);
 
     try {
+      addLog('🚀 Начало оформления заказа');
       const orderData = {
         customer_name: customerName.trim(),
         customer_email: user.email,
@@ -82,11 +97,21 @@ const Cart = () => {
         })),
       };
 
+      addLog(`💰 Сумма заказа: ${totalPrice.toLocaleString('ru-RU')} ₽`);
+      addLog(`👤 Покупатель: ${customerName}`);
+      addLog(`📞 Телефон: ${phone}`);
+      addLog(`🏠 Адрес: ${deliveryAddress}`);
+      addLog(`📦 Товаров: ${cartItems.length} шт.`);
+      addLog('📤 Отправка запроса на сервер...');
+
       console.log('📦 Отправка заказа:', orderData);
       const result = await api.createOrder(orderData);
+      
+      addLog(`✅ Заказ создан! ID: ${result.order_id}`);
 
       // Отправляем СМС уведомление
       try {
+        addLog('📱 Отправка СМС уведомления...');
         await fetch('https://functions.poehali.dev/e5d08b0b-95a7-45e3-9e30-8fadba06e40f', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -95,7 +120,9 @@ const Cart = () => {
             customer_name: customerName.trim(),
           }),
         });
+        addLog('✅ СМС отправлено');
       } catch (smsError) {
+        addLog('⚠️ СМС не отправлено: ' + (smsError instanceof Error ? smsError.message : 'неизвестная ошибка'));
         console.error('SMS notification failed:', smsError);
         // Продолжаем даже если СМС не отправилось
       }
@@ -114,13 +141,22 @@ const Cart = () => {
         });
       }, 2000);
 
+      addLog('🎉 Заказ успешно оформлен!');
+      addLog('🔄 Очистка корзины...');
       clearCart();
+      addLog('✅ Корзина очищена');
+      addLog('⏱️ Переход на главную через 3 секунды...');
       setTimeout(() => navigate('/'), 3000);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      addLog('❌ ОШИБКА: ' + errorMsg);
+      if (error instanceof Error && error.stack) {
+        addLog('📋 Stack trace: ' + error.stack.split('\n').slice(0, 3).join(' | '));
+      }
       console.error('❌ Ошибка оформления заказа:', error);
       toast({
         title: 'Ошибка оформления заказа',
-        description: error instanceof Error ? error.message : 'Попробуйте еще раз или свяжитесь с поддержкой',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
@@ -334,6 +370,24 @@ const Cart = () => {
                     >
                       Назад к корзине
                     </Button>
+                  </div>
+                )}
+
+                {/* Окно с живыми логами */}
+                {logs.length > 0 && (
+                  <div className="mt-4 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                    <div className="p-3 border-b bg-slate-100 dark:bg-slate-800 flex items-center gap-2">
+                      <Icon name="Terminal" className="h-4 w-4" />
+                      <span className="text-sm font-medium">Живые логи</span>
+                    </div>
+                    <div className="p-3 max-h-64 overflow-y-auto font-mono text-xs space-y-1">
+                      {logs.map((log, index) => (
+                        <div key={index} className="text-slate-700 dark:text-slate-300">
+                          {log}
+                        </div>
+                      ))}
+                      <div ref={logsEndRef} />
+                    </div>
                   </div>
                 )}
               </Card>
