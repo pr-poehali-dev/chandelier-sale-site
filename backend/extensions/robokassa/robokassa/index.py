@@ -65,6 +65,7 @@ def handler(event: dict, context) -> dict:
         cart_items = payload.get('cart_items', [])
         success_url = str(payload.get('success_url', ''))
         fail_url = str(payload.get('fail_url', ''))
+        existing_order_id = payload.get('order_id')
 
         if amount <= 0:
             return {'statusCode': 400, 'headers': HEADERS, 'body': json.dumps({'error': 'Amount must be greater than 0'}), 'isBase64Encoded': False}
@@ -83,21 +84,43 @@ def handler(event: dict, context) -> dict:
             if cur.fetchone()[0] == 0:
                 break
 
-        order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
-
-        cur.execute(f"""
-            INSERT INTO {schema}.orders (order_number, customer_name, customer_email, customer_phone, total_amount, robokassa_inv_id, status, delivery_address, order_comment, customer_address)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment, user_address))
-
-        order_id = cur.fetchone()[0]
-
-        for item in cart_items:
+        # Если передан существующий order_id - обновляем его, иначе создаём новый
+        if existing_order_id:
+            print(f"🔄 Обновление существующего заказа ID={existing_order_id} с robokassa_inv_id={robokassa_inv_id}")
+            
             cur.execute(f"""
-                INSERT INTO {schema}.order_items (order_id, product_id, product_name, product_price, quantity)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
+                UPDATE {schema}.orders 
+                SET robokassa_inv_id = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+                RETURNING id, order_number
+            """, (robokassa_inv_id, existing_order_id))
+            
+            result = cur.fetchone()
+            if not result:
+                cur.close()
+                conn.close()
+                return {'statusCode': 404, 'headers': HEADERS, 'body': json.dumps({'error': f'Order {existing_order_id} not found'}), 'isBase64Encoded': False}
+            
+            order_id = result[0]
+            order_number = result[1]
+            print(f"✅ Заказ {order_number} обновлён с robokassa_inv_id={robokassa_inv_id}")
+        else:
+            print(f"➕ Создание нового заказа с robokassa_inv_id={robokassa_inv_id}")
+            order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
+
+            cur.execute(f"""
+                INSERT INTO {schema}.orders (order_number, customer_name, customer_email, customer_phone, total_amount, robokassa_inv_id, status, delivery_address, order_comment, customer_address)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment, user_address))
+
+            order_id = cur.fetchone()[0]
+
+            for item in cart_items:
+                cur.execute(f"""
+                    INSERT INTO {schema}.order_items (order_id, product_id, product_name, product_price, quantity)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
 
         # Формирование ссылки на оплату
         amount_str = f"{amount:.2f}"

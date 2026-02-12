@@ -74,10 +74,13 @@ def handler(event: dict, context) -> dict:
     
     schema = os.environ.get('MAIN_DB_SCHEMA', 'public')
 
+    print(f"💰 Обработка оплаты: InvId={inv_id}, OutSum={out_sum}")
+
+    # Обновляем заказ со статусами 'pending' или 'awaiting_payment'
     cur.execute(f"""
         UPDATE {schema}.orders
         SET status = 'paid', updated_at = CURRENT_TIMESTAMP
-        WHERE robokassa_inv_id = %s AND status = 'pending'
+        WHERE robokassa_inv_id = %s AND status IN ('pending', 'awaiting_payment')
         RETURNING id, order_number, customer_email
     """, (int(inv_id),))
 
@@ -90,8 +93,13 @@ def handler(event: dict, context) -> dict:
         conn.close()
 
         if existing and existing[0] == 'paid':
+            print(f"✅ Заказ с InvId={inv_id} уже оплачен")
             return {'statusCode': 200, 'headers': HEADERS, 'body': f'OK{inv_id}', 'isBase64Encoded': False}
+        
+        print(f"❌ Заказ с InvId={inv_id} не найден")
         return {'statusCode': 404, 'headers': HEADERS, 'body': 'Order not found', 'isBase64Encoded': False}
+    
+    print(f"✅ Заказ {result[1]} (ID={result[0]}) успешно оплачен")
 
     conn.commit()
     cur.close()
