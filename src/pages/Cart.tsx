@@ -9,13 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { api, User } from '@/lib/api';
-import { PaymentButton } from '@/components/extensions/robokassa/PaymentButton';
-import func2url from '@/func2url.json';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -29,7 +26,6 @@ const Cart = () => {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDebugLogs, setShowDebugLogs] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -314,76 +310,22 @@ const Cart = () => {
                     Оформить заказ
                   </Button>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <div className="flex items-center gap-2">
-                        <Icon name="Bug" className="h-4 w-4 text-yellow-600" />
-                        <Label htmlFor="debug-logs" className="text-sm font-medium cursor-pointer">
-                          Режим отладки
-                        </Label>
-                      </div>
-                      <Switch
-                        id="debug-logs"
-                        checked={showDebugLogs}
-                        onCheckedChange={setShowDebugLogs}
-                      />
-                    </div>
-
-                    {paymentMethod === 'card' ? (
-                      <PaymentButton
-                        apiUrl={func2url['robokassa-robokassa']}
-                        amount={totalPrice}
-                        userName={customerName}
-                        userEmail={user?.email || ''}
-                        userPhone={phone}
-                        userAddress={deliveryAddress}
-                        orderComment=""
-                        cartItems={cartItems.map(item => ({
-                          id: String(item.id),
-                          name: item.name,
-                          price: item.price,
-                          quantity: item.quantity,
-                        }))}
-                        successUrl={window.location.origin + '/order-success'}
-                        failUrl={window.location.origin + '/order-failed'}
-                        onSuccess={(orderNumber) => {
-                          toast({
-                            title: '✅ Оплата успешна!',
-                            description: `Заказ ${orderNumber} оплачен`,
-                          });
-                          clearCart();
-                          navigate('/order-success');
-                        }}
-                        onError={(error) => {
-                          toast({
-                            title: 'Ошибка оплаты',
-                            description: error.message,
-                            variant: 'destructive',
-                          });
-                        }}
-                        buttonText="Оплатить картой"
-                        className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium"
-                        disabled={!customerName || !deliveryAddress || !phone}
-                        showLogs={showDebugLogs}
-                      />
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        onClick={handlePlaceOrder}
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                            Оформление...
-                          </>
-                        ) : (
-                          'Подтвердить заказ'
-                        )}
-                      </Button>
-                    )}
-                    
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={handlePlaceOrder}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                          Оформление...
+                        </>
+                      ) : (
+                        'Подтвердить заказ'
+                      )}
+                    </Button>
                     <Button 
                       variant="outline"
                       className="w-full"

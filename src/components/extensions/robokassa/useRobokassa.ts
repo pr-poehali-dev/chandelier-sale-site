@@ -71,70 +71,40 @@ export function useRobokassa(options: UseRobokassaOptions): UseRobokassaReturn {
       setError(null);
 
       try {
-        console.log('🚀 useRobokassa: Начало создания платежа');
-        console.log('📋 useRobokassa: Payload', payload);
-        console.log('🌐 useRobokassa: API URL', apiUrl);
-
-        const requestBody = {
-          amount: payload.amount,
-          user_name: payload.userName,
-          user_email: payload.userEmail,
-          user_phone: payload.userPhone,
-          user_address: payload.userAddress,
-          order_comment: payload.orderComment,
-          cart_items: payload.cartItems,
-          success_url: payload.successUrl,
-          fail_url: payload.failUrl,
-        };
-
-        console.log('📤 useRobokassa: Request body', JSON.stringify(requestBody, null, 2));
-
         const response = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({
+            amount: payload.amount,
+            user_name: payload.userName,
+            user_email: payload.userEmail,
+            user_phone: payload.userPhone,
+            user_address: payload.userAddress,
+            order_comment: payload.orderComment,
+            cart_items: payload.cartItems,
+            success_url: payload.successUrl,
+            fail_url: payload.failUrl,
+          }),
         });
 
-        console.log(`📥 useRobokassa: Response status ${response.status} ${response.statusText}`);
-        console.log('🗂️ useRobokassa: Response headers', Object.fromEntries(response.headers.entries()));
-
-        const responseText = await response.text();
-        console.log('📝 useRobokassa: Raw response', responseText);
-
         if (!response.ok) {
-          let errorData: Record<string, unknown> = {};
-          try {
-            errorData = JSON.parse(responseText);
-          } catch (e) {
-            console.error('❌ useRobokassa: Failed to parse error response as JSON');
-          }
-          const errorMsg = (errorData.detail as string) || (errorData.error as string) || `HTTP ${response.status}: ${response.statusText}`;
-          console.error('❌ useRobokassa: Request failed', errorMsg);
-          throw new Error(errorMsg);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || "Payment creation failed");
         }
 
-        let data: PaymentResponse;
-        try {
-          data = JSON.parse(responseText);
-          console.log('✅ useRobokassa: Parsed response', data);
-        } catch (e) {
-          console.error('❌ useRobokassa: Failed to parse success response as JSON');
-          throw new Error('Invalid JSON response from payment API');
-        }
+        const data: PaymentResponse = await response.json();
 
         setPaymentUrl(data.payment_url);
         setOrderNumber(data.order_number);
 
-        console.log('💾 useRobokassa: Saving to localStorage', data.order_number);
+        // Сохраняем pending order в localStorage
         localStorage.setItem("pending_order", data.order_number);
 
-        console.log('🎉 useRobokassa: Payment created successfully');
         return data;
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Unknown error");
-        console.error('🔥 useRobokassa: Fatal error', error);
         setError(error);
         onError?.(error);
         throw error;
