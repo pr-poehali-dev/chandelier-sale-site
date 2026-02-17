@@ -1,0 +1,1 @@
+UPDATE t_p94134469_chandelier_sale_site.products SET description = REPLACE(description, 'ВамСвет', 'Светит Всем') WHERE description LIKE '%ВамСвет%';
