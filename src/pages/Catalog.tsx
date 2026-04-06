@@ -88,6 +88,11 @@ const Catalog = () => {
     }
   }, [searchParams]);
 
+  // Сбрасываем страницу на 1 при смене любого фильтра (кроме самой страницы)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedBrands, selectedCategory, priceRange, hasRemote, isDimmable, hasColorChange, isSale, isNew, isPickup, selectedStyles, selectedColors]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       console.log('🔄 Загрузка товаров с фильтрами:', {
