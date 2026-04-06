@@ -1,0 +1,1 @@
+UPDATE products SET in_stock = TRUE WHERE in_stock = FALSE;
