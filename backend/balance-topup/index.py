@@ -3,7 +3,7 @@ import hashlib
 import os
 
 def handler(event: dict, context) -> dict:
-    '''API для оплаты заказа через Robokassa'
+    """API для оплаты заказа через Robokassa"""
     method = event.get('httpMethod', 'GET')
 
     if method == 'OPTIONS':

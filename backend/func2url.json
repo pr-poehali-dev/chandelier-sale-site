@@ -10,6 +10,7 @@
   "partner-applications": "https://functions.poehali.dev/38a8a7ad-125d-46b7-a060-acc1588fc679",
   "crawl-products": "https://functions.poehali.dev/716c1111-2419-4984-a5ca-e532a20654e2",
   "search-image": "https://functions.poehali.dev/35a79cb3-5e24-4538-9b39-eec115df5f7e",
+  "balance-topup": "https://functions.poehali.dev/e1ae7286-c2c0-4eb8-9021-ec146b03b1bb",
   "import-products": "https://functions.poehali.dev/a943bcc1-fe5a-4a70-94b6-9e426109f5b0",
   "orders": "https://functions.poehali.dev/3ada9bb3-60ff-495f-a5f2-ddf20782173d",
   "admin-products": "https://functions.poehali.dev/a71ff6b6-9926-40f0-9b0f-b51ac1cf105e",
