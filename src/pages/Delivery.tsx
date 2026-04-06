@@ -1,14 +1,20 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
+import SEO from '@/components/SEO';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { useCart } from '@/contexts/CartContext';
+import { User } from '@/lib/api';
 
 const Delivery = () => {
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const deliveryOptions = [
     {
       icon: 'Truck',
@@ -78,10 +84,11 @@ const Delivery = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Доставка и оплата - Светит всем" description="Способы доставки и оплаты в интернет-магазине Светит всем. Курьерская доставка по Уфе, самовывоз, доставка по России." />
       <Header 
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
-        onAuthClick={() => {}}
+        onAuthClick={() => setShowAuth(true)}
       />
 
       <main className="flex-1">
@@ -162,6 +169,12 @@ const Delivery = () => {
       </main>
 
       <Footer />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth} 
+        onAuthSuccess={(user) => { setUser(user); }} 
+      />
     </div>
   );
 };

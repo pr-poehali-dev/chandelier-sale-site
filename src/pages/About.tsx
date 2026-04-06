@@ -1,13 +1,19 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
+import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { useCart } from '@/contexts/CartContext';
+import { User } from '@/lib/api';
 
 const About = () => {
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const stats = [
     { value: '10+', label: 'Лет на рынке' },
     { value: '50K+', label: 'Довольных клиентов' },
@@ -17,10 +23,11 @@ const About = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="О компании - Светит всем" description="Узнайте больше о компании Светит всем - более 10 лет на рынке освещения. Качественные люстры, светильники и лампы от ведущих производителей." />
       <Header 
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
-        onAuthClick={() => {}}
+        onAuthClick={() => setShowAuth(true)}
       />
 
       <main className="flex-1">
@@ -38,7 +45,11 @@ const About = () => {
             <div>
               <h2 className="text-3xl font-bold mb-6">Наша история</h2>
               <div className="space-y-4 text-muted-foreground">
-                <p></p>
+                <p>
+                  Компания «Светит всем» была основана более 10 лет назад с простой идеей — сделать качественное 
+                  освещение доступным для каждого. За это время мы прошли путь от небольшого магазина до крупного 
+                  поставщика светотехнической продукции, заслужив доверие более 50 000 клиентов по всей России.
+                </p>
                 <p>
                   Наша миссия — помочь каждому клиенту создать уникальную атмосферу в своем пространстве 
                   с помощью качественного и стильного освещения. Мы работаем только с проверенными 
@@ -118,6 +129,12 @@ const About = () => {
       </main>
 
       <Footer />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth} 
+        onAuthSuccess={(user) => { setUser(user); }} 
+      />
     </div>
   );
 };

@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
+import SEO from '@/components/SEO';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useCart } from '@/contexts/CartContext';
+import { User } from '@/lib/api';
 
 const Blog = () => {
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const articles = [
     {
       id: 1,
@@ -69,10 +75,11 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Блог - Светит всем" description="Полезные статьи о выборе, установке и использовании освещения. Советы, тренды и обзоры от экспертов." />
       <Header 
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
-        onAuthClick={() => {}}
+        onAuthClick={() => setShowAuth(true)}
       />
 
       <main className="flex-1">
@@ -155,6 +162,12 @@ const Blog = () => {
       </main>
 
       <Footer />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth} 
+        onAuthSuccess={(user) => { setUser(user); }} 
+      />
     </div>
   );
 };

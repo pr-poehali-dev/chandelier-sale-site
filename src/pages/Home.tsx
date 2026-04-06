@@ -24,22 +24,22 @@ const Home = () => {
     {
       name: 'Люстры',
       image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/ea3f6d76-2db5-45df-8995-27d163a48b43.jpg',
-      link: '/catalog?type=chandelier',
+      link: '/catalog?category=Люстры',
     },
     {
       name: 'Настольные лампы',
       image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/08d2e311-543a-444f-bd95-27580dbf222a.jpg',
-      link: '/catalog?type=lamp',
+      link: '/catalog?category=Настольные лампы',
     },
     {
       name: 'Бра',
       image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/2544184f-df96-433d-8e76-14c189cae2d4.jpg',
-      link: '/catalog?type=sconce',
+      link: '/catalog?category=Бра',
     },
     {
       name: 'Трековые светильники',
       image: 'https://cdn.poehali.dev/projects/88bdb6c5-2aee-44c1-838f-837896570a9e/files/8b58c88a-caa8-4802-bfd8-fea8c222b354.jpg',
-      link: '/catalog?type=track',
+      link: '/catalog?category=Трековые светильники',
     },
   ];
 

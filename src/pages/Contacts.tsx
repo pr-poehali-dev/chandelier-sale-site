@@ -1,18 +1,55 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
+import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
+import { User } from '@/lib/api';
 
 const Contacts = () => {
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const { toast } = useToast();
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
   const openChat = () => {
-    const chatButton = document.querySelector('button[class*="fixed bottom-6 right-6"]') as HTMLButtonElement;
-    if (chatButton) {
-      chatButton.click();
+    window.dispatchEvent(new CustomEvent('open-chat'));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !message.trim()) {
+      toast({
+        title: 'Заполните обязательные поля',
+        description: 'Пожалуйста, укажите имя и сообщение',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSending(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: 'Сообщение отправлено',
+        description: 'Мы свяжемся с вами в ближайшее время',
+      });
+      setName('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+    } finally {
+      setSending(false);
     }
   };
   const contactInfo = [
@@ -40,10 +77,11 @@ const Contacts = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO title="Контакты - Светит всем" description="Свяжитесь с интернет-магазином Светит всем. Телефон, email, адрес магазина в Уфе. Онлайн-консультант." />
       <Header 
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
-        onAuthClick={() => {}}
+        onAuthClick={() => setShowAuth(true)}
       />
 
       <main className="flex-1">
@@ -79,13 +117,15 @@ const Contacts = () => {
             <Card>
               <CardContent className="pt-6">
                 <h2 className="text-2xl font-bold mb-6">Напишите нам</h2>
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   <div>
                     <label className="block text-sm font-medium mb-2">Имя</label>
                     <input
                       type="text"
                       placeholder="Ваше имя"
                       className="w-full px-4 py-2 rounded-lg border bg-background"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                   <div>
@@ -94,6 +134,8 @@ const Contacts = () => {
                       type="email"
                       placeholder="your@email.com"
                       className="w-full px-4 py-2 rounded-lg border bg-background"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div>
@@ -102,6 +144,8 @@ const Contacts = () => {
                       type="tel"
                       placeholder="+7 (___) ___-__-__"
                       className="w-full px-4 py-2 rounded-lg border bg-background"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                     />
                   </div>
                   <div>
@@ -110,10 +154,12 @@ const Contacts = () => {
                       placeholder="Ваше сообщение"
                       rows={4}
                       className="w-full px-4 py-2 rounded-lg border bg-background"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full">
-                    Отправить сообщение
+                  <Button className="w-full" type="submit" disabled={sending}>
+                    {sending ? 'Отправка...' : 'Отправить сообщение'}
                   </Button>
                 </form>
               </CardContent>
@@ -187,6 +233,12 @@ const Contacts = () => {
       </main>
 
       <Footer />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth} 
+        onAuthSuccess={(user) => { setUser(user); }} 
+      />
     </div>
   );
 };

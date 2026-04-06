@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AuthDialog from '@/components/AuthDialog';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
-import { api, Product } from '@/lib/api';
+import { api, Product, User } from '@/lib/api';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import ProductInfo from '@/components/product/ProductInfo';
 import ProductTabs from '@/components/product/ProductTabs';
@@ -20,6 +21,8 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     loadProduct();
@@ -136,12 +139,17 @@ const ProductDetail = () => {
         <Header
           cartItemsCount={totalItems}
           onCartClick={() => navigate('/cart')}
-          onAuthClick={() => {}}
+          onAuthClick={() => setShowAuth(true)}
         />
         <main className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">Загрузка...</p>
         </main>
         <Footer />
+        <AuthDialog 
+          open={showAuth} 
+          onOpenChange={setShowAuth} 
+          onAuthSuccess={(user) => { setUser(user); }} 
+        />
       </div>
     );
   }
@@ -169,7 +177,7 @@ const ProductDetail = () => {
       <Header
         cartItemsCount={totalItems}
         onCartClick={() => navigate('/cart')}
-        onAuthClick={() => {}}
+        onAuthClick={() => setShowAuth(true)}
       />
 
       <main className="flex-1 container mx-auto px-4 py-8">
@@ -200,6 +208,12 @@ const ProductDetail = () => {
       </main>
 
       <Footer />
+
+      <AuthDialog 
+        open={showAuth} 
+        onOpenChange={setShowAuth} 
+        onAuthSuccess={(user) => { setUser(user); }} 
+      />
     </div>
   );
 };

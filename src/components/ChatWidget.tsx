@@ -51,6 +51,12 @@ const ChatWidget = () => {
   }, [isOpen]);
 
   useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('open-chat', handleOpenChat);
+    return () => window.removeEventListener('open-chat', handleOpenChat);
+  }, []);
+
+  useEffect(() => {
     if (isOpen && sessionId) {
       loadMessages();
       const interval = setInterval(loadMessages, 30000);

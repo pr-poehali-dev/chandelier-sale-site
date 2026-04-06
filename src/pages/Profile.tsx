@@ -22,6 +22,7 @@ const Profile = () => {
   const [loadingFavorites, setLoadingFavorites] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [activeTab, setActiveTab] = useState('orders');
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -206,15 +207,15 @@ const Profile = () => {
                   <Separator className="my-4" />
 
                   <div className="space-y-2">
-                    <Button variant="ghost" className="w-full justify-start">
+                    <Button variant={activeTab === 'orders' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setActiveTab('orders')}>
                       <Icon name="ShoppingBag" className="mr-2 h-4 w-4" />
                       Мои заказы
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start">
+                    <Button variant={activeTab === 'favorites' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setActiveTab('favorites')}>
                       <Icon name="Heart" className="mr-2 h-4 w-4" />
                       Избранное
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start">
+                    <Button variant={activeTab === 'settings' ? 'default' : 'ghost'} className="w-full justify-start" onClick={() => setActiveTab('settings')}>
                       <Icon name="Settings" className="mr-2 h-4 w-4" />
                       Настройки
                     </Button>
@@ -243,7 +244,7 @@ const Profile = () => {
             </aside>
 
             <div>
-              <Tabs defaultValue="orders" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="mb-6 w-full grid grid-cols-2 lg:grid-cols-4 gap-1">
                   <TabsTrigger value="orders" className="text-xs sm:text-sm">Заказы</TabsTrigger>
                   <TabsTrigger value="favorites" className="text-xs sm:text-sm">
