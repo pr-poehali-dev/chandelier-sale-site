@@ -162,7 +162,7 @@ const Catalog = () => {
 
         try {
           const response = await fetch(
-            "https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467",
+            "https://functions.poehali.dev/35a79cb3-5e24-4538-9b39-eec115df5f7e",
             {
               method: "POST",
               headers: {

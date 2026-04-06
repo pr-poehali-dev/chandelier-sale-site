@@ -7,9 +7,9 @@ import ProductForm from '@/components/admin/ProductForm';
 import ProductList from '@/components/admin/ProductList';
 import BestDealsManager from '@/components/admin/BestDealsManager';
 
-const ADMIN_AUTH_URL = 'https://functions.poehali.dev/44942252-4c42-4971-9ae8-c9e43de1ca10';
-const ADMIN_PRODUCTS_URL = 'https://functions.poehali.dev/722ef0fd-ab85-4438-b34d-464a0b50d4d7';
-const UPLOAD_IMAGE_URL = 'https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f';
+const ADMIN_AUTH_URL = 'https://functions.poehali.dev/17a2b5e8-a20f-4dd1-9ccc-f92783d0495b';
+const ADMIN_PRODUCTS_URL = 'https://functions.poehali.dev/a71ff6b6-9926-40f0-9b0f-b51ac1cf105e';
+const UPLOAD_IMAGE_URL = 'https://functions.poehali.dev/379c3586-f78f-4670-a239-15957ea26d39';
 
 interface Admin {
   id: number;

@@ -98,7 +98,7 @@ const Profile = () => {
       console.log('💳 Инициализация оплаты для заказа:', order.id);
       
       // Обновляем статус заказа на "ожидает оплаты"
-      const updateResponse = await fetch(`https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${order.id}`, {
+      const updateResponse = await fetch(`https://functions.poehali.dev/3ada9bb3-60ff-495f-a5f2-ddf20782173d?id=${order.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +112,7 @@ const Profile = () => {
 
       console.log('✅ Статус заказа обновлен на awaiting_payment');
 
-      const response = await fetch('https://functions.poehali.dev/eb9797fc-7fdb-4119-ab81-aee45041262d', {
+      const response = await fetch('https://functions.poehali.dev/e1ae7286-c2c0-4eb8-9021-ec146b03b1bb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

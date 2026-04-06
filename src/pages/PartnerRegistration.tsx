@@ -123,7 +123,7 @@ const PartnerRegistration = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a', {
+      const response = await fetch('https://functions.poehali.dev/38a8a7ad-125d-46b7-a060-acc1588fc679', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

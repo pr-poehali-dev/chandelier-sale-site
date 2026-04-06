@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
-const CHAT_API = 'https://functions.poehali.dev/d551e786-cb55-48fa-93a9-271785689233';
+const CHAT_API = 'https://functions.poehali.dev/ffeac0e2-7060-4d6a-802c-879c060f816c';
 
 interface ChatSession {
   id: number;

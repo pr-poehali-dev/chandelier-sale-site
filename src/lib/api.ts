@@ -1,11 +1,11 @@
 const API_URLS = {
-  products: 'https://functions.poehali.dev/c44b8670-1a85-41f5-9bd4-b828cbf10cca',
-  auth: 'https://functions.poehali.dev/34222c3d-94fd-4e6d-81d4-4f387c9f2dad',
-  seedProducts: 'https://functions.poehali.dev/d89a79eb-294c-455c-84e8-5ffe2b6b99d0',
-  searchImage: 'https://functions.poehali.dev/17e374a7-17b7-4c8c-b4a0-995daf6c4467',
-  importProducts: 'https://functions.poehali.dev/c24a558f-7384-4e33-82a3-45fbe5aa34e1',
-  crawlProducts: 'https://functions.poehali.dev/5845aa6f-cc5c-416c-86f8-13f4d13f0f2e',
-  orders: 'https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a',
+  products: 'https://functions.poehali.dev/5243cae0-7355-402e-9265-f37156d9f092',
+  auth: 'https://functions.poehali.dev/b52e3624-de7a-408e-abbe-003fc3199fe5',
+  seedProducts: 'https://functions.poehali.dev/71dfe833-3fc1-4bd0-9390-deb2a875abc2',
+  searchImage: 'https://functions.poehali.dev/35a79cb3-5e24-4538-9b39-eec115df5f7e',
+  importProducts: 'https://functions.poehali.dev/a943bcc1-fe5a-4a70-94b6-9e426109f5b0',
+  crawlProducts: 'https://functions.poehali.dev/716c1111-2419-4984-a5ca-e532a20654e2',
+  orders: 'https://functions.poehali.dev/3ada9bb3-60ff-495f-a5f2-ddf20782173d',
 };
 
 export interface Product {

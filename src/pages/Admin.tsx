@@ -214,7 +214,7 @@ const Admin = () => {
   const loadPartnerApplications = async () => {
     setPartnersLoading(true);
     try {
-      const response = await fetch('https://functions.poehali.dev/1318b8fa-01d2-4ca1-af97-a64c493d701a');
+      const response = await fetch('https://functions.poehali.dev/38a8a7ad-125d-46b7-a060-acc1588fc679');
       const data = await response.json();
       setPartnerApplications(data.applications || []);
     } catch (error) {
@@ -232,7 +232,7 @@ const Admin = () => {
   const updateOrderStatus = async (orderId: number, status: string) => {
     try {
       await fetch(
-        `https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${orderId}`,
+        `https://functions.poehali.dev/3ada9bb3-60ff-495f-a5f2-ddf20782173d?id=${orderId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -292,7 +292,7 @@ const Admin = () => {
     if (!confirm("Удалить этот заказ?")) return;
 
     try {
-      await fetch(`https://functions.poehali.dev/fcd6dd35-a3e6-4d67-978f-190d82e2575a?id=${orderId}`, {
+      await fetch(`https://functions.poehali.dev/3ada9bb3-60ff-495f-a5f2-ddf20782173d?id=${orderId}`, {
         method: "DELETE",
       });
 
@@ -515,7 +515,7 @@ const Admin = () => {
         fileSize: file.size,
       });
 
-      const uploadResponse = await fetch('https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f', {
+      const uploadResponse = await fetch('https://functions.poehali.dev/379c3586-f78f-4670-a239-15957ea26d39', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

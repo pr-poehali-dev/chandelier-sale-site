@@ -112,7 +112,7 @@ const Cart = () => {
       // Отправляем СМС уведомление
       try {
         addLog('📱 Отправка СМС уведомления...');
-        await fetch('https://functions.poehali.dev/e5d08b0b-95a7-45e3-9e30-8fadba06e40f', {
+        await fetch('https://functions.poehali.dev/9302b2f5-7691-41ee-b4cc-bd2960b31f4a', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

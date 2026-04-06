@@ -6,8 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
-const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
-const UPLOAD_IMAGE_URL = 'https://functions.poehali.dev/e3579ac7-cd2e-4676-b1ff-8833a602ad6f';
+const BEST_DEALS_API = 'https://functions.poehali.dev/215f65e3-1002-480c-9066-64445eeb76cb';
+const UPLOAD_IMAGE_URL = 'https://functions.poehali.dev/379c3586-f78f-4670-a239-15957ea26d39';
 
 interface BestDealProduct {
   id?: number;

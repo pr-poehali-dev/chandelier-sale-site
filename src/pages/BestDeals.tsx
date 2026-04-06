@@ -31,7 +31,7 @@ const BestDeals = () => {
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
 
-  const BEST_DEALS_API = "https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6";
+  const BEST_DEALS_API = "https://functions.poehali.dev/215f65e3-1002-480c-9066-64445eeb76cb";
 
   useEffect(() => {
     loadProducts();

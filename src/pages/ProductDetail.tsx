@@ -44,7 +44,7 @@ const ProductDetail = () => {
     
     if (!foundProduct) {
       try {
-        const BEST_DEALS_API = 'https://functions.poehali.dev/6a11bad0-b439-4e23-84f2-0008a31965f6';
+        const BEST_DEALS_API = 'https://functions.poehali.dev/215f65e3-1002-480c-9066-64445eeb76cb';
         console.log('🌐 Запрос к best-deals API...');
         const response = await fetch(BEST_DEALS_API);
         if (response.ok) {
