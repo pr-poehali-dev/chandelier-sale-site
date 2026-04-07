@@ -52,7 +52,7 @@ const AdminOrdersTab = ({
                       <span className="font-semibold">Заказ №{order.id}</span>
                       <Badge
                         variant={
-                          order.status === "completed"
+                          order.status === "completed" || order.status === "paid"
                             ? "default"
                             : order.status === "pending"
                               ? "secondary"
@@ -67,11 +67,13 @@ const AdminOrdersTab = ({
                           ? "Ожидает"
                           : order.status === "awaiting_payment"
                             ? "Ожидает оплаты"
-                            : order.status === "processing"
-                              ? "В обработке"
-                              : order.status === "completed"
-                                ? "Выполнен"
-                                : "Отменён"}
+                            : order.status === "paid"
+                              ? "Оплачен"
+                              : order.status === "processing"
+                                ? "В обработке"
+                                : order.status === "completed"
+                                  ? "Выполнен"
+                                  : "Отменён"}
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
@@ -157,6 +159,7 @@ const AdminOrdersTab = ({
                           <SelectItem value="awaiting_payment">
                             Ожидает оплаты
                           </SelectItem>
+                          <SelectItem value="paid">Оплачен</SelectItem>
                           <SelectItem value="processing">
                             В обработке
                           </SelectItem>

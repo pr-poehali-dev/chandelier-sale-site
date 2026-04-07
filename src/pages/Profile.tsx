@@ -155,6 +155,8 @@ const Profile = () => {
     switch (status) {
       case 'completed':
         return <Badge className="bg-green-600">Выполнен</Badge>;
+      case 'paid':
+        return <Badge className="bg-emerald-600">Оплачен</Badge>;
       case 'processing':
         return <Badge className="bg-blue-600">В обработке</Badge>;
       case 'pending':

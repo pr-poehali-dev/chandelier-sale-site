@@ -63,6 +63,8 @@ const OrdersManager = ({
         return "bg-yellow-500";
       case "awaiting_payment":
         return "bg-orange-500";
+      case "paid":
+        return "bg-emerald-500";
       case "processing":
         return "bg-blue-500";
       case "shipped":
@@ -82,6 +84,8 @@ const OrdersManager = ({
         return "Ожидает";
       case "awaiting_payment":
         return "Ожидает оплаты";
+      case "paid":
+        return "Оплачен";
       case "processing":
         return "Обрабатывается";
       case "shipped":
@@ -154,6 +158,7 @@ const OrdersManager = ({
                           <SelectContent>
                             <SelectItem value="pending">Ожидает</SelectItem>
                             <SelectItem value="awaiting_payment">Ожидает оплаты</SelectItem>
+                            <SelectItem value="paid">Оплачен</SelectItem>
                             <SelectItem value="processing">Обрабатывается</SelectItem>
                             <SelectItem value="shipped">Отправлен</SelectItem>
                             <SelectItem value="delivered">Доставлен</SelectItem>
