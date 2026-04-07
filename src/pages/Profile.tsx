@@ -112,15 +112,20 @@ const Profile = () => {
 
       console.log('✅ Статус заказа обновлен на awaiting_payment');
 
-      const response = await fetch('https://functions.poehali.dev/e1ae7286-c2c0-4eb8-9021-ec146b03b1bb', {
+      const baseUrl = window.location.origin;
+      const response = await fetch('https://functions.poehali.dev/617e4992-3e75-4fdd-a5db-3f52702edcef', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: order.total_amount,
           user_name: order.customer_name,
           user_email: order.customer_email,
+          user_phone: order.customer_phone || '',
+          user_address: order.customer_address || '',
           order_id: order.id,
-          cart_items: []
+          cart_items: [],
+          success_url: `${baseUrl}/profile`,
+          fail_url: `${baseUrl}/profile`,
         })
       });
       
