@@ -42,7 +42,6 @@ def handler(event: dict, context) -> dict:
     if not password_2:
         return {'statusCode': 500, 'headers': HEADERS, 'body': 'Configuration error', 'isBase64Encoded': False}
 
-    # Парсинг параметров из body или query string
     params = {}
     body = event.get('body', '')
 
@@ -63,12 +62,10 @@ def handler(event: dict, context) -> dict:
     if not out_sum or not inv_id or not signature_value:
         return {'statusCode': 400, 'headers': HEADERS, 'body': 'Missing required parameters', 'isBase64Encoded': False}
 
-    # Проверка подписи
     expected_signature = calculate_signature(out_sum, inv_id, password_2)
     if signature_value != expected_signature:
         return {'statusCode': 400, 'headers': HEADERS, 'body': 'Invalid signature', 'isBase64Encoded': False}
 
-    # Обновление статуса заказа
     conn = get_db_connection()
     cur = conn.cursor()
     
@@ -76,19 +73,17 @@ def handler(event: dict, context) -> dict:
 
     print(f"💰 Обработка оплаты: InvId={inv_id}, OutSum={out_sum}")
 
-    # Обновляем заказ со статусами 'pending' или 'awaiting_payment'
     cur.execute(f"""
         UPDATE {schema}.orders
         SET status = 'paid', updated_at = CURRENT_TIMESTAMP
-        WHERE robokassa_inv_id = %s AND status IN ('pending', 'awaiting_payment')
+        WHERE robokassa_inv_id = {int(inv_id)} AND status IN ('pending', 'awaiting_payment')
         RETURNING id, order_number, customer_email
-    """, (int(inv_id),))
+    """)
 
     result = cur.fetchone()
 
     if not result:
-        # Проверяем, может уже оплачен
-        cur.execute(f"SELECT status FROM {schema}.orders WHERE robokassa_inv_id = %s", (int(inv_id),))
+        cur.execute(f"SELECT status FROM {schema}.orders WHERE robokassa_inv_id = {int(inv_id)}")
         existing = cur.fetchone()
         conn.close()
 
@@ -104,8 +99,5 @@ def handler(event: dict, context) -> dict:
     conn.commit()
     cur.close()
     conn.close()
-
-    # TODO: Отправить уведомление (email, telegram) после успешной оплаты
-    # order_id, order_number, user_email = result
 
     return {'statusCode': 200, 'headers': HEADERS, 'body': f'OK{inv_id}', 'isBase64Encoded': False}

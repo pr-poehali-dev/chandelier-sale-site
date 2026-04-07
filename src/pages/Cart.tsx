@@ -13,6 +13,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { api, User } from '@/lib/api';
+import { openPaymentPage } from '@/components/extensions/robokassa/useRobokassa';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -124,7 +125,44 @@ const Cart = () => {
       } catch (smsError) {
         addLog('⚠️ СМС не отправлено: ' + (smsError instanceof Error ? smsError.message : 'неизвестная ошибка'));
         console.error('SMS notification failed:', smsError);
-        // Продолжаем даже если СМС не отправилось
+      }
+
+      if (paymentMethod === 'card') {
+        addLog('💳 Создание ссылки на оплату...');
+        const baseUrl = window.location.origin;
+        const paymentResponse = await fetch('https://functions.poehali.dev/617e4992-3e75-4fdd-a5db-3f52702edcef', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: totalPrice,
+            user_name: customerName.trim(),
+            user_email: user.email,
+            user_phone: phone,
+            user_address: deliveryAddress,
+            order_id: result.order_id,
+            cart_items: cartItems.map(item => ({
+              id: String(item.id),
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            })),
+            success_url: `${baseUrl}/`,
+            fail_url: `${baseUrl}/cart`,
+          }),
+        });
+
+        if (!paymentResponse.ok) {
+          const errData = await paymentResponse.json().catch(() => ({}));
+          throw new Error(errData.error || 'Ошибка создания платежа');
+        }
+
+        const paymentData = await paymentResponse.json();
+        addLog('✅ Ссылка на оплату получена');
+        addLog('🔄 Переход на страницу оплаты...');
+
+        clearCart();
+        openPaymentPage(paymentData.payment_url);
+        return;
       }
 
       toast({

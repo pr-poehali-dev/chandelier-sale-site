@@ -7,6 +7,12 @@ from urllib.parse import urlencode
 from datetime import datetime
 
 
+def escape_sql(value):
+    if value is None:
+        return 'NULL'
+    return "'" + str(value).replace("'", "''") + "'"
+
+
 def calculate_signature(*args) -> str:
     """Создание MD5 подписи по документации Robokassa"""
     joined = ':'.join(str(arg) for arg in args)
@@ -77,23 +83,21 @@ def handler(event: dict, context) -> dict:
 
         schema = os.environ.get('MAIN_DB_SCHEMA', 'public')
         
-        # Генерация уникального InvoiceID
         for _ in range(10):
             robokassa_inv_id = random.randint(100000, 2147483647)
-            cur.execute(f"SELECT COUNT(*) FROM {schema}.orders WHERE robokassa_inv_id = %s", (robokassa_inv_id,))
+            cur.execute(f"SELECT COUNT(*) FROM {schema}.orders WHERE robokassa_inv_id = {int(robokassa_inv_id)}")
             if cur.fetchone()[0] == 0:
                 break
 
-        # Если передан существующий order_id - обновляем его, иначе создаём новый
         if existing_order_id:
             print(f"🔄 Обновление существующего заказа ID={existing_order_id} с robokassa_inv_id={robokassa_inv_id}")
             
             cur.execute(f"""
                 UPDATE {schema}.orders 
-                SET robokassa_inv_id = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
+                SET robokassa_inv_id = {int(robokassa_inv_id)}, updated_at = CURRENT_TIMESTAMP
+                WHERE id = {int(existing_order_id)}
                 RETURNING id, order_number
-            """, (robokassa_inv_id, existing_order_id))
+            """)
             
             result = cur.fetchone()
             if not result:
@@ -103,6 +107,9 @@ def handler(event: dict, context) -> dict:
             
             order_id = result[0]
             order_number = result[1]
+            if not order_number:
+                order_number = f"ORD-{datetime.now().strftime('%Y%m%d')}-{robokassa_inv_id}"
+                cur.execute(f"UPDATE {schema}.orders SET order_number = {escape_sql(order_number)} WHERE id = {int(order_id)}")
             print(f"✅ Заказ {order_number} обновлён с robokassa_inv_id={robokassa_inv_id}")
         else:
             print(f"➕ Создание нового заказа с robokassa_inv_id={robokassa_inv_id}")
@@ -110,24 +117,21 @@ def handler(event: dict, context) -> dict:
 
             cur.execute(f"""
                 INSERT INTO {schema}.orders (order_number, customer_name, customer_email, customer_phone, total_amount, robokassa_inv_id, status, delivery_address, order_comment, customer_address)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES ({escape_sql(order_number)}, {escape_sql(user_name)}, {escape_sql(user_email)}, {escape_sql(user_phone)}, {float(round(amount, 2))}, {int(robokassa_inv_id)}, {escape_sql('pending')}, {escape_sql(user_address)}, {escape_sql(order_comment)}, {escape_sql(user_address)})
                 RETURNING id
-            """, (order_number, user_name, user_email, user_phone, round(amount, 2), robokassa_inv_id, 'pending', user_address, order_comment, user_address))
+            """)
 
             order_id = cur.fetchone()[0]
 
             for item in cart_items:
                 cur.execute(f"""
                     INSERT INTO {schema}.order_items (order_id, product_id, product_name, product_price, quantity)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (order_id, item.get('id'), item.get('name'), item.get('price'), item.get('quantity')))
+                    VALUES ({int(order_id)}, {int(item.get('id'))}, {escape_sql(item.get('name'))}, {float(item.get('price'))}, {int(item.get('quantity'))})
+                """)
 
-        # Формирование ссылки на оплату
         amount_str = f"{amount:.2f}"
 
-        # Подпись с учётом SuccessUrl2/FailUrl2 если переданы
         if success_url or fail_url:
-            # MerchantLogin:OutSum:InvId:SuccessUrl2:SuccessUrl2Method:FailUrl2:FailUrl2Method:Password#1
             signature = calculate_signature(
                 merchant_login, amount_str, robokassa_inv_id,
                 success_url, 'GET', fail_url, 'GET', password_1
@@ -154,7 +158,7 @@ def handler(event: dict, context) -> dict:
 
         payment_url = f"{ROBOKASSA_URL}?{urlencode(query_params)}"
 
-        cur.execute(f"UPDATE {schema}.orders SET payment_url = %s WHERE id = %s", (payment_url, order_id))
+        cur.execute(f"UPDATE {schema}.orders SET payment_url = {escape_sql(payment_url)} WHERE id = {int(order_id)}")
         conn.commit()
         cur.close()
         conn.close()

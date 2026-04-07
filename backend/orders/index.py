@@ -5,6 +5,13 @@ from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+
+def escape_sql(value):
+    if value is None:
+        return 'NULL'
+    return "'" + str(value).replace("'", "''") + "'"
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
     Управление заказами: создание заказа, получение списка заказов
@@ -33,7 +40,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             order_id = params.get('id')
             
             if order_id:
-                cur.execute('''
+                cur.execute(f'''
                     SELECT o.*, 
                            json_agg(json_build_object(
                                'id', oi.id,
@@ -45,9 +52,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                            )) as items
                     FROM t_p94134469_chandelier_sale_site.orders o
                     LEFT JOIN t_p94134469_chandelier_sale_site.order_items oi ON o.id = oi.order_id
-                    WHERE o.id = %s
+                    WHERE o.id = {int(order_id)}
                     GROUP BY o.id
-                ''', (order_id,))
+                ''')
                 order = cur.fetchone()
                 
                 if not order:
@@ -118,19 +125,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             total_amount = sum(item['price'] * item['quantity'] for item in items)
             
-            cur.execute('''
+            cur.execute(f'''
                 INSERT INTO t_p94134469_chandelier_sale_site.orders (customer_name, customer_email, customer_phone, customer_address, total_amount, payment_method, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES ({escape_sql(customer_name)}, {escape_sql(customer_email)}, {escape_sql(customer_phone)}, {escape_sql(customer_address)}, {float(total_amount)}, {escape_sql(payment_method)}, {escape_sql('pending')})
                 RETURNING id
-            ''', (customer_name, customer_email, customer_phone, customer_address, total_amount, payment_method, 'pending'))
+            ''')
             
             order_id = cur.fetchone()['id']
             
             for item in items:
-                cur.execute('''
+                cur.execute(f'''
                     INSERT INTO t_p94134469_chandelier_sale_site.order_items (order_id, product_id, product_name, product_image, quantity, price)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (order_id, item['product_id'], item['product_name'], item.get('product_image'), item['quantity'], item['price']))
+                    VALUES ({int(order_id)}, {int(item['product_id'])}, {escape_sql(item['product_name'])}, {escape_sql(item.get('product_image'))}, {int(item['quantity'])}, {float(item['price'])})
+                ''')
             
             conn.commit()
             
@@ -162,26 +169,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             tracking_number = body.get('tracking_number')
             
             update_fields = []
-            update_values = []
             
             if status:
-                update_fields.append('status = %s')
-                update_values.append(status)
+                update_fields.append(f'status = {escape_sql(status)}')
             
             if tracking_number is not None:
-                update_fields.append('tracking_number = %s')
-                update_values.append(tracking_number if tracking_number else None)
+                if tracking_number:
+                    update_fields.append(f'tracking_number = {escape_sql(tracking_number)}')
+                else:
+                    update_fields.append('tracking_number = NULL')
             
             if update_fields:
                 update_fields.append('updated_at = CURRENT_TIMESTAMP')
-                update_values.append(order_id)
                 
                 query = f'''
                     UPDATE t_p94134469_chandelier_sale_site.orders 
                     SET {', '.join(update_fields)}
-                    WHERE id = %s
+                    WHERE id = {int(order_id)}
                 '''
-                cur.execute(query, update_values)
+                cur.execute(query)
                 conn.commit()
             
             return {
@@ -203,8 +209,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute('DELETE FROM t_p94134469_chandelier_sale_site.order_items WHERE order_id = %s', (order_id,))
-            cur.execute('DELETE FROM t_p94134469_chandelier_sale_site.orders WHERE id = %s', (order_id,))
+            cur.execute(f'DELETE FROM t_p94134469_chandelier_sale_site.order_items WHERE order_id = {int(order_id)}')
+            cur.execute(f'DELETE FROM t_p94134469_chandelier_sale_site.orders WHERE id = {int(order_id)}')
             conn.commit()
             
             return {
