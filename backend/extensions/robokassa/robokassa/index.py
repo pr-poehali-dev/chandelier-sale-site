@@ -131,13 +131,20 @@ def handler(event: dict, context) -> dict:
 
         amount_str = f"{amount:.2f}"
 
-        if success_url or fail_url:
-            signature = calculate_signature(
-                merchant_login, amount_str, robokassa_inv_id,
-                success_url, 'GET', fail_url, 'GET', password_1
-            )
-        else:
-            signature = calculate_signature(merchant_login, amount_str, robokassa_inv_id, password_1)
+        result_url = os.environ.get('ROBOKASSA_RESULT_URL', '')
+        
+        sig_parts = [merchant_login, amount_str, robokassa_inv_id]
+        if result_url:
+            sig_parts.append(result_url)
+        if success_url:
+            sig_parts.append(success_url)
+            sig_parts.append('GET')
+        if fail_url:
+            sig_parts.append(fail_url)
+            sig_parts.append('GET')
+        sig_parts.append(password_1)
+        
+        signature = calculate_signature(*sig_parts)
 
         query_params = {
             'MerchantLogin': merchant_login,
@@ -149,6 +156,9 @@ def handler(event: dict, context) -> dict:
             'Description': f'Заказ {order_number}'
         }
 
+        if result_url:
+            query_params['ResultUrl2'] = result_url
+            query_params['ResultUrl2Method'] = 'POST'
         if success_url:
             query_params['SuccessUrl2'] = success_url
             query_params['SuccessUrl2Method'] = 'GET'
