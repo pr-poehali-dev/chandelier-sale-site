@@ -1,6 +1,6 @@
 const API_URLS = {
   products: 'https://functions.poehali.dev/5243cae0-7355-402e-9265-f37156d9f092',
-  auth: 'https://functions.poehali.dev/b52e3624-de7a-408e-abbe-003fc3199fe5',
+  auth: 'https://functions.poehali.dev/84256c1a-006a-406a-a06d-fc59db888599',
   seedProducts: 'https://functions.poehali.dev/71dfe833-3fc1-4bd0-9390-deb2a875abc2',
   searchImage: 'https://functions.poehali.dev/35a79cb3-5e24-4538-9b39-eec115df5f7e',
   importProducts: 'https://functions.poehali.dev/a943bcc1-fe5a-4a70-94b6-9e426109f5b0',
@@ -185,43 +185,32 @@ export const api = {
       }),
     });
     
+    const result = await response.json();
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || error.error || 'Ошибка регистрации');
+      throw new Error(result.message || result.error || 'Ошибка регистрации');
     }
     
-    const result = await response.json();
     return { 
-      requiresVerification: true, 
+      requiresVerification: result.email_verification_required !== false, 
       email: data.email 
     };
   },
 
-  async verifyEmail(email: string, code: string): Promise<User> {
+  async verifyEmail(email: string, code: string): Promise<{ verified: boolean; message: string }> {
     const response = await fetch(`${API_URLS.auth}?action=verify-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code }),
     });
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || error.error || 'Неверный код');
-    }
-    
     const result = await response.json();
     
-    if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token);
-      localStorage.setItem('refresh_token', result.refresh_token);
+    if (!response.ok) {
+      throw new Error(result.message || result.error || 'Неверный код');
     }
     
-    return {
-      user_id: result.user.id,
-      email: result.user.email,
-      first_name: result.user.name || '',
-      token: result.access_token
-    };
+    return { verified: true, message: result.message || 'Email подтверждён' };
   },
 
   async login(email: string, password: string): Promise<User> {
@@ -231,12 +220,11 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
     
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
-    }
-    
     const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Неверный email или пароль');
+    }
     
     if (result.access_token) {
       localStorage.setItem('access_token', result.access_token);

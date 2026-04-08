@@ -21,6 +21,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationPassword, setVerificationPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
@@ -63,10 +64,20 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
       const result = await api.register(registerData);
       if (result.requiresVerification) {
         setVerificationEmail(result.email);
+        setVerificationPassword(registerData.password);
         setShowVerification(true);
         toast({
           title: 'Проверьте почту',
           description: 'Мы отправили код подтверждения на ваш email',
+        });
+      } else {
+        const user = await api.login(registerData.email, registerData.password);
+        localStorage.setItem('user', JSON.stringify(user));
+        onAuthSuccess(user);
+        onOpenChange(false);
+        toast({
+          title: 'Регистрация успешна',
+          description: `Добро пожаловать, ${user.first_name}!`,
         });
       }
     } catch (error) {
@@ -85,7 +96,8 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
     setLoading(true);
     
     try {
-      const user = await api.verifyEmail(verificationEmail, verificationCode);
+      await api.verifyEmail(verificationEmail, verificationCode);
+      const user = await api.login(verificationEmail, verificationPassword);
       localStorage.setItem('user', JSON.stringify(user));
       onAuthSuccess(user);
       onOpenChange(false);
@@ -243,11 +255,11 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
                   <Input
                     id="register-password"
                     type={showRegisterPassword ? "text" : "password"}
-                    placeholder="Минимум 6 символов"
+                    placeholder="Минимум 8 символов (буквы + цифры)"
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="pr-10"
                   />
                   <button
