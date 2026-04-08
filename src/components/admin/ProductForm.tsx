@@ -189,11 +189,32 @@ const ProductForm = ({ adminProductsUrl, uploadImageUrl, onProductAdded }: Produ
                 onChange={(e) => setProduct({ ...product, type: e.target.value })}
                 className="w-full p-2 border rounded-md"
               >
-                <option value="люстра">Люстра</option>
-                <option value="светильник">Светильник</option>
-                <option value="бра">Бра</option>
-                <option value="торшер">Торшер</option>
-                <option value="настольная лампа">Настольная лампа</option>
+                <option value="ceiling_chandelier">Люстра потолочная</option>
+                <option value="pendant_chandelier">Люстра подвесная</option>
+                <option value="fan_chandelier">Люстра с вентилятором</option>
+                <option value="light_pendant">Подвесной светильник</option>
+                <option value="light_ceiling">Потолочный светильник</option>
+                <option value="light_recessed">Встраиваемый светильник</option>
+                <option value="light_wall">Настенный светильник</option>
+                <option value="light_mirror">Подсветка зеркала</option>
+                <option value="light_picture">Подсветка картин</option>
+                <option value="light_projector">Прожектор</option>
+                <option value="sconce">Бра</option>
+                <option value="lamp_table">Настольная лампа</option>
+                <option value="floor_lamp">Торшер</option>
+                <option value="track_light">Трековый светильник</option>
+                <option value="track_rail">Трековая шина</option>
+                <option value="spot_recessed">Спот встраиваемый</option>
+                <option value="spot_surface">Спот накладной</option>
+                <option value="outdoor_lantern">Уличный фонарь</option>
+                <option value="decorative_candle">Декоративная свеча</option>
+                <option value="decorative_garland">Гирлянда</option>
+                <option value="decorative_tree">Световое дерево</option>
+                <option value="electric_frame">Электрощит/рамка</option>
+                <option value="electric_switch">Выключатель</option>
+                <option value="electric_power">Блок питания</option>
+                <option value="electric_other">Электрика прочее</option>
+                <option value="люстра">Люстра (старый тип)</option>
               </select>
             </div>
           </div>

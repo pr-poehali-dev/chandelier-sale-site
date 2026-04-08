@@ -62,12 +62,16 @@ const BestDealsManager = () => {
 
   const handleImageUpload = async (file: File, isEdit: boolean = false) => {
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
 
       const response = await fetch(UPLOAD_IMAGE_URL, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, filename: file.name, folder: 'products' }),
       });
 
       if (!response.ok) throw new Error('Ошибка загрузки');
