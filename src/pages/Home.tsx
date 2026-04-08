@@ -124,10 +124,7 @@ const Home = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" asChild className="hover:scale-105 transition-transform">
-                <Link to="/catalog">
-                  Смотреть каталог
-                  <Icon name="ArrowRight" className="ml-2 h-5 w-5" />
-                </Link>
+                <Link to="/catalog">Смотреть каталог</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/about">О компании</Link>
