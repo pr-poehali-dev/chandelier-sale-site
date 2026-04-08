@@ -16,7 +16,6 @@ import Blog from "./pages/Blog";
 import Contacts from "./pages/Contacts";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-import AdminPanel from "./pages/AdminPanel";
 import Collaboration from "./pages/Collaboration";
 import PartnerRegistration from "./pages/PartnerRegistration";
 import Logs from "./pages/Logs";
@@ -55,7 +54,6 @@ const App = () => (
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/admin-panel" element={<AdminPanel />} />
             <Route path="/collaboration" element={<Collaboration />} />
             <Route path="/partnership" element={<Collaboration />} />
             <Route path="/partnership/:category" element={<PartnerRegistration />} />
