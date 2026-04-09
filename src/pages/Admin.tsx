@@ -521,8 +521,8 @@ const Admin = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: file.name,
-          fileContent: base64String,
+          filename: file.name,
+          file: base64String,
           contentType: file.type,
         }),
       });
