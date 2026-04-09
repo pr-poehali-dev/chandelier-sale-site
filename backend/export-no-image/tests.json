@@ -1,0 +1,1 @@
+{"tests": [{"name": "Export no-image products", "method": "GET", "path": "/", "expectedStatus": 200, "expectedBody": {"url": "string"}, "bodyMatcher": "partial"}]}
