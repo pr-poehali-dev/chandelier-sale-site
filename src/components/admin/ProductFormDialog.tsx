@@ -79,6 +79,8 @@ interface ProductFormDialogProps {
   onSave: () => Promise<void>;
   uploadingImage: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onAdditionalImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  uploadingAdditionalImage?: boolean;
   addLog: (level: LogEntry["level"], category: string, message: string, details?: unknown) => void;
 }
 
@@ -91,10 +93,13 @@ const ProductFormDialog = ({
   onSave,
   uploadingImage,
   onImageUpload,
+  onAdditionalImageUpload,
+  uploadingAdditionalImage,
   addLog,
 }: ProductFormDialogProps) => {
   const { toast } = useToast();
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const additionalImageInputRef = useRef<HTMLInputElement>(null);
   const [additionalImageUrl, setAdditionalImageUrl] = useState("");
 
   const handleSave = async () => {
@@ -233,6 +238,31 @@ const ProductFormDialog = ({
               <Button type="button" onClick={handleAddImage} variant="outline">
                 <Icon name="Plus" className="h-4 w-4" />
               </Button>
+              {onAdditionalImageUpload && (
+                <>
+                  <Button
+                    type="button"
+                    onClick={() => additionalImageInputRef.current?.click()}
+                    disabled={uploadingAdditionalImage}
+                    variant="outline"
+                    title="Загрузить файл"
+                  >
+                    {uploadingAdditionalImage ? (
+                      <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icon name="Upload" className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <input
+                    ref={additionalImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={onAdditionalImageUpload}
+                  />
+                </>
+              )}
             </div>
             {formData.images.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">

@@ -24,6 +24,7 @@ const Admin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAdditionalImage, setUploadingAdditionalImage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBrand, setFilterBrand] = useState("all");
   const [filterType, setFilterType] = useState("all");
@@ -565,6 +566,68 @@ const Admin = () => {
     }
   };
 
+  const uploadImageToS3 = async (file: File): Promise<string> => {
+    const reader = new FileReader();
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const base64String = base64Data.split(',')[1];
+
+    const uploadResponse = await fetch('https://functions.poehali.dev/379c3586-f78f-4670-a239-15957ea26d39', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: file.name,
+        file: base64String,
+        contentType: file.type,
+      }),
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`Ошибка загрузки: ${errorText}`);
+    }
+
+    const uploadResult = await uploadResponse.json();
+    const imageUrl = uploadResult.cdnUrl || uploadResult.url;
+    if (!imageUrl) throw new Error('URL изображения не получен от сервера');
+    return imageUrl;
+  };
+
+  const handleAdditionalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setUploadingAdditionalImage(true);
+    try {
+      const urls: string[] = [];
+      for (const file of files) {
+        addLog("info", "Доп. изображение", `Загрузка: ${file.name}`);
+        const url = await uploadImageToS3(file);
+        urls.push(url);
+        addLog("success", "Доп. изображение", `Загружено: ${file.name}`);
+      }
+      updateFormData({ images: [...formData.images, ...urls] });
+      toast({
+        title: "Изображения загружены",
+        description: `Добавлено ${urls.length} фото`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Неизвестная ошибка";
+      addLog("error", "Доп. изображение", errorMessage);
+      toast({
+        title: "Ошибка загрузки",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAdditionalImage(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSave = async () => {
     try {
       const productData: any = {
@@ -805,6 +868,8 @@ const Admin = () => {
         onSave={handleSave}
         uploadingImage={uploadingImage}
         onImageUpload={handleImageUpload}
+        onAdditionalImageUpload={handleAdditionalImageUpload}
+        uploadingAdditionalImage={uploadingAdditionalImage}
         addLog={addLog}
       />
     </div>
