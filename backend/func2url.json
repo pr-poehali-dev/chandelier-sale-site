@@ -1,4 +1,5 @@
 {
+  "delete-placeholder-products": "https://functions.poehali.dev/e9c3383b-5864-42bc-8753-63888d1c45b6",
   "update-images-from-file": "https://functions.poehali.dev/c2359b10-3e2d-4fdd-bc14-55be7bde1a84",
   "export-no-image": "https://functions.poehali.dev/3a4d4d37-a67c-4f97-b962-db0ed94aee78",
   "robokassa-robokassa-webhook": "https://functions.poehali.dev/f7966bf5-b6f8-41d2-bb48-57e5ddae87d0",

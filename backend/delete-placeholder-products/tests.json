@@ -1,0 +1,1 @@
+{"tests": [{"name": "Delete placeholder", "method": "GET", "path": "/", "expectedStatus": 200, "expectedBody": {"deleted": "number"}, "bodyMatcher": "partial"}]}
